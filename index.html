@@ -16,8 +16,23 @@
 /* Puente con Google Sheets: la página pide y guarda los datos en el enlace /exec del proyecto (Web.gs). Imita google.script.run. */
 window.API_URL = 'https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec';
 (function () {
-  var n = 0, VER = 'web 5', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
+  var n = 0, VER = 'web 6', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
   document.addEventListener('DOMContentLoaded', function () { var v = document.createElement('div'); v.textContent = VER; v.style.cssText = 'position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999'; document.body.appendChild(v); });
+  // Aviso de versión nueva: cada 5 minutos (y al volver a la pestaña) se mira si en GitHub hay una página distinta a la abierta
+  var HUELLA = '81dc98bc5c96';
+  function revisarVersion() {
+    if (document.getElementById('avisoVersion')) return;
+    fetch(location.pathname + '?huella=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
+      var m = /var HUELLA = '([0-9a-f]{8,})'/.exec(t || ''); if (!m || m[1] === HUELLA || document.getElementById('avisoVersion')) return;
+      var a = document.createElement('div'); a.id = 'avisoVersion';
+      a.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:10000;background:#0B0B0D;color:#F6F1E4;border:1px solid #C9A227;border-radius:14px;padding:12px 16px;font:600 14px Archivo,sans-serif;box-shadow:0 8px 28px rgba(0,0,0,.35);display:flex;gap:12px;align-items:center;max-width:calc(100vw - 32px)';
+      a.innerHTML = '<span>Hay una versión nueva de la página.</span><button type="button" style="background:#C9A227;color:#0B0B0D;border:0;border-radius:999px;padding:8px 14px;font:700 13px Archivo,sans-serif;cursor:pointer;white-space:nowrap">Actualizar ahora</button>';
+      a.querySelector('button').onclick = function () { location.reload(); };
+      document.body.appendChild(a);
+    }).catch(function () {});
+  }
+  setInterval(revisarVersion, 5 * 60 * 1000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) revisarVersion(); });
   function fin(d, ok, mal) { if (d && d.ok) { if (ok) ok(d.r); } else if (mal) mal(new Error((d && d.error) || 'No se pudo completar.')); }
   // Segundo camino: como <script> (no depende de los permisos entre sitios del navegador)
   function porScript(fn, args, ok, mal) {
