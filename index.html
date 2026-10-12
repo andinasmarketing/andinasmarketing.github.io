@@ -16,10 +16,10 @@
 /* Puente con Google Sheets: la página pide y guarda los datos en el enlace /exec del proyecto (Web.gs). Imita google.script.run. */
 window.API_URL = 'https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec';
 (function () {
-  var n = 0, VER = 'web 16', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
+  var n = 0, VER = 'web 17', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
   document.addEventListener('DOMContentLoaded', function () { var v = document.createElement('div'); v.textContent = VER; v.style.cssText = 'position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999'; document.body.appendChild(v); });
   // Aviso de versión nueva: cada 5 minutos (y al volver a la pestaña) se mira si en GitHub hay una página distinta a la abierta
-  var HUELLA = 'adb70b5bb0fd';
+  var HUELLA = 'd66a2157f865';
   function revisarVersion() {
     if (document.getElementById('avisoVersion')) return;
     fetch(location.pathname + '?huella=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -685,9 +685,15 @@ window.API_URL = 'https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
   .vf-fil .vf-bar { margin: 0; }
   .vf-bar button:disabled { opacity: .45; cursor: default; }
   .vf-sel { font: inherit; font-size: 13px; font-weight: 700; padding: 7px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
-  .vf-perf { display: flex; flex-direction: column; line-height: 1.15; }
+  .vf-perf { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.15; min-width: 0; max-width: 100%; }
   .vf-perf small { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
   .vf-perf b { font-size: 19px !important; font-weight: 800; }
+  .vf-mail { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; font: inherit; font-size: 12.5px; font-weight: 600; color: var(--ink); background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 3px 8px; cursor: pointer; max-width: 100%; }
+  .vf-mail span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .vf-mail i { font-style: normal; font-size: 11px; font-weight: 800; color: #7A5D00; background: rgba(201,162,39,.18); border-radius: 999px; padding: 1px 8px; flex: none; }
+  .vf-mail:hover { border-color: #C9A227; } .vf-mail.ok i { background: #0F7B5F; color: #fff; }
+  :root[data-theme="oscuro"] .vf-mail i { color: #E6C65C; }
+  .vf-sinmail { margin-top: 4px; font-size: 11.5px; color: var(--faint); }
   .vf-de { font-size: 12.5px; color: var(--muted); line-height: 1.35; padding-left: 10px; border-left: 1px solid var(--line); }
   .vf-de b { color: var(--ink); font-size: 12.5px !important; }
   .vf-cnt { font-size: 12px; font-weight: 800; background: var(--paper); border-radius: 999px; padding: 2px 10px; }
@@ -5092,7 +5098,7 @@ function monCargar() {
     revisar: [{ tipo: 'accion', tit: 'ID de perfil anotado como cliente, sin corregir', ayuda: 'El operador copió el ID de su perfil en lugar del ID del cliente.', items: ['Grupo Pekin, Agustin Febres: día 4, anotó 186380092 (ID del perfil Cassio 62)'] }, { tipo: 'aviso', tit: 'Asignados sin ningún registro en el mes', ayuda: 'Perfiles sin ningún número digitado.', items: ['Grupo Pekin, noche, sin operador asignado: Samuel 64, Cassio 62, Eleide 57'] }, { tipo: 'info', tit: 'Perfiles atendidos por contingencia', ayuda: 'Un operador atendió un perfil de otro grupo.', items: ['Día 4: Eliezer Orance atendió a Felipe 50 (Grupo Berna, tarde), 4 clientes', 'Día 4: Edgar Orance atendió a Fernando 46 (Grupo Brusela, tarde), 2 clientes', 'Día 4: Celio Ollarves atendió a Victor (Grupo Brusela, tarde), 3 clientes', 'Día 3: Edgar Orance atendió a Victor (Grupo Brusela, tarde), 1 cliente'] }],
     historial: [['06/10/2026 07:12:40', '2026-10', 5, 'GRUPO RIO', 'MAÑANA', 'NILSON ROJAS', 'MIGUEL', '', '7', 'Registro', 'Laura Pérez'], ['06/10/2026 07:10:02', '2026-10', 4, 'GRUPO RIO', 'TARDE', 'EDGAR ORANCE', 'ALDEMARO', '3', '2', 'Corrección', 'Sin identificar']], turno: { nombre: 'Laura Pérez', desde: '06:05', hayHoja: true },
     reloj: { ahora: '2026-10-10T16:40' },
-    ver: [[10, 'GRUPO RIO', 'MAÑANA', 'NILSON ROJAS', 'MIGUEL', '193401122', '', '', '', 0, '', 0], [10, 'GRUPO RIO', 'MAÑANA', 'NILSON ROJAS', 'MIGUEL', '193401178', '', '', '', 0, '', 0], [10, 'GRUPO RIO', 'MAÑANA', 'NILSON ROJAS', 'ALDEMARO', '193402210', '', '', '', 0, '', 0],
+    ver: [[10, 'GRUPO RIO', 'MAÑANA', 'NILSON ROJAS', 'MIGUEL', '193401122', '', '', '', 0, '', 0, '', 'Andimiguel821451d285305@gmail.com'], [10, 'GRUPO RIO', 'MAÑANA', 'NILSON ROJAS', 'MIGUEL', '193401178', '', '', '', 0, '', 0, '', 'Andimiguel821451d285305@gmail.com'], [10, 'GRUPO RIO', 'MAÑANA', 'NILSON ROJAS', 'ALDEMARO', '193402210', '', '', '', 0, '', 0, '', 'Andialdemaro8421g10322d6313@gmail.com'],
       [10, 'GRUPO TOKYO', 'TARDE', 'ELIEZER ORANCE', 'MARTIN', '193405561', '', '', '', 0, '', 0], [10, 'GRUPO TOKYO', 'MAÑANA', 'YONAIKER VIVAS', 'SELMO', '193398001', 'si', 'Laura Pérez', '10/10 09:12', 0, '', 0], [9, 'GRUPO RIO', 'NOCHE', 'MARWIN OLLARVES', 'MIGUEL', '193380045', 'no', 'Laura Pérez', '10/10 07:40', 0, '', 0]],
     ops: [['GRUPO RIO', 'NILSON ROJAS', 'Largo 6 a 16', '06:00', '16:00', '05:58', '16:00', 'salio', true, '16:20', 10, true], ['GRUPO TOKYO', 'YONAIKER VIVAS', 'Mañana', '06:15', '14:15', '06:10', '14:15', 'salio', false, '14:35', 10, true],
       ['GRUPO RIO', 'EDGAR ORANCE', 'Largo 12 a 22', '12:00', '22:00', '11:55', '22:00', 'turno', true, '22:20', 10], ['GRUPO TOKYO', 'ELIEZER ORANCE', 'Tarde', '14:15', '22:15', '14:35', '22:15', 'turno', false, '22:35', 10, false, '2026-10-10', 20, ''], ['GRUPO BERNA', 'MARIA JOSE MEDINA', 'Mañana', '06:15', '14:15', '06:05', '14:15', 'turno', false, '14:35', 10], ['GRUPO BRUSELA', 'MARIA DLA (TORREALBA)', 'Mañana', '06:15', '14:15', '06:01', '14:15', 'turno', false, '14:35', 10],
@@ -5115,6 +5121,8 @@ function monLista(items) {
     return '<div class="mn-gr">' + (k ? '<div class="mn-gt"><b>' + esc(k) + '</b><i>' + xs.length + '</i></div>' : '') +
       '<ul class="lista">' + xs.map(x => '<li>' + esc(x[1].charAt(0).toUpperCase() + x[1].slice(1)) + '</li>').join('') + '</ul></div>'; }).join('');
 }
+/** Copiar cuando el navegador no deja usar el portapapeles moderno. */
+function monCopiarViejo(t) { const ta = document.createElement('textarea'); ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} ta.remove(); }
 /** El monitor marca uno o varios IDs: 'si' (está retraído), 'no' (no está) o '' (deshacer). Se guarda a nombre del monitor de turno. */
 function monVerificar(idx, res, boton) {
   const V = MON.datos.ver || [], xs = idx.map(i => V[i]).filter(Boolean); if (!xs.length) return;
@@ -5138,7 +5146,7 @@ function monRender() {
   const dif = P.filter(x => x.tipo === 'No coincide'), fal = P.filter(x => x.tipo !== 'No coincide');
   const R = d.revisar || [], S = d.sinRet || [], nRev = R.reduce((a, x) => a + x.items.length, 0);
   // Verificación de IDs: los que faltan (días que aún no se digitan) y los ya revisados
-  const VF = (d.ver || []).map((r, i) => ({ i, d: r[0], g: r[1], t: r[2], o: r[3], p: r[4], id: r[5], est: r[6] || '', vq: r[7] || '', vt: r[8] || '', dig: r[9] === 1 }));
+  const VF = (d.ver || []).map((r, i) => ({ i, d: r[0], g: r[1], t: r[2], o: r[3], p: r[4], id: r[5], est: r[6] || '', vq: r[7] || '', vt: r[8] || '', dig: r[9] === 1, mail: r[13] || '' }));
   const vfPend = VF.filter(x => !x.est && !x.dig), vfHechos = VF.filter(x => x.est);
   // Lo que llega mientras el monitor está revisando NO se mete en la lista (lo hacía saltar y confundía):
   // queda guardado y sale un aviso "Llegaron N IDs nuevos" para mostrarlos cuando él quiera.
@@ -5205,7 +5213,7 @@ function monRender() {
     const grupos = [...new Set(base.map(x => x.g))].sort();
     if (gru && grupos.indexOf(gru) < 0) MON.vfG = '';
     const lista = base.filter(x => !MON.vfG || x.g === MON.vfG);
-    if (MON.vf === 'pend') html += '<ol class="vf-pasos"><li><b>Abre el perfil</b> en la plataforma (sale en grande en cada recuadro).</li><li><b>Busca cada ID</b> y toca <span class="vf-mini si">✅ Sí</span> si está retraído o <span class="vf-mini no">❌ No</span> si no lo está.</li></ol>';
+    if (MON.vf === 'pend') html += '<ol class="vf-pasos"><li><b>Copia el correo del perfil</b> (botón «Copiar» de cada recuadro) y entra con él a la plataforma.</li><li><b>Busca cada ID</b> y toca <span class="vf-mini si">✅ Sí</span> si está retraído o <span class="vf-mini no">❌ No</span> si no lo está.</li></ol>';
     if (MON.vf === 'pend' && vfNuevos.length) html += '<button type="button" class="vf-nuevos" id="vfNuevos">' + (vfNuevos.length === 1 ? '🔔 Llegó 1 ID nuevo' : '🔔 Llegaron ' + vfNuevos.length + ' IDs nuevos') + '. Toca aquí cuando termines lo que estás revisando.</button>';
     if (grupos.length > 1) html += '<div class="vf-fil"><select class="vf-sel" id="vfGrupo" aria-label="Grupo"><option value="">Todos los grupos</option>' + grupos.map(g => '<option value="' + esc(g) + '"' + (g === MON.vfG ? ' selected' : '') + '>' + esc(titulo(g)) + '</option>').join('') + '</select></div>';
     if (!lista.length) html += base.length ? '<div class="vacio">No hay IDs con ese filtro.</div>' : MON.vf === 'pend' ? '<div class="mon-ok"><b>Nada por verificar</b>Todos los IDs anotados ya están revisados. Cuando un operador anote uno nuevo, aparece aquí.</div>' : '<div class="vacio">Todavía no hay IDs revisados en los últimos días.</div>';
@@ -5217,7 +5225,8 @@ function monRender() {
         const porPerf = {}; xsD.forEach(x => { const kk = x.g + '|' + x.p + '|' + x.o; (porPerf[kk] = porPerf[kk] || []).push(x); });
         return '<div class="mn-dia"><span class="mn-dn">' + dia + '</span><b>Día ' + dia + '</b><i>' + xsD.length + (xsD.length === 1 ? ' ID' : ' IDs') + '</i></div>' +
           Object.keys(porPerf).sort().map(kk => { const xs = porPerf[kk].sort((a, b) => String(a.id).localeCompare(String(b.id))), x0 = xs[0];
-            return '<div class="vf-op"><div class="vf-oh"><span class="vf-perf"><small>Perfil</small><b>' + esc(titulo(x0.p)) + '</b></span><span class="vf-de">' + esc(titulo(x0.g)) + '<br>Operador: <b>' + esc(titulo(x0.o)) + '</b></span>' +
+            return '<div class="vf-op"><div class="vf-oh"><span class="vf-perf"><small>Perfil</small><b>' + esc(titulo(x0.p)) + '</b>' +
+              (x0.mail ? '<button type="button" class="vf-mail" data-cm="' + esc(x0.mail) + '" title="Toca para copiar el correo">✉ <span>' + esc(x0.mail) + '</span><i>Copiar</i></button>' : '<span class="vf-sinmail">Sin correo registrado</span>') + '</span><span class="vf-de">' + esc(titulo(x0.g)) + '<br>Operador: <b>' + esc(titulo(x0.o)) + '</b></span>' +
               '<span class="vf-cnt">' + xs.length + (xs.length === 1 ? ' ID' : ' IDs') + '</span>' +
               (MON.vf === 'pend' && xs.length > 1 && comoSup ? '<button type="button" class="vf-si vf-todos" data-vt="' + xs.map(x => x.i).join(',') + '">✅ Todos están retraídos</button>' : '') + '</div><ul class="vf-l">' +
               xs.map(x => '<li><button type="button" class="vf-id" data-cp="' + esc(x.id) + '" title="Toca para copiar el ID">' + esc(x.id) + '</button>' +
@@ -5303,6 +5312,8 @@ function monRender() {
   const vn = document.getElementById('vfNuevos'); if (vn) vn.onclick = () => { MON.vfVerTodo = true; monRender(); };
   const vg = document.getElementById('vfGrupo'); if (vg) vg.onchange = () => { MON.vfG = vg.value; monRender(); };
   c.querySelectorAll('[data-cp]').forEach(b => b.onclick = () => { const t = b.dataset.cp; try { navigator.clipboard.writeText(t); } catch (e) {} const o = b.firstChild.textContent; b.firstChild.textContent = 'Copiado'; setTimeout(() => { b.firstChild.textContent = o; }, 900); });
+  c.querySelectorAll('[data-cm]').forEach(b => b.onclick = () => { const t = b.dataset.cm; const listo = () => { const i = b.querySelector('i'); i.textContent = '✓ Copiado'; b.classList.add('ok'); setTimeout(() => { i.textContent = 'Copiar'; b.classList.remove('ok'); }, 1400); };
+    try { navigator.clipboard.writeText(t).then(listo, () => { monCopiarViejo(t); listo(); }); } catch (e) { monCopiarViejo(t); listo(); } });
   c.querySelectorAll('[data-vs]').forEach(b => b.onclick = () => monVerificar([Number(b.dataset.vs)], 'si', b));
   c.querySelectorAll('[data-vt]').forEach(b => b.onclick = () => { const ids = b.dataset.vt.split(',').map(Number);
     if (confirm('¿Revisaste en la plataforma los ' + ids.length + ' IDs y todos están retraídos?')) monVerificar(ids, 'si', b); });
