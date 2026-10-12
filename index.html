@@ -16,7 +16,8 @@
 /* Puente con Google Sheets: la página pide y guarda los datos en el enlace /exec del proyecto (Web.gs). Imita google.script.run. */
 window.API_URL = 'https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec';
 (function () {
-  var n = 0, MSG = 'No se pudo conectar con los datos de Google. Si sigue pasando, avísale a supervisión.';
+  var n = 0, VER = 'web 4', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
+  document.addEventListener('DOMContentLoaded', function () { var v = document.createElement('div'); v.textContent = VER; v.style.cssText = 'position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999'; document.body.appendChild(v); });
   function fin(d, ok, mal) { if (d && d.ok) { if (ok) ok(d.r); } else if (mal) mal(new Error((d && d.error) || 'No se pudo completar.')); }
   // Segundo camino: como <script> (no depende de los permisos entre sitios del navegador)
   function porScript(fn, args, ok, mal) {
