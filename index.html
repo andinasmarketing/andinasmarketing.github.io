@@ -14,13 +14,25 @@
 <link rel="apple-touch-icon" href="icono-180.png">
 <script>
 /* Puente con Google Sheets: la página pide y guarda los datos en el enlace /exec del proyecto (Web.gs). Imita google.script.run. */
-window.API_URL = 'https://script.google.com/macros/s/AKfycbwiy6Mg11mmRfMFnFi8wRQ9BjyU_waiG3ZPC0WOn4qWsNSWLXCQzVVHKcIk__AhiRF_/exec';
+window.API_URL = 'https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec';
 (function () {
+  var n = 0, MSG = 'No se pudo conectar con los datos de Google. Si sigue pasando, avísale a supervisión.';
+  function fin(d, ok, mal) { if (d && d.ok) { if (ok) ok(d.r); } else if (mal) mal(new Error((d && d.error) || 'No se pudo completar.')); }
+  // Segundo camino: como <script> (no depende de los permisos entre sitios del navegador)
+  function porScript(fn, args, ok, mal) {
+    var cb = '__prime' + (++n) + Date.now().toString(36), s = document.createElement('script'), t;
+    var limpiar = function () { clearTimeout(t); try { delete window[cb]; } catch (e) { window[cb] = undefined; } if (s.parentNode) s.parentNode.removeChild(s); };
+    window[cb] = function (d) { limpiar(); fin(d, ok, mal); };
+    s.onerror = function () { limpiar(); if (mal) mal(new Error(MSG)); };
+    t = setTimeout(function () { limpiar(); if (mal) mal(new Error(MSG)); }, 60000);
+    s.src = API_URL + '?api=1&fn=' + encodeURIComponent(fn) + '&args=' + encodeURIComponent(JSON.stringify(args)) + '&cb=' + cb;
+    document.head.appendChild(s);
+  }
   function llamar(fn, args, ok, mal) {
     fetch(API_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: fn, args: args }) })
       .then(function (r) { if (!r.ok) throw new Error('El servidor respondió ' + r.status); return r.json(); })
-      .then(function (d) { if (d && d.ok) { if (ok) ok(d.r); } else if (mal) mal(new Error((d && d.error) || 'No se pudo completar.')); })
-      .catch(function (e) { if (mal) mal(e); else console.error(fn, e); });
+      .then(function (d) { fin(d, ok, mal); })
+      .catch(function () { porScript(fn, args, ok, mal); });
   }
   function run(ok, mal) {
     return new Proxy({}, { get: function (_, k) {
