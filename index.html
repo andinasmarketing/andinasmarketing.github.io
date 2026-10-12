@@ -16,7 +16,7 @@
 /* Puente con Google Sheets: la página pide y guarda los datos en el enlace /exec del proyecto (Web.gs). Imita google.script.run. */
 window.API_URL = 'https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec';
 (function () {
-  var n = 0, VER = 'web 4', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
+  var n = 0, VER = 'web 5', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
   document.addEventListener('DOMContentLoaded', function () { var v = document.createElement('div'); v.textContent = VER; v.style.cssText = 'position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999'; document.body.appendChild(v); });
   function fin(d, ok, mal) { if (d && d.ok) { if (ok) ok(d.r); } else if (mal) mal(new Error((d && d.error) || 'No se pudo completar.')); }
   // Segundo camino: como <script> (no depende de los permisos entre sitios del navegador)
@@ -2394,7 +2394,9 @@ function calcularBono() {
  * TRABAJADO; 2) quien llegó primero a ese total; 3) mejor asistencia (menos ausencias y llegadas tarde); 4) más clientes ya confirmados
  * por el monitor. Si todo es igual, es un empate real (r.empate). Al que queda arriba se le guarda el porqué (r.desempate).
  */
+const MARCA_DESDE = '2026-11', MARCA_TXT = 'noviembre';   // desde este mes la marcación de llegada al turno cuenta en el desempate
 function desempateBono(L, mes) {
+  const GRACIA = String(mes) < MARCA_DESDE;
   const m = DATA.mesPorClave[mes]; if (!m) return L;
   let ult = 0; m.conDatos.forEach((x, i) => { if (x) ult = i + 1; });
   // Llegadas tarde y ausencias del mes según la asistencia (solo se puede para el mes en curso)
@@ -2402,25 +2404,36 @@ function desempateBono(L, mes) {
     if (hoy.slice(0, 7) === mes) asistenciaHtml(true, Number(hoy.slice(8))).forEach(z => { if (z.f.slice(0, 7) === mes && (z.est === 'tarde' || z.est === 'aus')) malas[nrm(z.o)] = (malas[nrm(z.o)] || 0) + 1; }); } catch (e) {}
   const asis = DATA.asis || {};
   L.forEach(r => {
-    const k = nrm(r.nombre); let trab = 0, llego = 0, acum = 0, aus = 0;
+    const k = nrm(r.nombre); let trab = 0, trabM = 0, llego = 0, acum = 0, aus = 0;
     for (let i = 0; i < ult; i++) {
       const c = (asis[k + '|' + mes + '-' + ('0' + (i + 1)).slice(-2)] || [])[0];
-      if (r.dia[i] > 0 || c === 'marco') trab++;
+      if (r.dia[i] > 0) trab++; if (r.dia[i] > 0 || c === 'marco') trabM++;
       if (c === 'aus') aus++;
       acum += r.dia[i]; if (!llego && r.total > 0 && acum >= r.total) llego = i + 1;
     }
-    r.prom = trab ? Math.round(r.total / trab * 10) / 10 : 0; r.llego = llego || 99; r.faltas = malas[k] !== undefined ? malas[k] : aus; r.conf = r.total - (r.vivo || 0);
+    r.prom = (GRACIA ? trab : trabM) ? Math.round(r.total / (GRACIA ? trab : trabM) * 10) / 10 : 0; r.promM = trabM ? Math.round(r.total / trabM * 10) / 10 : 0; r.llego = llego || 99; r.faltas = malas[k] !== undefined ? malas[k] : aus; r.conf = r.total - (r.vivo || 0);
   });
   const crit = [['prom', -1, (a, b) => 'tiene mejor promedio por día trabajado: ' + fmt1.format(a.prom) + ' clientes, contra ' + fmt1.format(b.prom)],
     ['llego', 1, (a, b) => 'llegó primero a ese total: el día ' + a.llego + ', y ' + titulo(b.nombre) + ' el día ' + b.llego],
     ['faltas', 1, (a, b) => 'tiene mejor asistencia: ' + a.faltas + (a.faltas === 1 ? ' falta o llegada tarde' : ' faltas o llegadas tarde') + ', contra ' + b.faltas],
     ['conf', -1, (a, b) => 'tiene más clientes confirmados por el monitor: ' + a.conf + ', contra ' + b.conf]];
-  L.sort((a, b) => { if (b.total !== a.total) return b.total - a.total; for (const c of crit) { if (a[c[0]] !== b[c[0]]) return c[1] * (a[c[0]] - b[c[0]]); } return a.nombre.localeCompare(b.nombre); });
+  // La marcación de llegada al turno (asistencia) cuenta para el desempate solo desde MARCA_DESDE; antes se muestra como nota.
+  const usar = GRACIA ? crit.filter(c => c[0] !== 'faltas') : crit;
+  const critM = crit.map(c => c[0] === 'prom' ? ['promM', -1, c[2]] : c);
+  const comp = (C, a, b) => { if (b.total !== a.total) return b.total - a.total; for (const c of C) { if (a[c[0]] !== b[c[0]]) return c[1] * (a[c[0]] - b[c[0]]); } return 0; };
+  L.sort((a, b) => comp(usar, a, b) || a.nombre.localeCompare(b.nombre));
   for (let i = 1; i < L.length; i++) {
     const a = L[i - 1], b = L[i]; if (a.total !== b.total || !a.total) continue;
-    const c = crit.filter(c => a[c[0]] !== b[c[0]])[0];
-    if (!c) { b.empate = true; continue; }
-    if (!a.desempate) a.desempate = 'Empata con ' + titulo(b.nombre) + ' en ' + fmt.format(a.total) + ' clientes. Va arriba porque ' + c[2](a, b) + '.';
+    const c = usar.filter(c => a[c[0]] !== b[c[0]])[0];
+    let nota = '';
+    const dM = critM.filter(c => a[c[0]] !== b[c[0]])[0];
+    if (GRACIA && dM && dM[0] === 'faltas') {          // solo si la marcación de llegada sí habría decidido
+      const g = a.faltas < b.faltas ? a : b, p = g === a ? b : a, pl = n => n + (n === 1 ? ' falta o llegada tarde' : ' faltas o llegadas tarde');
+      nota = ' Por la marcación de llegada al turno ganaría ' + titulo(g.nombre) + ' (tiene ' + pl(g.faltas) + ' y ' + titulo(p.nombre) + ' ' + pl(p.faltas) +
+        '), pero este mes no se tiene en cuenta: desde ' + MARCA_TXT + ' sí será requisito.';
+    }
+    if (!c) { b.empate = true; if (nota && !a.desempate) a.desempate = 'Empata con ' + titulo(b.nombre) + ' en ' + fmt.format(a.total) + ' clientes en todo lo que cuenta este mes.' + nota; continue; }
+    if (!a.desempate) a.desempate = 'Empata con ' + titulo(b.nombre) + ' en ' + fmt.format(a.total) + ' clientes. Va arriba porque ' + c[2](a, b) + '.' + nota;
   }
   return L;
 }
@@ -2451,7 +2464,7 @@ function renderBono() {
       '<div class="tot">' + fmt.format(r.total) + '<small>clientes' + (dcd > 1 ? ', ' + fmt1.format(r.total / dcd) + ' por día' : '') + '</small></div>' +
       '<div class="det">' + esc(Object.keys(r.grupos).join(', ')) + '. ' + esc(detPerf(r)) + '</div>' +
       (ventaja && empatados.length === 1 ? '<div class="det">' + fmt.format(ventaja) + ' más que el segundo lugar</div>' : '') +
-      (empatados.length === 1 && r.desempate ? '<div class="det">⚖ ' + esc(r.desempate) + '</div>' : '') +
+      (r.desempate ? '<div class="det">⚖ ' + esc(r.desempate) + '</div>' : '') +
       '</div>').join('');
     const resto = L.slice(empatados.length).map((r, k) =>
       '<li><span class="p">' + (empatados.length + k + 1) + '</span><span>' + esc(titulo(r.nombre)) +
@@ -5413,7 +5426,7 @@ function renderRanking() {
     const gan = emp.map(r => '<div class="gan"><div class="tag">' + (emp.length > 1 ? 'Empate en el primer lugar' : 'Primer lugar') + '</div>' +
       '<div class="nm">' + esc(titulo(r.nombre)) + '</div><div class="tot">' + fmt.format(r.total) + '<small>clientes' + (dcd > 1 ? ', ' + fmt1.format(r.total / dcd) + ' por día' : '') + '</small></div>' +
       '<div class="hor" style="margin:4px 0 0">' + esc(r.grupos.map(titulo).join(', ')) + '</div>' + chips([seg && emp.length === 1 && seg.total < top ? fmt.format(top - seg.total) + ' más que el 2.º' : ''], r.vivo) +
-      (emp.length === 1 && r.desempate ? '<div class="rk-des">⚖ ' + esc(r.desempate) + '</div>' : '') + '</div>').join('');
+      (r.desempate ? '<div class="rk-des">⚖ ' + esc(r.desempate) + '</div>' : '') + '</div>').join('');
     const resto = L.slice(emp.length).map((r, k) => {
       const pos = emp.length + k + 1;
       const falta = top - r.total;
