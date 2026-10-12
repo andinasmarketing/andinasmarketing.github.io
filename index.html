@@ -16,10 +16,10 @@
 /* Puente con Google Sheets: la página pide y guarda los datos en el enlace /exec del proyecto (Web.gs). Imita google.script.run. */
 window.API_URL = 'https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec';
 (function () {
-  var n = 0, VER = 'web 9', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
+  var n = 0, VER = 'web 10', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
   document.addEventListener('DOMContentLoaded', function () { var v = document.createElement('div'); v.textContent = VER; v.style.cssText = 'position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999'; document.body.appendChild(v); });
   // Aviso de versión nueva: cada 5 minutos (y al volver a la pestaña) se mira si en GitHub hay una página distinta a la abierta
-  var HUELLA = '7c2fbddb60bd';
+  var HUELLA = '75648e5e5815';
   function revisarVersion() {
     if (document.getElementById('avisoVersion')) return;
     fetch(location.pathname + '?huella=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -639,7 +639,7 @@ window.API_URL = 'https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
   .mn-hero { display: grid; grid-template-columns: minmax(220px, 1fr) 2fr; gap: 18px; align-items: center; background: linear-gradient(135deg, #0B0B0D 0%, #1B1810 100%); color: #fff; border: 1px solid #C9A227; border-radius: 16px; padding: 20px 22px; margin: 0 0 14px; }
   .mn-hero-t b { display: block; font-size: 26px; font-weight: 800; font-stretch: 118%; line-height: 1.1; color: #E6C65C; }
   .mn-hero-t span { display: block; margin-top: 6px; font-size: 14px; color: #D8D4C6; }
-  .mn-kp { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+  .mn-kp { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; }
   .mn-kp button { text-align: left; font: inherit; color: #fff; cursor: pointer; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14); border-top: 3px solid #8E929B; border-radius: 12px; padding: 12px 14px; }
   .mn-kp button:hover { background: rgba(255,255,255,.11); }
   .mn-kp button.r { border-top-color: #E0574C; } .mn-kp button.a { border-top-color: #E6C65C; } .mn-kp button.v { border-top-color: #3DBB85; }
@@ -5121,7 +5121,7 @@ function monRender() {
   // Verificación de IDs: los que faltan (días que aún no se digitan) y los ya revisados
   const VF = (d.ver || []).map((r, i) => ({ i, d: r[0], g: r[1], t: r[2], o: r[3], p: r[4], id: r[5], est: r[6] || '', vq: r[7] || '', vt: r[8] || '', dig: r[9] === 1 }));
   const vfPend = VF.filter(x => !x.est && !x.dig), vfHechos = VF.filter(x => x.est);
-  if (!MON.tab) MON.tab = vfPend.length ? 'ver' : 'pend';
+  if (!MON.tab || (MON.tab === 'reg' && !d.sup)) MON.tab = vfPend.length ? 'ver' : 'pend';
   const O = (d.ops || []).map(r => ({ g: r[0], o: r[1], n: r[2], e: r[3], s: r[4], ent: r[5], sale: r[6], est: r[7], diez: r[8], dig: r[9], col: r[10], listo: r[11], fecha: r[12], tarde: r[13] || 0, aj: r[14] || '', dg: r[15] || 0 }));
   // ¿Ya digitaron los clientes de ese operador? Perfiles digitados (dg) y perfiles que todavía faltan en esa columna (de "Pendientes")
   const nrm = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
@@ -5132,7 +5132,7 @@ function monRender() {
   const yaDig = x => x.listo === undefined ? (x.est === 'salio' || x.est === 'nomarco_fin') && reloj >= x.dig : !!x.listo;
   const hecho = x => yaDig(x) && x.dg > 0 && !x.falta;
   const listos = O.filter(x => yaDig(x) && !hecho(x));
-  const tabs = [['ver', 'Verificar IDs', vfPend.length], ['pend', 'Pendientes', P.length], ['tur', 'Turnos de operadores', O.filter(x => x.est === 'turno').length], ['rev', 'Para revisar', nRev], ['cero', 'Perfiles sin retraer', S.length], ['reg', 'Mis registros', d.historial.length]];
+  const tabs = [['ver', 'Verificar IDs', vfPend.length], ['pend', 'Pendientes', P.length], ['tur', 'Turnos de operadores', O.filter(x => x.est === 'turno').length], ['rev', 'Para revisar', nRev], ['cero', 'Perfiles sin retraer', S.length]].concat(d.sup ? [['reg', 'Registros de los monitores', d.historial.length]] : []);
   const cab = (k, tit, sub) => '<div class="mn-h"><span class="mn-hi">' + monIco(k) + '</span><div><h2>' + tit + '</h2><div class="sub">' + sub + '</div></div></div>';
   // Resumen
   let html = '<div class="mn-hero"><div class="mn-hero-t"><b>' + (P.length ? (P.length === 1 ? 'Tienes 1 pendiente' : 'Tienes ' + fmt.format(P.length) + ' pendientes') : 'Estás al día') + '</b>' +
@@ -5142,11 +5142,11 @@ function monRender() {
     '<button type="button" data-tab="pend" class="r"><b>' + fmt.format(dif.length) + '</b><span>No coinciden</span></button>' +
     '<button type="button" data-tab="pend" class="a"><b>' + fmt.format(fal.length) + '</b><span>Por diligenciar</span></button>' +
     '<button type="button" data-tab="rev"><b>' + fmt.format(nRev) + '</b><span>Para revisar</span></button>' +
-    '<button type="button" data-tab="reg" class="v"><b>' + fmt.format(d.hoy || 0) + '</b><span>Registros de hoy</span></button></div></div>';
+    (d.sup ? '<button type="button" data-tab="reg" class="v"><b>' + fmt.format(d.hoy || 0) + '</b><span>Registros de hoy</span></button>' : '') + '</div></div>';
   // Quién está registrando en este turno
   if (d.turno && d.turno.hayHoja) html += d.turno.nombre
-    ? '<div class="mn-turno ok"><b>Monitor de turno: ' + esc(d.turno.nombre) + '</b><span>Registrando desde las ' + esc(d.turno.desde) + '. Lo que se digite queda a su nombre hasta el cambio de turno.</span></div>'
-    : '<div class="mn-turno"><b>Nadie se ha identificado en este turno</b><span>Abre la hoja y elige tu nombre en la pestaña "MONITOR DE TURNO" (casilla roja). Mientras tanto, lo que se digite queda como "Sin identificar".</span></div>';
+    ? '<div class="mn-turno ok"><b>Monitor de turno: ' + esc(d.turno.nombre) + '</b><span>' + (d.sup ? 'Registrando desde las ' + esc(d.turno.desde) + '. Lo que se digite queda a su nombre hasta el cambio de turno.' : 'Turno iniciado a las ' + esc(d.turno.desde) + '.') + '</span></div>'
+    : '<div class="mn-turno"><b>Empieza tu turno</b><span>Abre la hoja y elige tu nombre en la pestaña "MONITOR DE TURNO" (casilla roja).</span></div>';
   // Quién ya salió (ya se pueden digitar sus clientes) y quién sale pronto, sobre todo los de 10 horas que pasan por dos turnos de monitores
   if (O.length) {
     // Nombre completo y grupo (hay operadores con el mismo primer nombre), uno por renglón
@@ -5158,7 +5158,7 @@ function monRender() {
         listos.map(x => chip(x, '<em>Columna del día ' + x.col + '</em>')).join('') + '</div></div>' : '') +
       (sinMarca.length ? '<div class="mn-ops-f mal"><div class="mn-ops-t">⚠ Ya les toca y NO han marcado «Estoy de turno» en su tabla</div><div class="mn-chips">' +
         sinMarca.map(x => chip(x, '<em>Entra a las <b>' + esc(x.e) + '</b></em><button type="button" class="mn-ok" data-ll="' + O.indexOf(x) + '">Llegó a tiempo</button>')).join('') + '</div>' +
-        '<div class="sub" style="margin-top:6px">Si el operador sí está trabajando y se le olvidó marcar, toca «Llegó a tiempo»: queda confirmado por ti y se le marca la casilla con la hora de su horario.</div></div>' : '') +
+        '<div class="sub" style="margin-top:6px">Si el operador sí está trabajando y se le olvidó marcar, toca «Llegó a tiempo»: queda confirmado y se le marca la casilla con la hora de su horario.</div></div>' : '') +
       (prox.length ? '<div class="mn-ops-f"><div class="mn-ops-t">⏳ Siguen trabajando: NO digites sus clientes todavía</div><div class="mn-chips">' +
         prox.slice(0, 8).map(x => chip(x, '<em>Sale a las <b>' + esc(x.sale) + '</b>' + (x.diez ? ' · turno de 10 h' : '') + '</em>')).join('') + '</div>' +
         '<button type="button" class="mn-ver" data-tab="tur">' + (prox.length > 8 ? 'Ver los ' + prox.length + ' que siguen de turno' : 'Ver la lista completa') + '</button></div>' : '') +
@@ -5170,7 +5170,7 @@ function monRender() {
     html += cab('ver', 'Verificar IDs', 'Busca cada ID en la plataforma. Si el cliente sí quedó retraído toca ✅; si no, toca ❌ y al operador le sale el aviso para corregirlo. Lo que verificas ya le cuenta al operador; después solo transcribes el número en tu archivo cuando termine su turno.');
     const comoSup = !!(window.claveSup && window.claveSup() && MON.clave === window.claveSup());
     if (comoSup) html += '<div class="mn-turno ok" style="margin-bottom:12px"><b>Estás verificando como Supervisión</b><span>Lo que marques aquí queda a nombre de "Supervisión", no del monitor de turno.</span></div>';
-    else if (d.turno && d.turno.hayHoja && !d.turno.nombre) html += '<div class="mn-turno" style="margin-bottom:12px"><b>Primero identifícate</b><span>Elige tu nombre en la pestaña "MONITOR DE TURNO" de tu archivo: cada verificación queda a tu nombre.</span></div>';
+    else if (d.turno && d.turno.hayHoja && !d.turno.nombre) html += '<div class="mn-turno" style="margin-bottom:12px"><b>Empieza tu turno</b><span>Para verificar, primero elige tu nombre en la pestaña "MONITOR DE TURNO" de tu archivo.</span></div>';
     if (!MON.vf) MON.vf = 'pend';
     html += '<div class="vf-bar"><button type="button" data-vf="pend" aria-pressed="' + (MON.vf === 'pend') + '">Por verificar · ' + vfPend.length + '</button><button type="button" data-vf="hechos" aria-pressed="' + (MON.vf === 'hechos') + '">Ya revisados · ' + vfHechos.length + '</button></div>';
     const lista = MON.vf === 'pend' ? vfPend : vfHechos;
@@ -5239,7 +5239,7 @@ function monRender() {
             (r[5] === 2 ? '<td style="color:var(--faint)">Todos</td><td>' + queTxt(r[7], r[6]).h + '</td>'
               : '<td><b>' + esc(titulo(r[4])) + '</b></td><td><span class="rv-pill accion">Sin clientes</span></td>') + '</tr>'; }).join('') + '</tbody></table></div>' +
         (S.length > 300 ? '<p class="sub" style="margin:8px 0 0">Se muestran los 300 más recientes.</p>' : ''); }
-  } else {
+  } else if (MON.tab === 'reg' && d.sup) {
     // Registros viejos guardados con la celda completa ("JOSUE FEBRES / VACANTE @5"): se muestra quién estaba ese día
     const opDelDia = (t, dia) => { const p = String(t || '').split('/').map(x => x.trim()); if (p.length < 2) return t; let o = p[0];
       p.slice(1).forEach(x => { const m = x.match(/^(.+?)\s*@\s*(\d{1,2})$/); if (m && Number(dia) >= Number(m[2])) o = m[1]; }); return o; };
@@ -5263,7 +5263,7 @@ function monRender() {
   c.querySelectorAll('[data-cp]').forEach(b => b.onclick = () => { const t = b.dataset.cp; try { navigator.clipboard.writeText(t); } catch (e) {} const o = b.firstChild.textContent; b.firstChild.textContent = 'Copiado'; setTimeout(() => { b.firstChild.textContent = o; }, 900); });
   c.querySelectorAll('[data-vs]').forEach(b => b.onclick = () => monVerificar([Number(b.dataset.vs)], 'si', b));
   c.querySelectorAll('[data-vt]').forEach(b => b.onclick = () => { const ids = b.dataset.vt.split(',').map(Number);
-    if (confirm('¿Revisaste en la plataforma los ' + ids.length + ' IDs y todos están retraídos? Queda a tu nombre.')) monVerificar(ids, 'si', b); });
+    if (confirm('¿Revisaste en la plataforma los ' + ids.length + ' IDs y todos están retraídos?')) monVerificar(ids, 'si', b); });
   c.querySelectorAll('[data-vn]').forEach(b => b.onclick = () => { const x = (MON.datos.ver || [])[Number(b.dataset.vn)];
     if (x && confirm('¿Confirmas que el cliente ' + x[5] + ' NO está retraído? Deja de contarle a ' + titulo(x[3]) + ' y le sale el aviso para corregirlo.')) monVerificar([Number(b.dataset.vn)], 'no', b); });
   c.querySelectorAll('[data-vd]').forEach(b => b.onclick = () => monVerificar([Number(b.dataset.vd)], '', b));
@@ -5271,7 +5271,7 @@ function monRender() {
   c.querySelectorAll('[data-ll]').forEach(b => b.onclick = () => {
     const x = (MON.datos.ops || [])[Number(b.dataset.ll)]; if (!x) return;
     const nom = String(x[1]).toLowerCase().replace(/(^|\s)\S/g, m => m.toUpperCase());
-    if (!confirm('¿Confirmas que ' + nom + ' (' + String(x[0]).toLowerCase().replace(/(^|\s)\S/g, m => m.toUpperCase()) + ') llegó a su hora (' + x[3] + ')? Queda a tu nombre.')) return;
+    if (!confirm('¿Confirmas que ' + nom + ' (' + String(x[0]).toLowerCase().replace(/(^|\s)\S/g, m => m.toUpperCase()) + ') llegó a su hora (' + x[3] + ')?')) return;
     const fin = d => { if (!d.ok) { b.disabled = false; b.textContent = 'Llegó a tiempo'; alert(d.error || 'No se pudo guardar.'); return; } x[14] = 'A tiempo (confirmado)'; if (x[7] === 'nomarco' && d.marcada) x[7] = 'turno'; monRender(); };
     b.disabled = true; b.textContent = 'Guardando…';
     if (!esApps) return setTimeout(() => fin({ ok: true, marcada: true }), 300);
@@ -5426,7 +5426,7 @@ function renderAlertasPerfil() {
   const no = filtrados().filter(x => x.v === 'no');
   const avisoNo = no.length ? '<div class="alerta-p"><h3>❌ El monitor dice que ' + (no.length === 1 ? 'este cliente NO está retraído' : 'estos ' + no.length + ' clientes NO están retraídos') + '</h3>' +
     '<p>No te cuentan. Revisa cada uno: si te equivocaste de ID, corrígelo o bórralo de tu tabla. Si sí lo retrajiste, avísale al monitor para que lo revise otra vez.</p><ul>' +
-    no.slice().sort((a, b) => b.d - a.d).map(x => '<li><b>Día ' + x.d + '</b>, ' + esc(titulo(x.o)) + ', ' + esc(titulo(x.p)) + ': <b>' + esc(x.id) + '</b> <span>Revisó ' + esc(titulo(x.vq) || 'el monitor') + (x.vt ? ' · ' + esc(x.vt) : '') + '</span></li>').join('') + '</ul></div>' : '';
+    no.slice().sort((a, b) => b.d - a.d).map(x => '<li><b>Día ' + x.d + '</b>, ' + esc(titulo(x.o)) + ', ' + esc(titulo(x.p)) + ': <b>' + esc(x.id) + '</b> <span>Revisado por el monitor' + '</span></li>').join('') + '</ul></div>' : '';
   if (!xs.length) { caja.innerHTML = avisoNo; return; }
   caja.innerHTML = avisoNo + '<div class="alerta-p"><h3>⚠ ID de perfil anotado como cliente: ' + xs.length + ' sin corregir</h3>' +
     '<p>Esos números son el ID del PERFIL, no del cliente, así que no cuentan. Búscalos en tu tabla (la celda está en rojo) y cámbialos por el ID del cliente. Al corregirlos, este aviso se quita solo.</p><ul>' +
@@ -5472,7 +5472,7 @@ function renderLista() {
         (arr[0].c ? ' · Contingencia (' + titulo(arr[0].g) + ')' : (!SEL.grupo && arr[0].g ? ' · ' + titulo(arr[0].g) : ''));
       return (encab.trim() ? '<div class="grupo-perfil"><span class="dot" style="background:' + (JC[ji] || '#8A93A6') + '"></span>' + esc(encab.replace(/^ · /, '')) + '</div>' : '') +
         '<div class="ids">' + arr.map(x => '<button type="button" class="id' + (x.v === 'si' ? ' ver' : x.v === 'no' ? ' rech' : '') + (q && x.id.indexOf(q) >= 0 ? ' hit' : '') + '" data-id="' + esc(x.id) + '" title="' +
-          (x.v === 'si' ? 'Verificado por ' + esc(titulo(x.vq)) + ' (' + esc(x.vt) + '). ' : x.v === 'no' ? 'El monitor dice que NO está retraído. ' : '') + 'Toca para copiar">' + (x.v === 'si' ? '<i>✓</i>' : x.v === 'no' ? '<i>✕</i>' : '') + esc(x.id) + '</button>').join('') + '</div>';
+          (x.v === 'si' ? 'Verificado por el monitor. ' : x.v === 'no' ? 'El monitor dice que NO está retraído. ' : '') + 'Toca para copiar">' + (x.v === 'si' ? '<i>✓</i>' : x.v === 'no' ? '<i>✕</i>' : '') + esc(x.id) + '</button>').join('') + '</div>';
     }).join('');
     const nd = items.filter(x => x.v !== 'no').length, nv = items.filter(x => x.v === 'si').length;
     return '<div class="dia"><div class="dia-head"><h3>Día ' + d + '<small>' + DSEM[fecha.getDay()] + ', ' + nd + (nd === 1 ? ' cliente' : ' clientes') + (nv ? ' · ✓ ' + nv + (nv === 1 ? ' verificado' : ' verificados') + ' por el monitor' : '') + '</small></h3>' +
