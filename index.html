@@ -16,10 +16,10 @@
 /* Puente con Google Sheets: la página pide y guarda los datos en el enlace /exec del proyecto (Web.gs). Imita google.script.run. */
 window.API_URL = 'https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec';
 (function () {
-  var n = 0, VER = 'web 12', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
+  var n = 0, VER = 'web 14', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
   document.addEventListener('DOMContentLoaded', function () { var v = document.createElement('div'); v.textContent = VER; v.style.cssText = 'position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999'; document.body.appendChild(v); });
   // Aviso de versión nueva: cada 5 minutos (y al volver a la pestaña) se mira si en GitHub hay una página distinta a la abierta
-  var HUELLA = 'b10370c2d60f';
+  var HUELLA = 'ac2a91858ef0';
   function revisarVersion() {
     if (document.getElementById('avisoVersion')) return;
     fetch(location.pathname + '?huella=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -5192,28 +5192,26 @@ function monRender() {
     html += '<div class="vf-bar"><button type="button" data-vf="pend" aria-pressed="' + (MON.vf === 'pend') + '">Por verificar · ' + vfPend.length + '</button><button type="button" data-vf="hechos" aria-pressed="' + (MON.vf === 'hechos') + '">Ya revisados · ' + vfHechos.length + '</button></div>';
     // Filtros sencillos: jornada y grupo (el monitor revisa lo de su turno)
     const base = MON.vf === 'pend' ? vfPend : vfHechos;
-    const jor = MON.vfJ || '', gru = MON.vfG || '';
+    const gru = MON.vfG || '';
     const grupos = [...new Set(base.map(x => x.g))].sort();
     if (gru && grupos.indexOf(gru) < 0) MON.vfG = '';
-    const lista = base.filter(x => (!jor || x.t === jor) && (!MON.vfG || x.g === MON.vfG));
-    if (MON.vf === 'pend') html += '<ol class="vf-pasos"><li><b>Elige tu jornada</b> abajo.</li><li><b>Abre el perfil</b> en la plataforma (sale en grande en cada recuadro).</li><li><b>Busca cada ID</b> y toca <span class="vf-mini si">✅ Sí</span> si está retraído o <span class="vf-mini no">❌ No</span> si no lo está.</li></ol>';
-    html += '<div class="vf-fil"><div class="vf-bar">' + [['', 'Todas las jornadas']].concat(J.map((t, k) => [t, JL[k]])).map(o => { const n = base.filter(x => !o[0] || x.t === o[0]).length;
-        return '<button type="button" data-vj="' + o[0] + '" aria-pressed="' + (jor === o[0]) + '"' + (!n && o[0] ? ' disabled' : '') + '>' + o[1] + ' · ' + n + '</button>'; }).join('') + '</div>' +
-      (grupos.length > 1 ? '<select class="vf-sel" id="vfGrupo" aria-label="Grupo"><option value="">Todos los grupos</option>' + grupos.map(g => '<option value="' + esc(g) + '"' + (g === MON.vfG ? ' selected' : '') + '>' + esc(titulo(g)) + '</option>').join('') + '</select>' : '') + '</div>';
+    const lista = base.filter(x => !MON.vfG || x.g === MON.vfG);
+    if (MON.vf === 'pend') html += '<ol class="vf-pasos"><li><b>Abre el perfil</b> en la plataforma (sale en grande en cada recuadro).</li><li><b>Busca cada ID</b> y toca <span class="vf-mini si">✅ Sí</span> si está retraído o <span class="vf-mini no">❌ No</span> si no lo está.</li></ol>';
+    if (grupos.length > 1) html += '<div class="vf-fil"><select class="vf-sel" id="vfGrupo" aria-label="Grupo"><option value="">Todos los grupos</option>' + grupos.map(g => '<option value="' + esc(g) + '"' + (g === MON.vfG ? ' selected' : '') + '>' + esc(titulo(g)) + '</option>').join('') + '</select></div>';
     if (!lista.length) html += base.length ? '<div class="vacio">No hay IDs con ese filtro.</div>' : MON.vf === 'pend' ? '<div class="mon-ok"><b>Nada por verificar</b>Todos los IDs anotados ya están revisados. Cuando un operador anote uno nuevo, aparece aquí.</div>' : '<div class="vacio">Todavía no hay IDs revisados en los últimos días.</div>';
     else {
-      // Día (lo más reciente primero) → jornada (mañana, tarde, noche) → un recuadro por perfil
-      const porDJ = {}; lista.forEach(x => { const k = x.d + '|' + x.t; (porDJ[k] = porDJ[k] || []).push(x); });
-      html += Object.keys(porDJ).sort((a, b) => Number(b.split('|')[0]) - Number(a.split('|')[0]) || J.indexOf(a.split('|')[1]) - J.indexOf(b.split('|')[1])).map(k => {
-        const xsDJ = porDJ[k], dia = xsDJ[0].d, t = xsDJ[0].t;
-        const porPerf = {}; xsDJ.forEach(x => { const kk = x.g + '|' + x.p + '|' + x.o; (porPerf[kk] = porPerf[kk] || []).push(x); });
-        return '<div class="mn-dia"><span class="mn-dn">' + dia + '</span><b>Día ' + dia + ' · ' + (JL[J.indexOf(t)] || esc(t)) + '</b><i>' + xsDJ.length + (xsDJ.length === 1 ? ' ID' : ' IDs') + '</i></div>' +
+      // Día (lo más reciente primero) → un recuadro por perfil (ordenados por grupo y perfil)
+      const porD = {}; lista.forEach(x => { (porD[x.d] = porD[x.d] || []).push(x); });
+      html += Object.keys(porD).map(Number).sort((a, b) => b - a).map(dia => {
+        const xsD = porD[dia];
+        const porPerf = {}; xsD.forEach(x => { const kk = x.g + '|' + x.p + '|' + x.o; (porPerf[kk] = porPerf[kk] || []).push(x); });
+        return '<div class="mn-dia"><span class="mn-dn">' + dia + '</span><b>Día ' + dia + '</b><i>' + xsD.length + (xsD.length === 1 ? ' ID' : ' IDs') + '</i></div>' +
           Object.keys(porPerf).sort().map(kk => { const xs = porPerf[kk].sort((a, b) => String(a.id).localeCompare(String(b.id))), x0 = xs[0];
             return '<div class="vf-op"><div class="vf-oh"><span class="vf-perf"><small>Perfil</small><b>' + esc(titulo(x0.p)) + '</b></span><span class="vf-de">' + esc(titulo(x0.g)) + '<br>Operador: <b>' + esc(titulo(x0.o)) + '</b></span>' +
               '<span class="vf-cnt">' + xs.length + (xs.length === 1 ? ' ID' : ' IDs') + '</span>' +
               (MON.vf === 'pend' && xs.length > 1 && comoSup ? '<button type="button" class="vf-si vf-todos" data-vt="' + xs.map(x => x.i).join(',') + '">✅ Todos están retraídos</button>' : '') + '</div><ul class="vf-l">' +
               xs.map(x => '<li><button type="button" class="vf-id" data-cp="' + esc(x.id) + '" title="Toca para copiar el ID">' + esc(x.id) + '</button>' +
-                (x.est ? '<span class="vf-est ' + x.est + '">' + (x.est === 'si' ? '✓ Retraído' : '✕ No retraído') + (x.vq ? ' · ' + esc(x.vq) : '') + (x.vt ? ' · ' + esc(x.vt.slice(6)) : '') + '</span>' + (x.dig ? '' : '<button type="button" class="vf-des" data-vd="' + x.i + '">Deshacer</button>')
+                (x.est ? '<span class="vf-est ' + x.est + '">' + (x.est === 'si' ? '✓ Retraído' : '✕ No retraído') + '</span>' + (x.dig ? '' : '<button type="button" class="vf-des" data-vd="' + x.i + '">Deshacer</button>')
                   : '<button type="button" class="vf-si" data-vs="' + x.i + '">✅ Sí está retraído</button><button type="button" class="vf-no" data-vn="' + x.i + '">❌ No está</button>') + '</li>').join('') + '</ul></div>'; }).join('');
       }).join('');
     }
@@ -5289,7 +5287,6 @@ function monRender() {
   if (Math.abs(window.scrollY - yAntes) > 2) window.scrollTo(0, yAntes);
   c.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { MON.tab = b.dataset.tab; monRender(); });
   c.querySelectorAll('[data-vf]').forEach(b => b.onclick = () => { MON.vf = b.dataset.vf; monRender(); });
-  c.querySelectorAll('[data-vj]').forEach(b => b.onclick = () => { MON.vfJ = b.dataset.vj; monRender(); });
   const vg = document.getElementById('vfGrupo'); if (vg) vg.onchange = () => { MON.vfG = vg.value; monRender(); };
   c.querySelectorAll('[data-cp]').forEach(b => b.onclick = () => { const t = b.dataset.cp; try { navigator.clipboard.writeText(t); } catch (e) {} const o = b.firstChild.textContent; b.firstChild.textContent = 'Copiado'; setTimeout(() => { b.firstChild.textContent = o; }, 900); });
   c.querySelectorAll('[data-vs]').forEach(b => b.onclick = () => monVerificar([Number(b.dataset.vs)], 'si', b));
