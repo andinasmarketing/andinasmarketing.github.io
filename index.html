@@ -16,10 +16,10 @@
 /* Puente con Google Sheets: la página pide y guarda los datos en el enlace /exec del proyecto (Web.gs). Imita google.script.run. */
 window.API_URL = 'https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec';
 (function () {
-  var n = 0, VER = 'web 14', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
+  var n = 0, VER = 'web 15', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
   document.addEventListener('DOMContentLoaded', function () { var v = document.createElement('div'); v.textContent = VER; v.style.cssText = 'position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999'; document.body.appendChild(v); });
   // Aviso de versión nueva: cada 5 minutos (y al volver a la pestaña) se mira si en GitHub hay una página distinta a la abierta
-  var HUELLA = 'ac2a91858ef0';
+  var HUELLA = '77b60d7c878c';
   function revisarVersion() {
     if (document.getElementById('avisoVersion')) return;
     fetch(location.pathname + '?huella=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -5211,7 +5211,7 @@ function monRender() {
               '<span class="vf-cnt">' + xs.length + (xs.length === 1 ? ' ID' : ' IDs') + '</span>' +
               (MON.vf === 'pend' && xs.length > 1 && comoSup ? '<button type="button" class="vf-si vf-todos" data-vt="' + xs.map(x => x.i).join(',') + '">✅ Todos están retraídos</button>' : '') + '</div><ul class="vf-l">' +
               xs.map(x => '<li><button type="button" class="vf-id" data-cp="' + esc(x.id) + '" title="Toca para copiar el ID">' + esc(x.id) + '</button>' +
-                (x.est ? '<span class="vf-est ' + x.est + '">' + (x.est === 'si' ? '✓ Retraído' : '✕ No retraído') + '</span>' + (x.dig ? '' : '<button type="button" class="vf-des" data-vd="' + x.i + '">Deshacer</button>')
+                (x.est ? '<span class="vf-est ' + x.est + '">' + (x.est === 'si' ? '✓ Retraído' : '✕ No retraído') + '</span>' + (x.dig || !comoSup ? '' : '<button type="button" class="vf-des" data-vd="' + x.i + '">Deshacer</button>')
                   : '<button type="button" class="vf-si" data-vs="' + x.i + '">✅ Sí está retraído</button><button type="button" class="vf-no" data-vn="' + x.i + '">❌ No está</button>') + '</li>').join('') + '</ul></div>'; }).join('');
       }).join('');
     }
