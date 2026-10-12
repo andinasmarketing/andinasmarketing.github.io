@@ -16,10 +16,10 @@
 /* Puente con Google Sheets: la página pide y guarda los datos en el enlace /exec del proyecto (Web.gs). Imita google.script.run. */
 window.API_URL = 'https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec';
 (function () {
-  var n = 0, VER = 'web 6', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
+  var n = 0, VER = 'web 7', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
   document.addEventListener('DOMContentLoaded', function () { var v = document.createElement('div'); v.textContent = VER; v.style.cssText = 'position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999'; document.body.appendChild(v); });
   // Aviso de versión nueva: cada 5 minutos (y al volver a la pestaña) se mira si en GitHub hay una página distinta a la abierta
-  var HUELLA = '81dc98bc5c96';
+  var HUELLA = '353176c00421';
   function revisarVersion() {
     if (document.getElementById('avisoVersion')) return;
     fetch(location.pathname + '?huella=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -3172,17 +3172,17 @@ function guardarAusenciaUI(g, o, fecha, boton, msg, just) {
     .withSuccessHandler(t => { let d; try { d = JSON.parse(t); } catch (e) { d = {}; } listo(d); })
     .registrarAusencia(clave, g, o, fecha, !!just);
 }
-function guardarNovedadUI(g, o, tipo, desde, hasta, boton) {
+function guardarNovedadUI(g, o, tipo, desde, hasta, boton, editar) {
   if (!esApps) {
     const hoy = DATA.reloj && DATA.reloj.ahora ? DATA.reloj.ahora.slice(0, 10) : new Date().toISOString().slice(0, 10);
     DATA.novedades = (DATA.novedades || []).map(r => { if (nrm(r[1]) !== nrm(o) || (r[4] && r[4] < hoy)) return r;
-      const corte = tipo === 'Activo' ? (r[3] < hoy ? ymdMas(hoy, -1) : '') : (r[2] !== tipo && r[3] < desde ? ymdMas(desde, -1) : '');
+      const corte = editar ? '' : tipo === 'Activo' ? (r[3] < hoy ? ymdMas(hoy, -1) : '') : (r[2] !== tipo && r[3] < desde ? ymdMas(desde, -1) : '');
       return corte ? [r[0], r[1], r[2], r[3], corte] : null; }).filter(r => r);
     if (tipo !== 'Activo') DATA.novedades.push([g, o, tipo, desde, hasta || '']); render(); return; }
   if (boton) boton.disabled = true;
   google.script.run.withFailureHandler(e => { if (boton) boton.disabled = false; alert('No se pudo guardar. ' + (e && e.message ? e.message : '')); })
     .withSuccessHandler(t => { let d; try { d = JSON.parse(t); } catch (e) { d = {}; } if (!d.ok) { if (boton) boton.disabled = false; alert(d.error || 'No se pudo guardar.'); return; } cargar(true); })
-    .guardarNovedad(clave, g, o, tipo, desde, hasta || '');
+    .guardarNovedad(clave, g, o, tipo, desde, hasta || '', !!editar);
 }
 /** Horario que el encargado le puso a un operador en una fecha (archivo de horarios por semana). null si no hay nada registrado. */
 function horarioDia(o, fecha) {
@@ -3691,7 +3691,7 @@ function renderNovedades() {
   else h += '<div class="table-scroll"><table class="sr-t"><thead><tr><th>Operador</th><th>Grupo</th><th>Novedad</th><th>Desde</th><th>Hasta</th><th>Estado</th><th></th></tr></thead><tbody>' +
     ver.map((x, i) => '<tr><td class="name"><b>' + esc(titulo(x.o)) + '</b></td><td>' + esc(titulo(x.g)) + '</td><td>' + esc(x.t) + '</td><td>' + fe(x.d) + '</td><td>' + (x.h ? fe(x.h) : (x.t === 'Retirado' || x.t === 'Retiro definitivo' ? '—' : 'Sin fecha')) + '</td>' +
       '<td><span class="rv-pill ' + (x.est === 'Vigente' ? (x.t.indexOf('Retir') === 0 ? 'accion' : 'aviso') : x.est === 'Programada' ? 'info' : '') + '">' + x.est + '</span></td>' +
-      '<td>' + (x.est === 'Terminada' ? '' : '<button type="button" class="sr-x" data-qc="' + i + '">Cambiar fechas</button> <button type="button" class="sr-x" data-q="' + i + '">' + (x.t === 'Retiro definitivo' ? 'Deshacer' : x.est === 'Programada' ? 'Quitar' : 'Ya volvió') + '</button>' +
+      '<td>' + (x.est === 'Terminada' ? '' : '<button type="button" class="sr-x" data-qc="' + i + '">' + (x.t === 'Retirado' || x.t === 'Retiro definitivo' ? 'Cambiar fecha' : 'Editar') + '</button> <button type="button" class="sr-x" data-q="' + i + '">' + (x.t === 'Retiro definitivo' ? 'Deshacer' : x.est === 'Programada' ? 'Quitar' : 'Ya volvió') + '</button>' +
         (x.t === 'Retirado' ? ' <button type="button" class="sr-x" data-qd="' + i + '">Es definitivo</button>' : '')) + '</td></tr>').join('') + '</tbody></table></div>';
   h += '</section>';
   // Ausencias (faltó un día): se pueden justificar (no pierde su descanso) o quitar si se anotó por error
@@ -3725,7 +3725,7 @@ function renderNovedades() {
   // Cambiar fechas (alargar o acortar unas vacaciones, un permiso o una incapacidad): se reemplaza la novedad con las fechas nuevas
   caja.querySelectorAll('[data-qc]').forEach(q => { const x = ver[Number(q.dataset.qc)]; q.onclick = () => {
     const td = q.parentNode, ret = x.t === 'Retirado' || x.t === 'Retiro definitivo';
-    td.innerHTML = '<div class="nov-ed" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><label>Desde <input type="date" class="e-d" value="' + x.d + '"></label>' + (ret ? '' : '<label>Hasta <input type="date" class="e-h" value="' + (x.h || '') + '" min="' + x.d + '"></label>') +
+    td.innerHTML = '<div class="nov-ed" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">' + (ret ? '' : '<label>Novedad <select class="e-t">' + ['Vacaciones', 'Permiso o incapacidad'].map(t => '<option' + (t === x.t ? ' selected' : '') + '>' + t + '</option>').join('') + '</select></label>') + '<label>Desde <input type="date" class="e-d" value="' + x.d + '"></label>' + (ret ? '' : '<label>Hasta <input type="date" class="e-h" value="' + (x.h || '') + '" min="' + x.d + '"></label>') +
       '<button type="button" class="btn">Guardar</button><button type="button" class="sr-x e-c">Cancelar</button><small class="rac-err" role="alert"></small></div>';
     const d = td.querySelector('.e-d'), h = td.querySelector('.e-h'), err = td.querySelector('.rac-err');
     d.onchange = () => { if (h) h.min = d.value; };
@@ -3735,7 +3735,7 @@ function renderNovedades() {
       if (!d.value) { err.textContent = 'Falta la fecha de inicio.'; return; }
       if (h && !h.value) { err.textContent = 'Falta la fecha de fin.'; return; }
       if (h && h.value < d.value) { err.textContent = 'La fecha de fin no puede ser anterior a la de inicio.'; return; }
-      NOVUI.editando = false; guardarNovedadUI(x.g, x.o, x.t, d.value, h ? h.value : '', e.target);
+      NOVUI.editando = false; const tt = td.querySelector('.e-t'); guardarNovedadUI(x.g, x.o, tt ? tt.value : x.t, d.value, h ? h.value : '', e.target, true);
     };
   }; });
 }
