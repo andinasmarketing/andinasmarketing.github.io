@@ -16,10 +16,10 @@
 /* Puente con Google Sheets: la página pide y guarda los datos en el enlace /exec del proyecto (Web.gs). Imita google.script.run. */
 window.API_URL = 'https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec';
 (function () {
-  var n = 0, VER = 'web 23', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
+  var n = 0, VER = 'web 24', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
   document.addEventListener('DOMContentLoaded', function () { var v = document.createElement('div'); v.textContent = VER; v.style.cssText = 'position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999'; document.body.appendChild(v); });
   // Aviso de versión nueva: cada 5 minutos (y al volver a la pestaña) se mira si en GitHub hay una página distinta a la abierta
-  var HUELLA = '10f2c0e8a356';
+  var HUELLA = 'bafdf9895694';
   function revisarVersion() {
     if (document.getElementById('avisoVersion')) return;
     fetch(location.pathname + '?huella=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -74,42 +74,36 @@ window.API_URL = 'https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
     .vt-cel td { border: 0 !important; padding: 2px 0 !important; text-align: left !important; }
     .vt-cel td[data-l]::before { content: attr(data-l) ": "; color: var(--muted); font-size: 12px; font-weight: 700; }
   }
-  /* Personal de la semana (horarios): negro y dorado de la marca, cada turno con el color del archivo de horarios */
-  .pe-sec { border-top: 3px solid var(--oro); }
-  .pe-head { display: flex; gap: 12px; align-items: center; margin-bottom: 6px; }
-  .pe-head h2 { margin: 0; }
-  .pe-hi { width: 44px; height: 44px; border-radius: 12px; background: #0B0B0D; border: 1px solid var(--oro); display: grid; place-items: center; flex: none; }
-  .pe-hi svg, .pe-bi svg { width: 22px; height: 22px; fill: none; stroke: var(--oro-claro, #E6C766); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-  .pe-blo { margin-top: 18px; }
-  .pe-bt { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px; background: linear-gradient(90deg, #0B0B0D, #1C1A12); color: #F6F1E4; margin-bottom: 10px; }
-  .pe-bt b { font-size: 15px; letter-spacing: .04em; text-transform: uppercase; color: var(--oro-claro, #E6C766); }
-  .pe-bt em { margin-left: auto; font-style: normal; font-size: 12px; font-weight: 800; background: var(--oro); color: #0B0B0D; border-radius: 999px; padding: 2px 10px; }
-  .pe-bi { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: rgba(201,162,39,.15); }
-  .pe-bi svg { width: 18px; height: 18px; }
-  .pe-av { width: 40px; height: 40px; border-radius: 50%; flex: none; display: grid; place-items: center; font-weight: 800; font-size: 14px; letter-spacing: .02em;
-    background: radial-gradient(circle at 30% 25%, #F3DC8C, #C9A227 60%, #8E6C12); color: #0B0B0D; box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px rgba(201,162,39,.55); }
-  .pe-enc { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
-  .pe-card { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); box-shadow: 0 1px 0 rgba(0,0,0,.03); }
-  .pe-card b, .pe-quien b { display: block; font-size: 15px; margin-bottom: 4px; }
-  .pe-jor { display: inline-block; font-size: 12px; font-weight: 800; border-radius: 999px; padding: 3px 10px; }
-  .pe-lista { display: grid; gap: 10px; }
-  .pe-fila { display: grid; grid-template-columns: minmax(200px, 250px) 1fr; gap: 14px; align-items: center; padding: 12px 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); }
-  .pe-quien { display: flex; gap: 12px; align-items: center; min-width: 0; }
-  .pe-dias { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
-  .pe-chip { border-radius: 10px; padding: 6px 4px 7px; text-align: center; border: 1px solid transparent; min-height: 58px; display: flex; flex-direction: column; justify-content: center; line-height: 1.15; }
-  .pe-chip i { font-style: normal; font-size: 10.5px; font-weight: 700; opacity: .75; text-transform: uppercase; letter-spacing: .03em; }
-  .pe-chip b { font-size: 14px; font-weight: 800; margin-top: 2px; }
-  .pe-chip small { font-size: 11px; font-weight: 600; opacity: .85; }
-  .pe-chip.libre b { font-size: 12px; }
-  .pe-ct { display: none; }
-  .pe-chip.vacio { background: var(--paper); color: var(--faint); border: 1px dashed var(--line); }
-  .pe-chip.hoy { box-shadow: 0 0 0 2px var(--oro), 0 4px 12px rgba(201,162,39,.25); }
+  /* Encargados, supervisores y monitores del día: mismo estilo de la imagen "Turnos por día" (negro, dorado y blanco) */
+  .eq-sec { background: #F4F3EE; color: #15161A; }
+  .eq-tit { font: 700 17px Arial, Helvetica, sans-serif; color: #8A6D1A; margin: 2px 4px 14px; }
+  .eq-tit span { color: #8A6D1A; font-weight: 500; }
+  .eq-tab { background: #FFFFFF; border: 1px solid #E6E0CF; border-radius: 14px; overflow: hidden; box-shadow: 0 3px 10px rgba(0,0,0,.08); font-family: Arial, Helvetica, sans-serif; }
+  .eq-fila { display: grid; grid-template-columns: minmax(150px, 250px) repeat(3, minmax(0, 1fr)); border-bottom: 1px solid #ECE6D6; background: #FFFFFF; }
+  .eq-fila.alt { background: #FBF8EF; } .eq-fila:last-child { border-bottom: 0; }
+  .eq-cab { background: #15161A !important; color: #E7C35A; font-weight: 700; font-size: 15px; }
+  .eq-cab > div { padding: 15px 20px; text-align: center; } .eq-cab > div:first-child { text-align: left; }
+  .eq-cargo { position: relative; padding: 14px 20px; display: flex; flex-direction: column; justify-content: center; }
+  .eq-cargo::before { content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: 4px; background: #D4A82A; }
+  .eq-cargo b { font-size: 17px; color: #15161A; } .eq-cargo small { font-size: 12px; color: #8A8A8A; margin-top: 2px; }
+  .eq-c { padding: 10px 12px; text-align: center; display: flex; flex-direction: column; justify-content: center; gap: 8px; position: relative; }
+  .eq-c::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 1px; background: #ECE6D6; }
+  .eq-p b { display: block; font-size: 17px; color: #15161A; } .eq-p small { display: block; font-size: 13px; color: #8A6D1A; margin-top: 2px; }
+  .eq-v { color: #BDBDBD; font-size: 16px; }
+  .eq-fuera { margin-top: 12px; background: #FFFFFF; border: 1px solid #E6E0CF; border-radius: 14px; overflow: hidden; box-shadow: 0 3px 10px rgba(0,0,0,.08); font-family: Arial, Helvetica, sans-serif; }
+  .eq-ft { background: #15161A; color: #E7C35A; font-weight: 700; font-size: 13px; letter-spacing: .04em; padding: 10px 20px; }
+  .eq-fx { display: flex; align-items: center; gap: 10px; padding: 10px 20px; border-bottom: 1px solid #ECE6D6; } .eq-fx:last-child { border-bottom: 0; }
+  .eq-fx b { font-size: 17px; color: #15161A; } .eq-car { color: #8A8A8A; font-size: 13px; margin-left: auto; }
+  .eq-mot { background: #0F7B5F; color: #FFFFFF; font-weight: 700; font-size: 12px; border-radius: 999px; padding: 4px 12px; } .eq-mot.otro { background: #15161A; color: #E7C35A; }
   @media (max-width: 760px) {
-    .pe-fila { grid-template-columns: 1fr; gap: 10px; }
-    .pe-dias { gap: 4px; }
-    .pe-chip { padding: 5px 2px 6px; min-height: 52px; border-radius: 8px; }
-    .pe-chip i { font-size: 8.5px; letter-spacing: 0; white-space: nowrap; } .pe-chip b { font-size: 12px; } .pe-chip small { font-size: 10px; } .pe-chip.libre b { font-size: 11px; }
-    .pe-a, .pe-lg { display: none; } .pe-ct { display: inline; }
+    .eq-cab { display: none; }
+    .eq-fila { grid-template-columns: 1fr; }
+    .eq-cargo { background: #15161A; } .eq-cargo b { color: #E7C35A; font-size: 15px; } .eq-cargo::before { display: none; }
+    .eq-c { flex-direction: row; flex-wrap: wrap; justify-content: flex-start; align-items: center; text-align: left; padding: 8px 16px; gap: 6px 16px; border-top: 1px solid #ECE6D6; }
+    .eq-c::before { display: none; }
+    .eq-c::after { content: attr(data-j); order: -1; width: 100%; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #8A6D1A; }
+    .eq-c:has(.eq-v) { display: none; }
+    .eq-p b { font-size: 15px; } .eq-p small { font-size: 12px; }
   }
   html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   /* ====== COLORES (cámbialos aquí) ======
@@ -3381,32 +3375,29 @@ function horariosHtml(H, hoy, publico) {
  */
 function personalHtml(H, sem, iHoy) {
   const P = (H.personal || []).filter(x => x.l === sem.l)[0]; if (!P || !P.b || !P.b.length) return '';
-  const DS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'], nom = { ENCARGADOS: 'Encargados', SUPERVISORES: 'Supervisores', MONITORES: 'Monitores', OTROS: 'Otros' };
-  const ico = { ENCARGADOS: '<path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8-4.3-4.1 5.9-.9z"/>', SUPERVISORES: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/>', MONITORES: '<path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>', OTROS: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/>' };
-  const ini = n => String(n || '').trim().split(/\s+/).slice(0, 2).map(p => p.charAt(0)).join('').toUpperCase();
-  const corta = hm => { if (!hm) return ''; let h = Number(hm.slice(0, 2)); const m = hm.slice(3, 5), ap = h >= 12 ? 'p' : 'a'; h = h % 12 || 12; return h + (m !== '00' ? ':' + m : '') + ap; };
-  const chip = (v, k) => {
-    const x = v ? horarioTipo(v, H) : null, c = colorHorario(v, x && x.e), hoy = k === iHoy ? ' hoy' : '';
-    const dia = '<i>' + DS[k] + ' ' + Number(ymdMas(sem.l, k).slice(8)) + '</i>';
-    if (!v) return '<div class="pe-chip vacio' + hoy + '">' + dia + '<b>—</b></div>';
-    const est = 'background:' + c.f + ';color:' + c.t + (c.b ? ';border-color:' + c.b : '');
-    if (!x || x.desc || !x.e) { const t = x ? x.n : v, ct = nrm(t) === 'DESCANSO' ? 'Libre' : t.length > 7 ? t.slice(0, 5) + '.' : t;
-      return '<div class="pe-chip libre' + hoy + '" style="' + est + '" title="' + esc(t) + '">' + dia + '<b><span class="pe-lg">' + esc(t) + '</span><span class="pe-ct">' + esc(ct) + '</span></b></div>'; }
-    return '<div class="pe-chip' + hoy + '" style="' + est + '" title="' + esc(x.n) + ': ' + esc(hora12(x.e)) + ' a ' + esc(hora12(x.s)) + '">' + dia + '<b>' + esc(corta(x.e)) + '</b><small><span class="pe-a">a </span>' + esc(corta(x.s)) + '</small></div>';
-  };
-  const pillJ = j => { if (!j) return '<span class="pe-jor" style="background:var(--line-2);color:var(--muted)">Sin jornada</span>'; const x = horarioTipo(j, H), c = colorHorario(j, x && x.e);
-    return '<span class="pe-jor" style="background:' + c.f + ';color:' + c.t + '">' + esc(j) + (x && x.e ? ' · ' + esc(hora12(x.e)) + ' a ' + esc(hora12(x.s)) : '') + '</span>'; };
-  let h = '<section class="panel pe-sec"><div class="pe-head"><span class="pe-hi"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.2A4.6 4.6 0 0 1 21 19"/></svg></span><div><h2>Personal de la semana</h2>' +
-    '<div class="sub">Encargados, supervisores y monitores del ' + Number(sem.l.slice(8)) + '/' + sem.l.slice(5, 7) + ' al ' + ymdMas(sem.l, 6).slice(8) + '/' + ymdMas(sem.l, 6).slice(5, 7) + '.</div></div></div>';
+  // El mismo día que se eligió arriba en "Turnos por día" (y con el mismo estilo de esa imagen: negro, dorado y blanco)
+  const i = NOVUI.dimg >= 0 && NOVUI.dimg <= 6 ? NOVUI.dimg : (iHoy >= 0 ? iHoy : 0), fecha = ymdMas(sem.l, i);
+  const nom = { ENCARGADOS: 'Encargados', SUPERVISORES: 'Supervisores', MONITORES: 'Monitores', OTROS: 'Otros' }, J3 = ['MAÑANA', 'TARDE', 'NOCHE'];
+  const jorDe = x => { if (!x || !x.e) return ''; const h = Number(x.e.slice(0, 2)); return h >= 18 || h < 4 ? 'NOCHE' : h >= 12 ? 'TARDE' : 'MAÑANA'; };
+  const horas = x => hora12(x.e) + ' – ' + hora12(x.s);
+  const filas = [], fuera = [];
   P.b.forEach(b => {
-    h += '<div class="pe-blo"><div class="pe-bt"><span class="pe-bi"><svg viewBox="0 0 24 24" aria-hidden="true">' + (ico[b.c] || ico.OTROS) + '</svg></span><b>' + esc(nom[b.c] || titulo(b.c)) + '</b><em>' + b.f.length + '</em></div>';
-    if (b.c === 'ENCARGADOS') {
-      h += '<div class="pe-enc">' + b.f.map(r => '<div class="pe-card"><span class="pe-av">' + esc(ini(r[0])) + '</span><div><b>' + esc(titulo(r[0])) + '</b>' + pillJ(r[1]) + '</div></div>').join('') + '</div></div>';
-      return;
-    }
-    h += '<div class="pe-lista">' + b.f.map(r => '<div class="pe-fila"><div class="pe-quien"><span class="pe-av">' + esc(ini(r[0])) + '</span><div><b>' + esc(titulo(r[0])) + '</b>' + pillJ(r[1]) + '</div></div>' +
-      '<div class="pe-dias">' + [0, 1, 2, 3, 4, 5, 6].map(k => chip(r[2][k], k)).join('') + '</div></div>').join('') + '</div></div>';
+    const celdas = [[], [], []];
+    b.f.forEach(r => {
+      if (b.c === 'ENCARGADOS') { const x = r[1] ? horarioTipo(r[1], H) : null, j = jorDe(x) || ({ 'MANANA': 'MAÑANA', 'TARDE': 'TARDE', 'NOCHE': 'NOCHE' })[nrm(r[1])] || 'MAÑANA'; celdas[J3.indexOf(j)].push([r[0], '']); return; }
+      const v = r[2][i], x = v ? horarioTipo(v, H) : null;
+      if (!v) return;
+      if (!x || x.desc || !x.e) { fuera.push([r[0], (nom[b.c] || titulo(b.c)).replace(/es$/, '').replace(/s$/, ''), x ? x.n : v]); return; }
+      celdas[J3.indexOf(jorDe(x))].push([r[0], horas(x)]);
+    });
+    if (celdas.some(c => c.length)) filas.push({ c: nom[b.c] || titulo(b.c), celdas, enc: b.c === 'ENCARGADOS' });
   });
+  const cel = c => !c.length ? '<span class="eq-v">—</span>' : c.map(q => '<div class="eq-p"><b>' + esc(titulo(q[0])) + '</b>' + (q[1] ? '<small>' + esc(q[1]) + '</small>' : '') + '</div>').join('');
+  let h = '<section class="panel eq-sec"><div class="eq-tit">Encargados, supervisores y monitores <span>· ' + DIAS_L[i] + ' ' + fecha.slice(8) + '/' + fecha.slice(5, 7) + '</span></div>';
+  if (filas.length) h += '<div class="eq-tab"><div class="eq-fila eq-cab"><div>CARGO</div><div>MAÑANA</div><div>TARDE</div><div>NOCHE</div></div>' +
+    filas.map((f, n) => '<div class="eq-fila' + (n % 2 ? ' alt' : '') + '"><div class="eq-cargo"><b>' + esc(f.c) + '</b>' + (f.enc ? '<small>Por jornada</small>' : '') + '</div>' +
+      f.celdas.map((c, k) => '<div class="eq-c" data-j="' + ['Mañana', 'Tarde', 'Noche'][k] + '">' + cel(c) + '</div>').join('') + '</div>').join('') + '</div>';
+  if (fuera.length) h += '<div class="eq-fuera"><div class="eq-ft">NO ESTÁN ESE DÍA</div>' + fuera.map(q => '<div class="eq-fx"><b>' + esc(titulo(q[0])) + '</b><span class="eq-car">(' + esc(q[1]) + ')</span><span class="eq-mot' + (nrm(q[2]) === 'DESCANSO' ? '' : ' otro') + '">' + esc(nrm(q[2]) === 'DESCANSO' ? 'DESCANSA' : String(q[2]).toUpperCase()) + '</span></div>').join('') + '</div>';
   return h + '</section>';
 }
 /** Colores de cada horario, los mismos del archivo de horarios: { f: fondo, t: letra, b: borde }. */
