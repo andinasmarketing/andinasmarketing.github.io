@@ -16,10 +16,10 @@
 /* Puente con Google Sheets: la página pide y guarda los datos en el enlace /exec del proyecto (Web.gs). Imita google.script.run. */
 window.API_URL = 'https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec';
 (function () {
-  var n = 0, VER = 'web 19', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
+  var n = 0, VER = 'web 20', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
   document.addEventListener('DOMContentLoaded', function () { var v = document.createElement('div'); v.textContent = VER; v.style.cssText = 'position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999'; document.body.appendChild(v); });
   // Aviso de versión nueva: cada 5 minutos (y al volver a la pestaña) se mira si en GitHub hay una página distinta a la abierta
-  var HUELLA = 'a0c76027faf5';
+  var HUELLA = '219ef939d410';
   function revisarVersion() {
     if (document.getElementById('avisoVersion')) return;
     fetch(location.pathname + '?huella=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -473,6 +473,8 @@ window.API_URL = 'https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
   .rv.aviso .rv-n { background: var(--oro-suave); color: var(--oro-tinta); }
   /* Informativo: el mismo azul de su etiqueta, para que el color de la tarjeta y el del resumen coincidan */
   .rv.info { border-left-color: #3C6EB4; }
+  .rv.ver { border-left-color: #0F7B5F; }
+  .rv.ver .rv-n { background: rgba(15,123,95,.14); color: #0F7B5F; }
   .rv.info .rv-n { background: rgba(60,110,180,.14); color: #2C5D9E; }
   :root[data-theme="oscuro"] .rv-pill.info, :root[data-theme="oscuro"] .rv.info .rv-n { background: rgba(110,160,230,.18); color: #A9C8F2; }
   :root[data-theme="oscuro"] .rv.info { border-left-color: #6EA0E6; }
@@ -3027,6 +3029,7 @@ function segMonCargar() {
 function segMonVerRender() {
   const c = document.getElementById('segMonVer'); if (!c) return;
   const V = SEGMON.ver; if (!V) return;
+  const q = String(SEGMON.q || '').replace(/\D/g, '');
   const X = V.map(r => ({ d: r[0], g: r[1], t: r[2], o: r[3], p: r[4], id: r[5], est: r[6], vq: r[7], vt: r[8], dig: r[9] === 1, dq: r[10], sd: r[11] === 1, c: r[12] || '', tb: r[14] || '', tq: r[15] || '', act: r[16] || 0 }));
   const hoy = SEGMON.hoyDia || new Date().getDate(), hoyTxt = ('0' + hoy).slice(-2) + '/';
   const pend = X.filter(x => !x.est && !x.dig), rech = X.filter(x => x.est === 'no'), sinVer = X.filter(x => x.sd), sinTr = X.filter(x => x.est === 'si' && !x.dig && x.d < hoy);
@@ -3046,12 +3049,16 @@ function segMonVerRender() {
     (mons.length ? '<div class="table-scroll" style="margin:0 0 12px"><table><thead><tr><th>Verificados hoy</th><th class="num">✓ Retraídos</th><th class="num">✕ No retraídos</th><th class="num">Uno por uno</th><th class="num">Todos de una vez</th><th class="num">Muy rápidos</th><th class="num">Dejó sin verificar</th></tr></thead><tbody>' +
       mons.map(m => { const a = porMon[m]; return '<tr><td class="name"><b>' + esc(m) + '</b></td><td class="num">' + a.si + '</td><td class="num">' + a.no + '</td><td class="num">' + a.uno + '</td><td class="num">' + (a.todos ? '<span class="rv-pill aviso">' + a.todos + '</span>' : '0') + '</td><td class="num">' + (a.rap ? '<span class="rv-pill accion">' + a.rap + '</span>' : '0') + '</td><td class="num">' + (dejo[m] ? '<span class="rv-pill accion">' + dejo[m] + '</span>' : '0') + '</td></tr>'; }).join('') +
       '</tbody></table></div><div class="sub" style="margin:-4px 0 12px">"Muy rápidos": verificó ese ID menos de 10 segundos después del anterior; difícilmente alcanzó a buscarlo en la plataforma. "Dejó sin verificar": IDs anotados durante su turno que siguen sin revisar cuando su turno ya terminó. Los monitores no ven esta tabla.</div>' : '<div class="sub" style="margin:0 0 12px">Hoy todavía nadie ha verificado IDs.</div>') +
+    '<div style="margin:0 0 10px"><input type="search" id="segVerQ" placeholder="Buscar un ID: quién lo verificó" value="' + esc(q) + '" style="width:100%;max-width:420px;padding:10px 14px;border:1px solid var(--line);border-radius:999px;font:inherit;background:var(--surface);color:var(--ink)" inputmode="numeric" autocomplete="off"></div>' +
     '<div style="display:grid;grid-template-columns:minmax(0,1fr);gap:10px">' +
     bloque('❌ El monitor dice que NO están retraídos', 'No cuentan. Siguen en la tabla del operador: debe corregirlos o borrarlos.', rech, ['<th>Revisó</th>', x => '<td data-l="Revisó">' + esc(x.vq) + ' <small style="color:var(--faint)">' + esc(x.vt) + '</small></td>'], 'accion') +
     bloque('Digitados sin verificar', 'El monitor pasó el número a su archivo sin revisar estos IDs en la plataforma.', sinVer, ['<th>Digitó</th><th>Se anotó en el turno de</th>', x => '<td data-l="Digitó">' + esc(x.dq || '—') + '</td><td data-l="Turno de">' + esc(x.tq || '—') + ' <small style="color:var(--faint)">' + esc(x.tb) + '</small></td>'], 'accion') +
     bloque('Verificados que faltan por transcribir', 'Ya están confirmados para el operador, pero de días anteriores y el monitor todavía no los pasa a su archivo.', sinTr, ['<th>Verificó</th>', x => '<td data-l="Verificó">' + esc(x.vq) + ' <small style="color:var(--faint)">' + esc(x.vt) + '</small></td>'], 'aviso') +
+    bloque('✓ Verificados: quién y cuándo', 'Todos los IDs revisados este mes, con el monitor que los verificó.' + (q ? ' Filtrado por "' + esc(q) + '".' : ''), X.filter(x => x.est && (!q || String(x.id).indexOf(q) >= 0)).sort((a, b) => b.d - a.d), ['<th>Resultado</th><th>Verificó</th>', x => '<td data-l="Resultado">' + (x.est === 'si' ? '<span class="rv-pill ok">✓ Retraído</span>' : '<span class="rv-pill accion">✕ No retraído</span>') + '</td><td data-l="Verificó"><b>' + esc(x.vq || '—') + '</b> <small style="color:var(--faint)">' + esc(x.vt) + '</small></td>'], q ? 'accion' : 'ver') +
     bloque('Por verificar', 'Anotados por el operador y todavía sin revisar por un monitor. "Le tocaba a": el monitor del turno en que el operador lo anotó.', pend, ['<th>Le tocaba a</th>', x => '<td data-l="Le tocaba a">' + (x.act === 1 ? '<span class="rv-pill info">Turno actual</span> ' : '') + esc(x.tq || '—') + ' <small style="color:var(--faint)">' + esc(x.tb) + '</small></td>'], 'info') +
     '</div>';
+  const qi = document.getElementById('segVerQ');
+  if (qi) { qi.oninput = () => { SEGMON.q = qi.value; segMonVerRender(); const n = document.getElementById('segVerQ'); if (n) { n.focus(); const L = n.value.length; try { n.setSelectionRange(L, L); } catch (e) {} } }; }
 }
 window.segMonCargar = segMonCargar;
 
@@ -5162,8 +5169,8 @@ function monRender() {
   const dif = P.filter(x => x.tipo === 'No coincide'), fal = P.filter(x => x.tipo !== 'No coincide');
   const R = d.revisar || [], S = d.sinRet || [], nRev = R.reduce((a, x) => a + x.items.length, 0);
   // Verificación de IDs: los que faltan (días que aún no se digitan) y los ya revisados
-  const VF = (d.ver || []).map((r, i) => ({ i, d: r[0], g: r[1], t: r[2], o: r[3], p: r[4], id: r[5], est: r[6] || '', vq: r[7] || '', vt: r[8] || '', dig: r[9] === 1, mail: r[13] || '', tb: r[14] || '', act: r[16] || 0 }));
-  const vfPend = VF.filter(x => !x.est && !x.dig), vfHechos = VF.filter(x => x.est);
+  const VF = (d.ver || []).map((r, i) => ({ i, d: r[0], g: r[1], t: r[2], o: r[3], p: r[4], id: r[5], est: r[6] || '', vq: r[7] || '', vt: r[8] || '', dig: r[9] === 1, mail: r[13] || '', tb: r[14] || '', act: r[16] || 0, rec: r[17] === undefined ? 1 : r[17] }));
+  const vfPend = VF.filter(x => !x.est && !x.dig), vfHechos = VF.filter(x => x.est && (x.rec === 1 || x.est === 'no'));      // los últimos días
   // Lo que llega mientras el monitor está revisando NO se mete en la lista (lo hacía saltar y confundía):
   // queda guardado y sale un aviso "Llegaron N IDs nuevos" para mostrarlos cuando él quiera.
   const vk = x => x.g + '|' + x.id + '|' + x.d;
@@ -5246,7 +5253,7 @@ function monRender() {
               '<span class="vf-cnt">' + xs.length + (xs.length === 1 ? ' ID' : ' IDs') + '</span>' +
               '</div><ul class="vf-l">' +
               xs.map(x => '<li><button type="button" class="vf-id" data-cp="' + esc(x.id) + '" title="Toca para copiar el ID">' + esc(x.id) + '</button>' +
-                (x.est ? '<span class="vf-est ' + x.est + '">' + (x.est === 'si' ? '✓ Retraído' : '✕ No retraído') + (comoSup && x.vq ? ' · ' + esc(x.vq) + (x.vt ? ' · ' + esc(x.vt) : '') : '') + '</span>' + (comoSup ? '<button type="button" class="vf-des" data-vd="' + x.i + '">Deshacer</button>' : '')
+                (x.est ? '<span class="vf-est ' + x.est + '">' + (x.est === 'si' ? '✓ Retraído' : '✕ No retraído') + (comoSup && x.vq ? ' · ' + esc(x.vq) + (x.vt ? ' · ' + esc(x.vt) : '') : '') + '</span>'
                   : '<button type="button" class="vf-si" data-vs="' + x.i + '">✅ Sí está retraído</button><button type="button" class="vf-no" data-vn="' + x.i + '">❌ No está</button>') + '</li>').join('') + '</ul></div>'; }).join('');
       }).join(''); };
       // Por verificar: primero lo anotado en este turno de monitores; aparte, lo que quedó de turnos anteriores (así se sabe de quién era)
@@ -5342,7 +5349,7 @@ function monRender() {
     if (confirm('¿Revisaste en la plataforma los ' + ids.length + ' IDs y todos están retraídos?')) monVerificar(ids, 'si', b); });
   c.querySelectorAll('[data-vn]').forEach(b => b.onclick = () => { const x = (MON.datos.ver || [])[Number(b.dataset.vn)];
     if (x && confirm('¿Confirmas que el cliente ' + x[5] + ' NO está retraído? Deja de contarle a ' + titulo(x[3]) + ' y le sale el aviso para corregirlo.')) monVerificar([Number(b.dataset.vn)], 'no', b); });
-  c.querySelectorAll('[data-vd]').forEach(b => b.onclick = () => monVerificar([Number(b.dataset.vd)], '', b));
+
   // El monitor confirma que el operador llegó a tiempo (se le olvidó marcar, o marcó tarde pero llegó a su hora)
   c.querySelectorAll('[data-ll]').forEach(b => b.onclick = () => {
     const x = (MON.datos.ops || [])[Number(b.dataset.ll)]; if (!x) return;
