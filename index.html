@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
 <title>PRIME 2026 · Andinas Marketing</title>
 <meta name="description" content="PRIME 2026 · Andinas Marketing: clientes retraídos, rankings, puntos, horarios y asistencia de operadores.">
 <meta name="theme-color" content="#0B0B0D">
@@ -16,10 +16,10 @@
 /* Puente con Google Sheets: la página pide y guarda los datos en el enlace /exec del proyecto (Web.gs). Imita google.script.run. */
 window.API_URL = 'https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec';
 (function () {
-  var n = 0, VER = 'web 17', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
+  var n = 0, VER = 'web 19', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
   document.addEventListener('DOMContentLoaded', function () { var v = document.createElement('div'); v.textContent = VER; v.style.cssText = 'position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999'; document.body.appendChild(v); });
   // Aviso de versión nueva: cada 5 minutos (y al volver a la pestaña) se mira si en GitHub hay una página distinta a la abierta
-  var HUELLA = 'd66a2157f865';
+  var HUELLA = 'a0c76027faf5';
   function revisarVersion() {
     if (document.getElementById('avisoVersion')) return;
     fetch(location.pathname + '?huella=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -66,6 +66,15 @@ window.API_URL = 'https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
 <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,400..800;1,62..125,400..800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
+  /* El celular no agranda el texto por su cuenta (se veía desproporcionado) */
+  @media (max-width: 600px) {
+    .vt-cel table, .vt-cel tbody, .vt-cel tr, .vt-cel td { display: block; width: 100%; }
+    .vt-cel thead { display: none; }
+    .vt-cel tr { border-bottom: 1px solid var(--line); padding: 8px 2px; }
+    .vt-cel td { border: 0 !important; padding: 2px 0 !important; text-align: left !important; }
+    .vt-cel td[data-l]::before { content: attr(data-l) ": "; color: var(--muted); font-size: 12px; font-weight: 700; }
+  }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   /* ====== COLORES (cámbialos aquí) ======
      Negro y dorado de Andinas Marketing.
      --paper: fondo de la página · --surface: fondo de los paneles · --ink: texto principal
@@ -678,6 +687,9 @@ window.API_URL = 'https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
   .vf-l li .vf-id { min-width: 120px; }
   .vf-nuevos { position: sticky; top: 12px; z-index: 5; display: block; width: 100%; margin: 0 0 14px; font: inherit; font-size: 14px; font-weight: 800; text-align: center; cursor: pointer;
     background: #0B0B0D; color: #E6C65C; border: 1px solid #C9A227; border-radius: 12px; padding: 12px 14px; box-shadow: 0 8px 22px rgba(0,0,0,.22); }
+  .vf-sec { font-size: 16px; margin: 18px 0 8px; display: flex; align-items: baseline; gap: 8px; } .vf-sec small { font-size: 12.5px; font-weight: 600; color: var(--muted); }
+  .vf-sec.ant { padding-top: 14px; border-top: 1px dashed var(--line); }
+  .vf-ant { margin: -2px 0 10px; font-size: 13px; color: var(--muted); }
   .vf-pasos { margin: 0 0 14px; padding: 12px 14px 12px 34px; border-radius: 12px; background: rgba(201,162,39,.12); border: 1px solid rgba(201,162,39,.45); font-size: 14px; line-height: 1.6; }
   .vf-mini { display: inline-block; font-size: 12px; font-weight: 800; border-radius: 999px; padding: 0 8px; }
   .vf-mini.si { background: #0F7B5F; color: #fff; } .vf-mini.no { border: 1px solid #D43C2F; color: #B3312A; background: var(--surface); }
@@ -1231,6 +1243,7 @@ window.API_URL = 'https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
 <script>
 /* ================== Constantes ================== */
 const J = ['MAÑANA', 'TARDE', 'NOCHE'];
+const TOLER_LLEGADA = 30;      // minutos para marcar "Estoy de turno" sin contar como llegada tarde (cambio de turno: se pasan las novedades)
 const JL = ['Mañana', 'Tarde', 'Noche'];
 const JH = ['6:15 – 2:15', '2:15 – 10:15', '10:15 – 6:15'];
 let JC = ['#C9A227', '#9499A6', '#0E0F12'];   // se leen de --manana, --tarde y --noche (cambian con el modo oscuro)
@@ -3014,27 +3027,30 @@ function segMonCargar() {
 function segMonVerRender() {
   const c = document.getElementById('segMonVer'); if (!c) return;
   const V = SEGMON.ver; if (!V) return;
-  const X = V.map(r => ({ d: r[0], g: r[1], t: r[2], o: r[3], p: r[4], id: r[5], est: r[6], vq: r[7], vt: r[8], dig: r[9] === 1, dq: r[10], sd: r[11] === 1, c: r[12] || '' }));
+  const X = V.map(r => ({ d: r[0], g: r[1], t: r[2], o: r[3], p: r[4], id: r[5], est: r[6], vq: r[7], vt: r[8], dig: r[9] === 1, dq: r[10], sd: r[11] === 1, c: r[12] || '', tb: r[14] || '', tq: r[15] || '', act: r[16] || 0 }));
   const hoy = SEGMON.hoyDia || new Date().getDate(), hoyTxt = ('0' + hoy).slice(-2) + '/';
   const pend = X.filter(x => !x.est && !x.dig), rech = X.filter(x => x.est === 'no'), sinVer = X.filter(x => x.sd), sinTr = X.filter(x => x.est === 'si' && !x.dig && x.d < hoy);
   // Por monitor, lo de hoy: cuántos ✓ y ✕, y cómo los verificó (de a uno, todos de una vez o demasiado rápido)
   const porMon = {}; X.filter(x => x.est && String(x.vt).indexOf(hoyTxt) === 0).forEach(x => { const k = x.vq || 'Sin nombre'; const a = porMon[k] || (porMon[k] = { si: 0, no: 0, uno: 0, todos: 0, rap: 0 }); a[x.est]++;
     if (/^Todos/.test(x.c)) a.todos++; else if (/^R[aá]pido/.test(x.c)) a.rap++; else a.uno++; });
-  const tabla = (xs, cols) => '<div class="table-scroll" style="max-height:360px;overflow-y:auto"><table><thead><tr><th>Día</th><th>Grupo</th><th>Operador</th><th>Perfil</th><th>ID</th>' + cols[0] + '</tr></thead><tbody>' +
-    xs.map(x => '<tr><td><b>' + x.d + '</b></td><td>' + esc(titulo(x.g)) + '</td><td class="name">' + esc(titulo(x.o)) + ' <small style="color:var(--faint)">' + (JL[J.indexOf(x.t)] || '').toLowerCase() + '</small></td><td>' + esc(titulo(x.p)) + '</td><td><b>' + esc(x.id) + '</b></td>' + cols[1](x) + '</tr>').join('') + '</tbody></table></div>';
+  // Lo que se anotó en un turno de monitor que ya terminó y nadie verificó: queda a cargo del monitor de ese turno
+  const dejo = {}; pend.filter(x => x.act === 2).forEach(x => { const k = x.tq || 'Sin monitor identificado'; dejo[k] = (dejo[k] || 0) + 1; if (!porMon[k]) porMon[k] = { si: 0, no: 0, uno: 0, todos: 0, rap: 0 }; });
+  // En el celular cada fila se ve como una tarjeta (sin tabla que haya que correr de lado)
+  const tabla = (xs, cols) => '<div class="table-scroll vt-cel" style="max-height:420px;overflow-y:auto"><table><thead><tr><th>Día</th><th>Grupo</th><th>Operador</th><th>Perfil</th><th>ID</th>' + cols[0] + '</tr></thead><tbody>' +
+    xs.map(x => '<tr><td data-l="Día"><b>' + x.d + '</b></td><td data-l="Grupo">' + esc(titulo(x.g)) + '</td><td data-l="Operador" class="name">' + esc(titulo(x.o)) + ' <small style="color:var(--faint)">' + (JL[J.indexOf(x.t)] || '').toLowerCase() + '</small></td><td data-l="Perfil">' + esc(titulo(x.p)) + '</td><td data-l="ID"><b>' + esc(x.id) + '</b></td>' + cols[1](x) + '</tr>').join('') + '</tbody></table></div>';
   const bloque = (tit, ayuda, xs, cols, tipo) => '<details class="rv ' + tipo + '"' + (xs.length && tipo === 'accion' ? ' open' : '') + '><summary><span class="rv-n">' + fmt.format(xs.length) + '</span><span class="rv-t"><b>' + tit + '</b><small>' + ayuda + '</small></span></summary><div class="rv-c">' +
     (xs.length ? tabla(xs, cols) : '<p>Nada por ahora.</p>') + '</div></details>';
   const mons = Object.keys(porMon).sort((a, b) => (porMon[b].si + porMon[b].no) - (porMon[a].si + porMon[a].no));
   c.innerHTML = '<div class="mon-k seg-k" style="margin-bottom:12px"><div class="a"><b>' + fmt.format(pend.length) + '</b><span>IDs por verificar</span></div><div class="r"><b>' + fmt.format(rech.length) + '</b><span>❌ No retraídos sin corregir</span></div>' +
     '<div class="r"><b>' + fmt.format(sinVer.length) + '</b><span>Digitados sin verificar</span></div><div><b>' + fmt.format(sinTr.length) + '</b><span>Verificados sin transcribir</span></div></div>' +
-    (mons.length ? '<div class="table-scroll" style="margin:0 0 12px"><table><thead><tr><th>Verificados hoy</th><th class="num">✓ Retraídos</th><th class="num">✕ No retraídos</th><th class="num">Uno por uno</th><th class="num">Todos de una vez</th><th class="num">Muy rápidos</th></tr></thead><tbody>' +
-      mons.map(m => { const a = porMon[m]; return '<tr><td class="name"><b>' + esc(m) + '</b></td><td class="num">' + a.si + '</td><td class="num">' + a.no + '</td><td class="num">' + a.uno + '</td><td class="num">' + (a.todos ? '<span class="rv-pill aviso">' + a.todos + '</span>' : '0') + '</td><td class="num">' + (a.rap ? '<span class="rv-pill accion">' + a.rap + '</span>' : '0') + '</td></tr>'; }).join('') +
-      '</tbody></table></div><div class="sub" style="margin:-4px 0 12px">"Muy rápidos": verificó ese ID menos de 10 segundos después del anterior; difícilmente alcanzó a buscarlo en la plataforma. Los monitores no ven esta tabla.</div>' : '<div class="sub" style="margin:0 0 12px">Hoy todavía nadie ha verificado IDs.</div>') +
-    '<div style="display:grid;gap:10px">' +
-    bloque('❌ El monitor dice que NO están retraídos', 'No cuentan. Siguen en la tabla del operador: debe corregirlos o borrarlos.', rech, ['<th>Revisó</th>', x => '<td>' + esc(x.vq) + ' <small style="color:var(--faint)">' + esc(x.vt) + '</small></td>'], 'accion') +
-    bloque('Digitados sin verificar', 'El monitor pasó el número a su archivo sin revisar estos IDs en la plataforma.', sinVer, ['<th>Digitó</th>', x => '<td>' + esc(x.dq || '—') + '</td>'], 'accion') +
-    bloque('Verificados que faltan por transcribir', 'Ya están confirmados para el operador, pero de días anteriores y el monitor todavía no los pasa a su archivo.', sinTr, ['<th>Verificó</th>', x => '<td>' + esc(x.vq) + ' <small style="color:var(--faint)">' + esc(x.vt) + '</small></td>'], 'aviso') +
-    bloque('Por verificar', 'Anotados por el operador y todavía sin revisar por un monitor.', pend, ['<th></th>', () => '<td></td>'], 'info') +
+    (mons.length ? '<div class="table-scroll" style="margin:0 0 12px"><table><thead><tr><th>Verificados hoy</th><th class="num">✓ Retraídos</th><th class="num">✕ No retraídos</th><th class="num">Uno por uno</th><th class="num">Todos de una vez</th><th class="num">Muy rápidos</th><th class="num">Dejó sin verificar</th></tr></thead><tbody>' +
+      mons.map(m => { const a = porMon[m]; return '<tr><td class="name"><b>' + esc(m) + '</b></td><td class="num">' + a.si + '</td><td class="num">' + a.no + '</td><td class="num">' + a.uno + '</td><td class="num">' + (a.todos ? '<span class="rv-pill aviso">' + a.todos + '</span>' : '0') + '</td><td class="num">' + (a.rap ? '<span class="rv-pill accion">' + a.rap + '</span>' : '0') + '</td><td class="num">' + (dejo[m] ? '<span class="rv-pill accion">' + dejo[m] + '</span>' : '0') + '</td></tr>'; }).join('') +
+      '</tbody></table></div><div class="sub" style="margin:-4px 0 12px">"Muy rápidos": verificó ese ID menos de 10 segundos después del anterior; difícilmente alcanzó a buscarlo en la plataforma. "Dejó sin verificar": IDs anotados durante su turno que siguen sin revisar cuando su turno ya terminó. Los monitores no ven esta tabla.</div>' : '<div class="sub" style="margin:0 0 12px">Hoy todavía nadie ha verificado IDs.</div>') +
+    '<div style="display:grid;grid-template-columns:minmax(0,1fr);gap:10px">' +
+    bloque('❌ El monitor dice que NO están retraídos', 'No cuentan. Siguen en la tabla del operador: debe corregirlos o borrarlos.', rech, ['<th>Revisó</th>', x => '<td data-l="Revisó">' + esc(x.vq) + ' <small style="color:var(--faint)">' + esc(x.vt) + '</small></td>'], 'accion') +
+    bloque('Digitados sin verificar', 'El monitor pasó el número a su archivo sin revisar estos IDs en la plataforma.', sinVer, ['<th>Digitó</th><th>Se anotó en el turno de</th>', x => '<td data-l="Digitó">' + esc(x.dq || '—') + '</td><td data-l="Turno de">' + esc(x.tq || '—') + ' <small style="color:var(--faint)">' + esc(x.tb) + '</small></td>'], 'accion') +
+    bloque('Verificados que faltan por transcribir', 'Ya están confirmados para el operador, pero de días anteriores y el monitor todavía no los pasa a su archivo.', sinTr, ['<th>Verificó</th>', x => '<td data-l="Verificó">' + esc(x.vq) + ' <small style="color:var(--faint)">' + esc(x.vt) + '</small></td>'], 'aviso') +
+    bloque('Por verificar', 'Anotados por el operador y todavía sin revisar por un monitor. "Le tocaba a": el monitor del turno en que el operador lo anotó.', pend, ['<th>Le tocaba a</th>', x => '<td data-l="Le tocaba a">' + (x.act === 1 ? '<span class="rv-pill info">Turno actual</span> ' : '') + esc(x.tq || '—') + ' <small style="color:var(--faint)">' + esc(x.tb) + '</small></td>'], 'info') +
     '</div>';
 }
 window.segMonCargar = segMonCargar;
@@ -3152,7 +3168,7 @@ function renderSinRetraer() {
   const hm = m => hmDe(m), pill = o => {
     const T = o.T;
     switch (o.est) {
-      case 'turno': return '<span class="rv-pill ' + (o.cero.length ? 'aviso' : 'ok') + '">En turno desde las ' + hm(T.ent) + (T.ent < T.S - 15 ? ' (llegó antes)' : T.ent > T.S + 15 ? ' (llegó tarde)' : '') + (o.cero.length ? ' · ' + o.cero.length + ' en cero' : ' · completo') + '</span>';
+      case 'turno': return '<span class="rv-pill ' + (o.cero.length ? 'aviso' : 'ok') + '">En turno desde las ' + hm(T.ent) + (T.ent < T.S - 15 ? ' (llegó antes)' : T.ent > T.S + TOLER_LLEGADA ? ' (llegó tarde)' : '') + (o.cero.length ? ' · ' + o.cero.length + ' en cero' : ' · completo') + '</span>';
       case 'turno0': return '<span class="rv-pill accion">En turno desde las ' + hm(T.ent) + ' · sin clientes</span>';
       case 'falta': return '<span class="rv-pill accion">No ha marcado entrada · entraba a las ' + hm(T.S) + '</span>';
       case 'sinmarca': return '<span class="rv-pill aviso">Sin marcar entrada · ya anotó clientes</span>';
@@ -3583,7 +3599,7 @@ function asistenciaHtml(soloFilas, diasF) {
       const ausA = (DATA.ausencias || []).filter(a => nrm(a[1]) === nrm(o.o) && (a[0] === f || (Number(x.e.slice(0, 2)) >= 18 && a[0] === ymdMas(f, 1))))[0];
       if (nov) est = 'nov';
       else if (ausA && T.ent === null) { est = ausA[2] ? 'just' : 'aus'; nota = ausA[2] ? 'Ausencia justificada' : 'Ausencia anotada'; }
-      else if (T.ent !== null) { est = T.ent > T.S + 15 ? 'tarde' : 'ok'; nota = T.ajuste === 'sup' ? 'Ajustado por supervisión' : T.ajuste === 'antes' ? 'Antes del control de asistencia' : T.ent < T.S - 15 ? 'Llegó antes' : est === 'tarde' ? (T.ent - T.S) + ' min tarde' : ''; }
+      else if (T.ent !== null) { est = T.ent > T.S + TOLER_LLEGADA ? 'tarde' : 'ok'; nota = T.ajuste === 'sup' ? 'Ajustado por supervisión' : T.ajuste === 'antes' ? 'Antes del control de asistencia' : T.ent < T.S - 15 ? 'Llegó antes' : est === 'tarde' ? (T.ent - T.S) + ' min tarde' : ''; }
       else if (now < T.E) est = n > 0 ? 'sinmarca' : 'pend';
       else est = n > 0 ? 'sinmarca' : 'aus';
       filas.push({ f, g: o.g, o: o.o, x, T, n, est, nota, nov });
@@ -3593,7 +3609,7 @@ function asistenciaHtml(soloFilas, diasF) {
   const g0 = NOVUI.g, grupos = Array.from(new Set(filas.map(z => z.g))).sort(), base = filas.filter(z => !g0 || z.g === g0);
   const c = e => base.filter(z => z.est === e).length;
   const ver = base.filter(z => !NOVUI.aest || z.est === NOVUI.aest).sort((p, q) => (p.f < q.f ? 1 : p.f > q.f ? -1 : 0) || p.g.localeCompare(q.g) || p.T.S - q.T.S);
-  let h = '<div class="mon-k seg-k"><div class="v"><b>' + (c('ok') + c('tarde')) + '</b><span>Turnos con entrada marcada</span></div><div class="a"><b>' + c('tarde') + '</b><span>Llegaron tarde (más de 15 minutos)</span></div>' +
+  let h = '<div class="mon-k seg-k"><div class="v"><b>' + (c('ok') + c('tarde')) + '</b><span>Turnos con entrada marcada</span></div><div class="a"><b>' + c('tarde') + '</b><span>Llegaron tarde (más de ' + TOLER_LLEGADA + ' minutos)</span></div>' +
     '<div class="r"><b>' + c('aus') + '</b><span>Ausencias</span></div><div><b>' + c('sinmarca') + '</b><span>Sin marcar entrada pero anotaron clientes</span></div></div>';
   h += '<section class="panel"><h2>Asistencia por turno</h2><div class="sub">Cada turno del horario publicado contra la casilla «Estoy de turno». La entrada vale si se marca desde 4 horas antes de la hora del horario: quien entra a las 8 y llega a las 6 sale con «Llegó antes». Si el turno termina sin entrada marcada y sin clientes, es ausencia. Los descansos y las novedades (vacaciones, permisos) no cuentan como ausencia. Si un operador sí llegó a su hora y no salió así, toca «Llegó a tiempo». La asistencia cuenta desde ' + (DATA.asisDesde ? DATA.asisDesde.slice(8, 10) + '/' + DATA.asisDesde.slice(5, 7) + ' a las ' + DATA.asisDesde.slice(11) : 'que se publicó el horario') + '; los turnos de antes salen a tiempo.</div>' +
     '<div class="sub-barra" style="margin-top:12px">' + [[1, 'Hoy'], [7, '7 días'], [31, '31 días']].map(d => '<button type="button" data-ad="' + d[0] + '" aria-selected="' + (NOVUI.adias === d[0]) + '">' + d[1] + '</button>').join('') +
@@ -5083,7 +5099,7 @@ function monPedir(err) {
 function monAbrir() { monCargar(); }
 function monCargar() {
   if (MON.cargando) return;
-  if (!MON.clave && window.claveSup && window.claveSup()) MON.clave = window.claveSup();      // supervisión ya entró: ve todo sin otra clave
+  if (window.claveSup && window.claveSup()) MON.clave = window.claveSup();      // con la sesión de supervisión abierta siempre se entra como supervisión (aunque antes se hubiera puesto la clave de monitores)      // supervisión ya entró: ve todo sin otra clave
   if (!MON.clave) { monPedir(''); return; }
   MON.cargando = true;
   const b = document.getElementById('monRefresh'); b.disabled = true;
@@ -5098,7 +5114,7 @@ function monCargar() {
     revisar: [{ tipo: 'accion', tit: 'ID de perfil anotado como cliente, sin corregir', ayuda: 'El operador copió el ID de su perfil en lugar del ID del cliente.', items: ['Grupo Pekin, Agustin Febres: día 4, anotó 186380092 (ID del perfil Cassio 62)'] }, { tipo: 'aviso', tit: 'Asignados sin ningún registro en el mes', ayuda: 'Perfiles sin ningún número digitado.', items: ['Grupo Pekin, noche, sin operador asignado: Samuel 64, Cassio 62, Eleide 57'] }, { tipo: 'info', tit: 'Perfiles atendidos por contingencia', ayuda: 'Un operador atendió un perfil de otro grupo.', items: ['Día 4: Eliezer Orance atendió a Felipe 50 (Grupo Berna, tarde), 4 clientes', 'Día 4: Edgar Orance atendió a Fernando 46 (Grupo Brusela, tarde), 2 clientes', 'Día 4: Celio Ollarves atendió a Victor (Grupo Brusela, tarde), 3 clientes', 'Día 3: Edgar Orance atendió a Victor (Grupo Brusela, tarde), 1 cliente'] }],
     historial: [['06/10/2026 07:12:40', '2026-10', 5, 'GRUPO RIO', 'MAÑANA', 'NILSON ROJAS', 'MIGUEL', '', '7', 'Registro', 'Laura Pérez'], ['06/10/2026 07:10:02', '2026-10', 4, 'GRUPO RIO', 'TARDE', 'EDGAR ORANCE', 'ALDEMARO', '3', '2', 'Corrección', 'Sin identificar']], turno: { nombre: 'Laura Pérez', desde: '06:05', hayHoja: true },
     reloj: { ahora: '2026-10-10T16:40' },
-    ver: [[10, 'GRUPO RIO', 'MAÑANA', 'NILSON ROJAS', 'MIGUEL', '193401122', '', '', '', 0, '', 0, '', 'Andimiguel821451d285305@gmail.com'], [10, 'GRUPO RIO', 'MAÑANA', 'NILSON ROJAS', 'MIGUEL', '193401178', '', '', '', 0, '', 0, '', 'Andimiguel821451d285305@gmail.com'], [10, 'GRUPO RIO', 'MAÑANA', 'NILSON ROJAS', 'ALDEMARO', '193402210', '', '', '', 0, '', 0, '', 'Andialdemaro8421g10322d6313@gmail.com'],
+    ver: [[10, 'GRUPO RIO', 'MAÑANA', 'NILSON ROJAS', 'MIGUEL', '193401122', '', '', '', 0, '', 0, '', 'Andimiguel821451d285305@gmail.com', '13/10 06:00–14:00', '', 1], [10, 'GRUPO RIO', 'MAÑANA', 'NILSON ROJAS', 'MIGUEL', '193401178', '', '', '', 0, '', 0, '', 'Andimiguel821451d285305@gmail.com', '13/10 06:00–14:00', '', 1], [10, 'GRUPO RIO', 'MAÑANA', 'NILSON ROJAS', 'ALDEMARO', '193402210', '', '', '', 0, '', 0, '', 'Andialdemaro8421g10322d6313@gmail.com', '12/10 22:00–06:00', '', 2],
       [10, 'GRUPO TOKYO', 'TARDE', 'ELIEZER ORANCE', 'MARTIN', '193405561', '', '', '', 0, '', 0], [10, 'GRUPO TOKYO', 'MAÑANA', 'YONAIKER VIVAS', 'SELMO', '193398001', 'si', 'Laura Pérez', '10/10 09:12', 0, '', 0], [9, 'GRUPO RIO', 'NOCHE', 'MARWIN OLLARVES', 'MIGUEL', '193380045', 'no', 'Laura Pérez', '10/10 07:40', 0, '', 0]],
     ops: [['GRUPO RIO', 'NILSON ROJAS', 'Largo 6 a 16', '06:00', '16:00', '05:58', '16:00', 'salio', true, '16:20', 10, true], ['GRUPO TOKYO', 'YONAIKER VIVAS', 'Mañana', '06:15', '14:15', '06:10', '14:15', 'salio', false, '14:35', 10, true],
       ['GRUPO RIO', 'EDGAR ORANCE', 'Largo 12 a 22', '12:00', '22:00', '11:55', '22:00', 'turno', true, '22:20', 10], ['GRUPO TOKYO', 'ELIEZER ORANCE', 'Tarde', '14:15', '22:15', '14:35', '22:15', 'turno', false, '22:35', 10, false, '2026-10-10', 20, ''], ['GRUPO BERNA', 'MARIA JOSE MEDINA', 'Mañana', '06:15', '14:15', '06:05', '14:15', 'turno', false, '14:35', 10], ['GRUPO BRUSELA', 'MARIA DLA (TORREALBA)', 'Mañana', '06:15', '14:15', '06:01', '14:15', 'turno', false, '14:35', 10],
@@ -5146,7 +5162,7 @@ function monRender() {
   const dif = P.filter(x => x.tipo === 'No coincide'), fal = P.filter(x => x.tipo !== 'No coincide');
   const R = d.revisar || [], S = d.sinRet || [], nRev = R.reduce((a, x) => a + x.items.length, 0);
   // Verificación de IDs: los que faltan (días que aún no se digitan) y los ya revisados
-  const VF = (d.ver || []).map((r, i) => ({ i, d: r[0], g: r[1], t: r[2], o: r[3], p: r[4], id: r[5], est: r[6] || '', vq: r[7] || '', vt: r[8] || '', dig: r[9] === 1, mail: r[13] || '' }));
+  const VF = (d.ver || []).map((r, i) => ({ i, d: r[0], g: r[1], t: r[2], o: r[3], p: r[4], id: r[5], est: r[6] || '', vq: r[7] || '', vt: r[8] || '', dig: r[9] === 1, mail: r[13] || '', tb: r[14] || '', act: r[16] || 0 }));
   const vfPend = VF.filter(x => !x.est && !x.dig), vfHechos = VF.filter(x => x.est);
   // Lo que llega mientras el monitor está revisando NO se mete en la lista (lo hacía saltar y confundía):
   // queda guardado y sale un aviso "Llegaron N IDs nuevos" para mostrarlos cuando él quiera.
@@ -5219,8 +5235,8 @@ function monRender() {
     if (!lista.length) html += base.length ? '<div class="vacio">No hay IDs con ese filtro.</div>' : MON.vf === 'pend' ? '<div class="mon-ok"><b>Nada por verificar</b>Todos los IDs anotados ya están revisados. Cuando un operador anote uno nuevo, aparece aquí.</div>' : '<div class="vacio">Todavía no hay IDs revisados en los últimos días.</div>';
     else {
       // Día (lo más reciente primero) → un recuadro por perfil (ordenados por grupo y perfil)
-      const porD = {}; lista.forEach(x => { (porD[x.d] = porD[x.d] || []).push(x); });
-      html += Object.keys(porD).map(Number).sort((a, b) => b - a).map(dia => {
+      const vfDibujar = lista => { const porD = {}; lista.forEach(x => { (porD[x.d] = porD[x.d] || []).push(x); });
+      return Object.keys(porD).map(Number).sort((a, b) => b - a).map(dia => {
         const xsD = porD[dia];
         const porPerf = {}; xsD.forEach(x => { const kk = x.g + '|' + x.p + '|' + x.o; (porPerf[kk] = porPerf[kk] || []).push(x); });
         return '<div class="mn-dia"><span class="mn-dn">' + dia + '</span><b>Día ' + dia + '</b><i>' + xsD.length + (xsD.length === 1 ? ' ID' : ' IDs') + '</i></div>' +
@@ -5228,11 +5244,18 @@ function monRender() {
             return '<div class="vf-op"><div class="vf-oh"><span class="vf-perf"><small>Perfil</small><b>' + esc(titulo(x0.p)) + '</b>' +
               (x0.mail ? '<button type="button" class="vf-mail" data-cm="' + esc(x0.mail) + '" title="Toca para copiar el correo">✉ <span>' + esc(x0.mail) + '</span><i>Copiar</i></button>' : '<span class="vf-sinmail">Sin correo registrado</span>') + '</span><span class="vf-de">' + esc(titulo(x0.g)) + '<br>Operador: <b>' + esc(titulo(x0.o)) + '</b></span>' +
               '<span class="vf-cnt">' + xs.length + (xs.length === 1 ? ' ID' : ' IDs') + '</span>' +
-              (MON.vf === 'pend' && xs.length > 1 && comoSup ? '<button type="button" class="vf-si vf-todos" data-vt="' + xs.map(x => x.i).join(',') + '">✅ Todos están retraídos</button>' : '') + '</div><ul class="vf-l">' +
+              '</div><ul class="vf-l">' +
               xs.map(x => '<li><button type="button" class="vf-id" data-cp="' + esc(x.id) + '" title="Toca para copiar el ID">' + esc(x.id) + '</button>' +
-                (x.est ? '<span class="vf-est ' + x.est + '">' + (x.est === 'si' ? '✓ Retraído' : '✕ No retraído') + '</span>' + (x.dig || !comoSup ? '' : '<button type="button" class="vf-des" data-vd="' + x.i + '">Deshacer</button>')
+                (x.est ? '<span class="vf-est ' + x.est + '">' + (x.est === 'si' ? '✓ Retraído' : '✕ No retraído') + (comoSup && x.vq ? ' · ' + esc(x.vq) + (x.vt ? ' · ' + esc(x.vt) : '') : '') + '</span>' + (comoSup ? '<button type="button" class="vf-des" data-vd="' + x.i + '">Deshacer</button>' : '')
                   : '<button type="button" class="vf-si" data-vs="' + x.i + '">✅ Sí está retraído</button><button type="button" class="vf-no" data-vn="' + x.i + '">❌ No está</button>') + '</li>').join('') + '</ul></div>'; }).join('');
-      }).join('');
+      }).join(''); };
+      // Por verificar: primero lo anotado en este turno de monitores; aparte, lo que quedó de turnos anteriores (así se sabe de quién era)
+      const deAhora = MON.vf === 'pend' ? lista.filter(x => x.act === 1) : [], antes = MON.vf === 'pend' ? lista.filter(x => x.act !== 1) : [];
+      if (MON.vf !== 'pend') html += vfDibujar(lista);
+      else {
+        if (deAhora.length) html += '<h3 class="vf-sec">Anotados en tu turno' + (deAhora[0].tb ? ' <small>(' + esc(deAhora[0].tb.slice(6)) + ')</small>' : '') + '</h3>' + vfDibujar(deAhora);
+        if (antes.length) html += '<h3 class="vf-sec ant">Quedaron de turnos anteriores <small>' + antes.length + (antes.length === 1 ? ' ID' : ' IDs') + '</small></h3><p class="vf-ant">Se anotaron antes de que empezara tu turno: le tocaban al monitor anterior. Verifícalos también.</p>' + vfDibujar(antes);
+      }
     }
   } else if (MON.tab === 'pend') {
     html += cab('pend', 'Pendientes', 'Lo que debes corregir o diligenciar en la hoja del mes. Al hacerlo, se quitan solos de esta lista en uno o dos minutos.');
