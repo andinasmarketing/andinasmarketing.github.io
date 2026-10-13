@@ -16,10 +16,10 @@
 /* Puente con Google Sheets: la página pide y guarda los datos en el enlace /exec del proyecto (Web.gs). Imita google.script.run. */
 window.API_URL = 'https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec';
 (function () {
-  var n = 0, VER = 'web 21', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
+  var n = 0, VER = 'web 23', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
   document.addEventListener('DOMContentLoaded', function () { var v = document.createElement('div'); v.textContent = VER; v.style.cssText = 'position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999'; document.body.appendChild(v); });
   // Aviso de versión nueva: cada 5 minutos (y al volver a la pestaña) se mira si en GitHub hay una página distinta a la abierta
-  var HUELLA = '6dd7074c4461';
+  var HUELLA = '10f2c0e8a356';
   function revisarVersion() {
     if (document.getElementById('avisoVersion')) return;
     fetch(location.pathname + '?huella=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -73,6 +73,43 @@ window.API_URL = 'https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
     .vt-cel tr { border-bottom: 1px solid var(--line); padding: 8px 2px; }
     .vt-cel td { border: 0 !important; padding: 2px 0 !important; text-align: left !important; }
     .vt-cel td[data-l]::before { content: attr(data-l) ": "; color: var(--muted); font-size: 12px; font-weight: 700; }
+  }
+  /* Personal de la semana (horarios): negro y dorado de la marca, cada turno con el color del archivo de horarios */
+  .pe-sec { border-top: 3px solid var(--oro); }
+  .pe-head { display: flex; gap: 12px; align-items: center; margin-bottom: 6px; }
+  .pe-head h2 { margin: 0; }
+  .pe-hi { width: 44px; height: 44px; border-radius: 12px; background: #0B0B0D; border: 1px solid var(--oro); display: grid; place-items: center; flex: none; }
+  .pe-hi svg, .pe-bi svg { width: 22px; height: 22px; fill: none; stroke: var(--oro-claro, #E6C766); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .pe-blo { margin-top: 18px; }
+  .pe-bt { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px; background: linear-gradient(90deg, #0B0B0D, #1C1A12); color: #F6F1E4; margin-bottom: 10px; }
+  .pe-bt b { font-size: 15px; letter-spacing: .04em; text-transform: uppercase; color: var(--oro-claro, #E6C766); }
+  .pe-bt em { margin-left: auto; font-style: normal; font-size: 12px; font-weight: 800; background: var(--oro); color: #0B0B0D; border-radius: 999px; padding: 2px 10px; }
+  .pe-bi { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: rgba(201,162,39,.15); }
+  .pe-bi svg { width: 18px; height: 18px; }
+  .pe-av { width: 40px; height: 40px; border-radius: 50%; flex: none; display: grid; place-items: center; font-weight: 800; font-size: 14px; letter-spacing: .02em;
+    background: radial-gradient(circle at 30% 25%, #F3DC8C, #C9A227 60%, #8E6C12); color: #0B0B0D; box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px rgba(201,162,39,.55); }
+  .pe-enc { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+  .pe-card { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); box-shadow: 0 1px 0 rgba(0,0,0,.03); }
+  .pe-card b, .pe-quien b { display: block; font-size: 15px; margin-bottom: 4px; }
+  .pe-jor { display: inline-block; font-size: 12px; font-weight: 800; border-radius: 999px; padding: 3px 10px; }
+  .pe-lista { display: grid; gap: 10px; }
+  .pe-fila { display: grid; grid-template-columns: minmax(200px, 250px) 1fr; gap: 14px; align-items: center; padding: 12px 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); }
+  .pe-quien { display: flex; gap: 12px; align-items: center; min-width: 0; }
+  .pe-dias { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+  .pe-chip { border-radius: 10px; padding: 6px 4px 7px; text-align: center; border: 1px solid transparent; min-height: 58px; display: flex; flex-direction: column; justify-content: center; line-height: 1.15; }
+  .pe-chip i { font-style: normal; font-size: 10.5px; font-weight: 700; opacity: .75; text-transform: uppercase; letter-spacing: .03em; }
+  .pe-chip b { font-size: 14px; font-weight: 800; margin-top: 2px; }
+  .pe-chip small { font-size: 11px; font-weight: 600; opacity: .85; }
+  .pe-chip.libre b { font-size: 12px; }
+  .pe-ct { display: none; }
+  .pe-chip.vacio { background: var(--paper); color: var(--faint); border: 1px dashed var(--line); }
+  .pe-chip.hoy { box-shadow: 0 0 0 2px var(--oro), 0 4px 12px rgba(201,162,39,.25); }
+  @media (max-width: 760px) {
+    .pe-fila { grid-template-columns: 1fr; gap: 10px; }
+    .pe-dias { gap: 4px; }
+    .pe-chip { padding: 5px 2px 6px; min-height: 52px; border-radius: 8px; }
+    .pe-chip i { font-size: 8.5px; letter-spacing: 0; white-space: nowrap; } .pe-chip b { font-size: 12px; } .pe-chip small { font-size: 10px; } .pe-chip.libre b { font-size: 11px; }
+    .pe-a, .pe-lg { display: none; } .pe-ct { display: inline; }
   }
   html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   /* ====== COLORES (cámbialos aquí) ======
@@ -3335,7 +3372,51 @@ function horariosHtml(H, hoy, publico) {
     '<div class="sub-barra" style="margin-top:12px">' + H.semanas.map(x => '<button type="button" data-hs="' + x.l + '" aria-selected="' + (x === sem) + '">' + fe(x.l) + ' al ' + fe(mas(x.l, 6)) + (x === actual ? ' · esta semana' : '') + '</button>').join('') +
     '<select class="hor-g" aria-label="Grupo" style="margin-left:8px"><option value="">Todos los grupos</option>' + grupos.map(g => '<option value="' + esc(g) + '"' + (g === NOVUI.hg ? ' selected' : '') + '>' + esc(titulo(g)) + '</option>').join('') + '</select></div>' + '</section>';
   h += descansosHtml(sem, H, iHoy);
+  h += personalHtml(H, sem, iHoy);
   return h;
+}
+/**
+ * Horario del personal de la semana elegida (pestañas "Personal" del archivo de horarios): encargados solo con su jornada;
+ * supervisores y monitores con el horario de cada día.
+ */
+function personalHtml(H, sem, iHoy) {
+  const P = (H.personal || []).filter(x => x.l === sem.l)[0]; if (!P || !P.b || !P.b.length) return '';
+  const DS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'], nom = { ENCARGADOS: 'Encargados', SUPERVISORES: 'Supervisores', MONITORES: 'Monitores', OTROS: 'Otros' };
+  const ico = { ENCARGADOS: '<path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8-4.3-4.1 5.9-.9z"/>', SUPERVISORES: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/>', MONITORES: '<path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>', OTROS: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/>' };
+  const ini = n => String(n || '').trim().split(/\s+/).slice(0, 2).map(p => p.charAt(0)).join('').toUpperCase();
+  const corta = hm => { if (!hm) return ''; let h = Number(hm.slice(0, 2)); const m = hm.slice(3, 5), ap = h >= 12 ? 'p' : 'a'; h = h % 12 || 12; return h + (m !== '00' ? ':' + m : '') + ap; };
+  const chip = (v, k) => {
+    const x = v ? horarioTipo(v, H) : null, c = colorHorario(v, x && x.e), hoy = k === iHoy ? ' hoy' : '';
+    const dia = '<i>' + DS[k] + ' ' + Number(ymdMas(sem.l, k).slice(8)) + '</i>';
+    if (!v) return '<div class="pe-chip vacio' + hoy + '">' + dia + '<b>—</b></div>';
+    const est = 'background:' + c.f + ';color:' + c.t + (c.b ? ';border-color:' + c.b : '');
+    if (!x || x.desc || !x.e) { const t = x ? x.n : v, ct = nrm(t) === 'DESCANSO' ? 'Libre' : t.length > 7 ? t.slice(0, 5) + '.' : t;
+      return '<div class="pe-chip libre' + hoy + '" style="' + est + '" title="' + esc(t) + '">' + dia + '<b><span class="pe-lg">' + esc(t) + '</span><span class="pe-ct">' + esc(ct) + '</span></b></div>'; }
+    return '<div class="pe-chip' + hoy + '" style="' + est + '" title="' + esc(x.n) + ': ' + esc(hora12(x.e)) + ' a ' + esc(hora12(x.s)) + '">' + dia + '<b>' + esc(corta(x.e)) + '</b><small><span class="pe-a">a </span>' + esc(corta(x.s)) + '</small></div>';
+  };
+  const pillJ = j => { if (!j) return '<span class="pe-jor" style="background:var(--line-2);color:var(--muted)">Sin jornada</span>'; const x = horarioTipo(j, H), c = colorHorario(j, x && x.e);
+    return '<span class="pe-jor" style="background:' + c.f + ';color:' + c.t + '">' + esc(j) + (x && x.e ? ' · ' + esc(hora12(x.e)) + ' a ' + esc(hora12(x.s)) : '') + '</span>'; };
+  let h = '<section class="panel pe-sec"><div class="pe-head"><span class="pe-hi"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.2A4.6 4.6 0 0 1 21 19"/></svg></span><div><h2>Personal de la semana</h2>' +
+    '<div class="sub">Encargados, supervisores y monitores del ' + Number(sem.l.slice(8)) + '/' + sem.l.slice(5, 7) + ' al ' + ymdMas(sem.l, 6).slice(8) + '/' + ymdMas(sem.l, 6).slice(5, 7) + '.</div></div></div>';
+  P.b.forEach(b => {
+    h += '<div class="pe-blo"><div class="pe-bt"><span class="pe-bi"><svg viewBox="0 0 24 24" aria-hidden="true">' + (ico[b.c] || ico.OTROS) + '</svg></span><b>' + esc(nom[b.c] || titulo(b.c)) + '</b><em>' + b.f.length + '</em></div>';
+    if (b.c === 'ENCARGADOS') {
+      h += '<div class="pe-enc">' + b.f.map(r => '<div class="pe-card"><span class="pe-av">' + esc(ini(r[0])) + '</span><div><b>' + esc(titulo(r[0])) + '</b>' + pillJ(r[1]) + '</div></div>').join('') + '</div></div>';
+      return;
+    }
+    h += '<div class="pe-lista">' + b.f.map(r => '<div class="pe-fila"><div class="pe-quien"><span class="pe-av">' + esc(ini(r[0])) + '</span><div><b>' + esc(titulo(r[0])) + '</b>' + pillJ(r[1]) + '</div></div>' +
+      '<div class="pe-dias">' + [0, 1, 2, 3, 4, 5, 6].map(k => chip(r[2][k], k)).join('') + '</div></div>').join('') + '</div></div>';
+  });
+  return h + '</section>';
+}
+/** Colores de cada horario, los mismos del archivo de horarios: { f: fondo, t: letra, b: borde }. */
+function colorHorario(n, entra) {
+  const k = nrm(n), F = { 'MANANA': ['#FFF4B8', '#6B5600'], 'TARDE': ['#FFDCD2', '#8A3324'], 'NOCHE': ['#D7DBF7', '#2E3570'], 'DESCANSO': ['#0F7B5F', '#FFFFFF'],
+    'VACACIONES': ['#15161A', '#E7C35A'], 'PERMISO O INCAPACIDAD': ['#3A3B40', '#FFFFFF'], 'RETIRADO': ['#D9D9D9', '#6B6B6B'], 'MONITOR 6 A 18': ['#FFE7A8', '#6B4A00'], 'MONITOR 18 A 6': ['#2B2F45', '#FFE7A8'] }[k];
+  if (F) return { f: F[0], t: F[1] };
+  if (entra) { const L = [[6, '#CFE3FF', '#0B3D6E'], [7, '#C9EFE0', '#0E5A43'], [8, '#DDF2C2', '#3B5A10'], [9, '#CDEDED', '#1F5C5C'], [10, '#FFC78A', '#6B3300'], [14, '#E4D3F7', '#4B2377'], [18, '#F8CFE0', '#7A1F47'], [20, '#1F4E9C', '#FFFFFF']];
+    const hh = Number(String(entra).slice(0, 2)); let c = L[0]; L.forEach(x => { if (hh >= x[0]) c = x; }); return { f: c[1], t: c[2] }; }
+  return { f: 'var(--paper)', t: 'var(--ink)', b: 'var(--line)' };
 }
 /* ---------- Descansos y coberturas: imagen por día, como el cuadro que se manejaba (quién descansa y qué turno hacen sus compañeros) ---------- */
 const DIAS_L = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
@@ -3561,7 +3642,10 @@ function horAbrir() {
   const llave = cr.o + '|' + cr.k;
   if (HORPUB && HORPUB_K === llave && Date.now() - HORPUB_T < 60000) return horPintar();
   const listo = d => { HORPUB = d; HORPUB_T = Date.now(); HORPUB_K = llave; horPintar(); };
-  if (!esApps) return listo(Object.assign({ hoy: new Date().toISOString().slice(0, 10) }, demoTurnos(demo()).horarios));
+  if (!esApps) { const hd = Object.assign({ hoy: new Date().toISOString().slice(0, 10) }, demoTurnos(demo()).horarios); const l0 = (hd.semanas[hd.semanas.length - 1] || {}).l;
+    hd.personal = l0 ? [{ l: l0, b: [{ c: 'ENCARGADOS', f: [['ALEXANDER COLINA', 'Mañana', []], ['MAURICIO TORREALBA', 'Noche', []]] }, { c: 'SUPERVISORES', f: [['JESUS ENRIQUE', 'Mañana', ['Mañana', 'Mañana', 'Descanso', 'Mañana', 'Mañana', 'Monitor 6 a 18', 'Mañana']]] },
+      { c: 'MONITORES', f: [['LUIZZANA MUÑOZ', 'Mañana', ['Mañana', 'Mañana', 'Mañana', 'Descanso', 'Mañana', 'Mañana', 'Mañana']], ['ZHUHEY STAPER', 'Tarde', ['Tarde', 'Tarde', 'Tarde', 'Tarde', 'Descanso', 'Monitor 18 a 6', 'Tarde']]] }] }] : [];
+    return listo(hd); }
   if (!HORPUB || HORPUB_K !== llave) c.innerHTML = '<div class="state">Cargando…</div>';
   google.script.run.withFailureHandler(() => { c.innerHTML = '<div class="state">No se pudieron cargar los horarios. Intenta de nuevo.</div>'; })
     .withSuccessHandler(t => { let d; try { d = JSON.parse(t); } catch (e) { d = null; }
@@ -3581,7 +3665,7 @@ setInterval(() => {
   const llave = cr.o + '|' + cr.k; if (llave !== HORPUB_K) return;
   google.script.run.withSuccessHandler(t => { let d; try { d = JSON.parse(t); } catch (e) { return; }
       if (!d || !d.semanas) return;
-      const antes = JSON.stringify([HORPUB.semanas, HORPUB.pend]), ahora = JSON.stringify([d.semanas, d.pend]);
+      const antes = JSON.stringify([HORPUB.semanas, HORPUB.pend, HORPUB.personal]), ahora = JSON.stringify([d.semanas, d.pend, d.personal]);
       HORPUB_T = Date.now(); if (antes === ahora) return;
       const nuevas = d.semanas.filter(x => !HORPUB.semanas.some(y => y.l === x.l));
       HORPUB = d; const y = window.scrollY; horPintar(); window.scrollTo(0, y);
