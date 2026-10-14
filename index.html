@@ -16,10 +16,10 @@
 /* Puente con Google Sheets: la página pide y guarda los datos en el enlace /exec del proyecto (Web.gs). Imita google.script.run. */
 window.API_URL = 'https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec';
 (function () {
-  var n = 0, VER = 'web 25', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
+  var n = 0, VER = 'web 26', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
   document.addEventListener('DOMContentLoaded', function () { var v = document.createElement('div'); v.textContent = VER; v.style.cssText = 'position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999'; document.body.appendChild(v); });
   // Aviso de versión nueva: cada 5 minutos (y al volver a la pestaña) se mira si en GitHub hay una página distinta a la abierta
-  var HUELLA = '1acc8f4f0b09';
+  var HUELLA = 'b1b38e312e71';
   function revisarVersion() {
     if (document.getElementById('avisoVersion')) return;
     fetch(location.pathname + '?huella=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -632,6 +632,22 @@ window.API_URL = 'https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
   .kpi { border: 1px solid var(--line-2); border-left: 6px solid var(--line); border-radius: 10px; padding: 10px 14px; }
   .kpi b { display: block; font-size: 30px; font-weight: 800; font-stretch: 118%; line-height: 1.1; }
   .kpi span { font-size: 13px; color: var(--muted); }
+  .t10-ver { border-radius: 12px; padding: 14px 16px; margin: 0 0 14px; font-size: 15px; line-height: 1.45; border: 1px solid var(--line-2); border-left: 6px solid var(--line); }
+  .t10-ver b.t { display: block; font-size: 18px; margin-bottom: 2px; }
+  .t10-ver.si { border-left-color: #1E8449; } .t10-ver.med { border-left-color: #D68910; } .t10-ver.no { border-left-color: var(--down); }
+  .t10-k { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 0 0 14px; }
+  .t10-k > div { border: 1px solid var(--line-2); border-radius: 10px; padding: 10px 14px; }
+  .t10-k b { display: block; font-size: 26px; font-weight: 800; line-height: 1.15; }
+  .t10-k span { font-size: 13px; color: var(--muted); }
+  .t10-k small { display: block; font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .t10-bar { display: flex; flex-direction: column; gap: 4px; min-width: 120px; }
+  .t10-bar i { display: block; height: 7px; border-radius: 4px; }
+  .t10-m { margin: 0 0 12px; }
+  #tT10 .t10-cel { display: none; }
+  @media (max-width: 760px) { #tT10 thead { display: none; } #tT10 tr { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line-2); padding: 8px 0; }
+    #tT10 td { display: none; border: 0; padding: 2px 4px; } #tT10 td.name, #tT10 td:last-child, #tT10 td.t10-cel { display: block; } #tT10 td.t10-cel { order: 3; width: 100%; font-size: 13.5px; color: var(--muted); }
+    #tT10 td.t10-cel b { color: var(--text, inherit); } #tT10 .pill { white-space: nowrap; } }
+  @media (max-width: 760px) { .t10-k { grid-template-columns: repeat(2, minmax(0, 1fr)); } .t10-k b { font-size: 22px; } }
   .kpi.v { border-left-color: var(--oro); } .kpi.a { border-left-color: #D68910; } .kpi.r { border-left-color: var(--down); }
   .g-sec { margin: 18px 0 10px; font-size: 15px; font-weight: 750; padding-left: 10px; border-left: 4px solid var(--line); }
   .g-sec.v { border-left-color: var(--oro); } .g-sec.a { border-left-color: #D68910; } .g-sec.r { border-left-color: var(--down); }
@@ -1249,6 +1265,7 @@ window.API_URL = 'https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
         <button class="btn ghost" id="pgClear" type="button">Quitar filtros</button>
       </div>
       <div id="pgCuerpo"></div>
+      <div id="pgT10"></div>
     </div>
     <div id="vistaDash" hidden>
 <div class="wrap">
@@ -4944,6 +4961,88 @@ document.getElementById('ptGrupo').onchange = e => {
 };
 document.getElementById('ptOp').onchange = e => { if (window.avisoTurnoDe) window.avisoTurnoDe(null); PT.op = e.target.value; PT.pin = ''; PT.yo = ''; document.getElementById('ptCuerpo').innerHTML = '<div class="panel vacio">Cargando…</div>'; ptCargarOp(); };
 
+/* ---------- Turnos de 10 horas contra turnos de 8 horas (solo supervisión) ---------- */
+const T10S = { d: null, cargando: false, mes: '', err: '' };
+function ptT10() {
+  const c = document.getElementById('pgT10'); if (!c) return;
+  if (!T10S.d) {
+    c.innerHTML = '<section class="panel"><h2>Turnos de 10 horas vs. turnos de 8 horas</h2><div class="state" style="padding:14px 0">' + (T10S.err ? esc(T10S.err) : 'Cargando…') + '</div></section>';
+    if (T10S.cargando || T10S.err) return;
+    T10S.cargando = true;
+    const ok = t => { T10S.cargando = false; let d; try { d = JSON.parse(t); } catch (e) { d = { ok: false, error: 'La respuesta no se pudo leer.' }; }
+      if (d.ok) T10S.d = d; else T10S.err = d.error || 'No se pudo hacer el análisis.'; ptT10(); };
+    if (esApps) google.script.run.withSuccessHandler(ok).withFailureHandler(e => ok(JSON.stringify({ ok: false, error: e && e.message ? e.message : String(e) }))).analisisTurnos(clave);
+    else setTimeout(() => ok(JSON.stringify(ptT10Demo())), 150);
+    return;
+  }
+  ptT10Render(c);
+}
+function ptT10Render(c) {
+  const D = T10S.d, meses = D.meses || [];
+  if (!meses.length) { c.innerHTML = '<section class="panel"><h2>Turnos de 10 horas vs. turnos de 8 horas</h2><div class="sub">Todavía no hay días para comparar: hacen falta días ya terminados con horario y puntos anotados.</div></section>'; return; }
+  if (T10S.mes !== 'todo' && !meses.some(x => x.m === T10S.mes)) T10S.mes = meses[0].m;
+  const usados = T10S.mes === 'todo' ? meses : meses.filter(x => x.m === T10S.mes);
+  // Jornada de cada operador (del archivo de puntos), para el filtro de jornada
+  const jor = {}; ((PG.datos || {}).grupos || []).forEach(g => g.ops.forEach(o => { jor[g.g + '|' + o.n] = o.j; }));
+  const acc = {};
+  usados.forEach(M => M.ops.forEach(r => { const k = r[0] + '|' + r[1]; const a = acc[k] = acc[k] || { g: r[0], n: r[1], n8: 0, s8: 0, n10: 0, s10: 0 };
+    a.n8 += r[2]; a.s8 += r[3]; a.n10 += r[4]; a.s10 += r[5]; }));
+  let ops = Object.keys(acc).map(k => acc[k]).filter(a => (!PG.grupo || a.g === PG.grupo) && (!PG.op || a.n === PG.op) && (!PG.jornada || jor[a.g + '|' + a.n] === PG.jornada));
+  ops.forEach(a => { a.p8 = a.n8 ? a.s8 / a.n8 : null; a.p10 = a.n10 ? a.s10 / a.n10 : null; a.r = a.p8 && a.p10 ? a.p10 / a.p8 : null; a.ok = a.n8 >= 2 && a.n10 >= 2; });
+  const ambos = ops.filter(a => a.r !== null);
+  const prom = xs => xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : 0;
+  const P8 = prom(ambos.map(a => a.p8)), P10 = prom(ambos.map(a => a.p10)), R = P8 ? P10 / P8 : null;
+  const veredicto = r => r === null ? null : r >= 1.2 ? { k: 'si', c: 'ok', t: 'Sí rinde' } : r >= 1.05 ? { k: 'med', c: 'riesgo', t: 'Rinde a medias' } : { k: 'no', c: 'bajo', t: 'No rinde' };
+  const V = veredicto(R), pctTxt = r => (r >= 1 ? '+' : '') + fmt0.format((r - 1) * 100) + '%';
+  const extraH = (P10 - P8) / 2, normH = P8 / 8;
+  const DOW = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
+  const dows = []; usados.forEach(M => (M.dows || []).forEach(w => { if (dows.indexOf(w) < 0) dows.push(w); })); dows.sort();
+  const listaDias = dows.map(w => DOW[w]).join(', ').replace(/, ([^,]*)$/, ' y $1');
+  const nomMes = M => titMes(M.nom) + (M.hasta ? ' (hasta el ' + M.hasta + ')' : '');
+  let h = '<section class="panel"><h2>Turnos de 10 horas vs. turnos de 8 horas</h2><div class="sub">¿Las 2 horas extra del turno largo sí dan puntos? Se compara a cada operador consigo mismo: lo que hace en un día de 10 horas contra lo que hace en un día de 8 horas. ' +
+    'El turno de 10 horas tiene <b>25% más tiempo</b>, así que para que valga la pena los puntos deberían subir más o menos eso.</div>';
+  if (meses.length > 1) h += '<div class="seg-ctrl t10-m" id="t10Mes">' + meses.map(M => '<button type="button" data-v="' + M.m + '" aria-pressed="' + (T10S.mes === M.m) + '">' + esc(titMes(M.nom)) + '</button>').join('') + '<button type="button" data-v="todo" aria-pressed="' + (T10S.mes === 'todo') + '">Todos los meses</button></div>';
+  if (!ambos.length) h += '<div class="t10-ver"><b class="t">Todavía no se puede comparar</b>' + (ops.length ? 'Hay operadores con días de un solo tipo, pero ninguno con días de 8 y de 10 horas a la vez' + (PG.grupo || PG.op || PG.jornada ? ' en esta selección' : '') + '.' : 'No hay días con horario y puntos' + (PG.grupo || PG.op || PG.jornada ? ' en esta selección' : '') + '.') + '</div>';
+  else {
+    const quien = PG.op ? esc(titulo(PG.op)) : PG.grupo ? 'El grupo ' + esc(PG.grupo) : 'El equipo';
+    h += '<div class="t10-ver ' + V.k + '"><b class="t">' + (V.k === 'si' ? '✅ Sí está siendo viable' : V.k === 'med' ? '⚠️ Rinde, pero menos de lo que debería' : '❌ No está siendo viable') + '</b>' +
+      quien + ' hace en promedio <b>' + fmtP.format(P10) + ' puntos</b> en un día de 10 horas y <b>' + fmtP.format(P8) + '</b> en uno de 8 horas: <b>' + pctTxt(R) + '</b>. ' +
+      (V.k === 'si' ? 'Las 2 horas extra rinden casi como las normales.' : V.k === 'med' ? 'Las 2 horas extra sí suman, pero a menor ritmo que el resto del turno.' : 'Con 2 horas más hacen casi lo mismo que en 8 horas; las horas extra casi no están dando puntos.') + '</div>';
+    h += '<div class="t10-k">' +
+      '<div><span>Promedio en 8 horas</span><b>' + fmtP.format(P8) + '</b><small>' + fmtP.format(normH) + ' puntos por hora</small></div>' +
+      '<div><span>Promedio en 10 horas</span><b>' + fmtP.format(P10) + '</b><small>' + fmtP.format(P10 / 10) + ' puntos por hora</small></div>' +
+      '<div><span>Diferencia</span><b>' + pctTxt(R) + '</b><small>Para que valga la pena: +25%</small></div>' +
+      '<div><span>Las 2 horas extra</span><b>' + fmtP.format(Math.max(0, extraH)) + '</b><small>puntos por hora (normal: ' + fmtP.format(normH) + ')</small></div></div>';
+  }
+  const filas = ops.slice().sort((a, b) => (b.ok - a.ok) || ((b.r === null ? -9 : b.r) - (a.r === null ? -9 : a.r)));
+  const mx = Math.max.apply(null, filas.map(a => Math.max(a.p8 || 0, a.p10 || 0)).concat([1]));
+  h += '<div class="table-scroll"><table id="tT10"><thead><tr><th>Operador</th><th class="num">Días de 8 h</th><th class="num">Promedio 8 h</th><th class="num">Días de 10 h</th><th class="num">Promedio 10 h</th><th></th><th class="num">Diferencia</th><th class="num">Pts/hora 8 h</th><th class="num">Pts/hora 10 h</th><th>Resultado</th></tr></thead><tbody>' +
+    (filas.length ? filas.map(a => { const v = a.ok ? veredicto(a.r) : null;
+      return '<tr><td class="name"><b>' + esc(a.n) + '</b><small>' + esc(a.g) + '</small></td><td class="num">' + a.n8 + '</td><td class="num">' + (a.p8 === null ? '—' : fmtP.format(a.p8)) + '</td>' +
+        '<td class="num">' + a.n10 + '</td><td class="num"><b>' + (a.p10 === null ? '—' : fmtP.format(a.p10)) + '</b></td>' +
+        '<td><div class="t10-bar"><i style="width:' + ((a.p8 || 0) / mx * 100).toFixed(1) + '%;background:var(--line)"></i><i style="width:' + ((a.p10 || 0) / mx * 100).toFixed(1) + '%;background:var(--oro)"></i></div></td>' +
+        '<td class="num ' + (a.r === null ? '' : a.r >= 1.2 ? 'sube' : a.r < 1.05 ? 'baja' : '') + '">' + (a.r === null ? '—' : pctTxt(a.r)) + '</td>' +
+        '<td class="num">' + (a.p8 === null ? '—' : fmtP.format(a.p8 / 8)) + '</td><td class="num">' + (a.p10 === null ? '—' : fmtP.format(a.p10 / 10)) + '</td>' +
+        '<td class="t10-cel">8 h: <b>' + (a.p8 === null ? '—' : fmtP.format(a.p8)) + '</b> (' + a.n8 + (a.n8 === 1 ? ' día' : ' días') + ') · 10 h: <b>' + (a.p10 === null ? '—' : fmtP.format(a.p10)) + '</b> (' + a.n10 + (a.n10 === 1 ? ' día' : ' días') + ')' + (a.r === null ? '' : ' · <b>' + pctTxt(a.r) + '</b>') + '</td>' +
+        '<td>' + (v ? ptPill(v) : '<span class="pill neutro">' + (a.r === null ? 'Sin los dos tipos' : 'Pocos días') + '</span>') + '</td></tr>'; }).join('')
+      : '<tr><td colspan="10" class="vacio">Ningún operador coincide.</td></tr>') + '</tbody></table></div>';
+  h += '<p class="nota"><b>Cómo se calcula:</b> el tipo de día sale del horario de cada semana (pestañas "Semana …"): 8 horas = Mañana, Tarde o Noche; 10 horas = los turnos "Largo". ' +
+    'Solo cuentan días ya terminados y con puntos anotados. Los días de 8 horas se toman solo de los mismos días de la semana en que hubo turnos de 10' + (listaDias ? ' (' + listaDias + ')' : '') + ', porque el fin de semana el movimiento es distinto. ' +
+    'Barra gris = promedio en 8 h · barra dorada = promedio en 10 h. El resultado de cada operador aparece con al menos 2 días de cada tipo. ' +
+    '<b>Ojo:</b> los días de 10 horas son cuando un compañero del grupo descansa, así que pueden llegarle más clientes de lo normal; eso puede inflar un poco el resultado. ' +
+    'Meses: ' + usados.map(nomMes).join(', ') + '. Cada mes queda guardado para verlo después.' +
+    ((D.sin || []).length ? ' Sin horario encontrado (no entran): ' + D.sin.map(esc).join(', ') + '.' : '') + '</p></section>';
+  c.innerHTML = h;
+  c.querySelectorAll('#t10Mes button').forEach(b => b.onclick = () => { T10S.mes = b.dataset.v; ptT10Render(c); });
+}
+function ptT10Demo() {
+  if (window.DEMO_T10) return window.DEMO_T10;
+  const r = (a, b) => +(a + Math.random() * (b - a)).toFixed(2), ops = [];
+  ['GRUPO UNO', 'GRUPO DOS', 'GRUPO TRES'].forEach((g, gi) => [1, 2, 3].forEach(k => { const n8 = 6 + k, n10 = 2 + (k % 2), f = gi + 1, sube = [1.3, 1.1, 0.98][(gi + k) % 3];
+    ops.push([g, 'OPERADOR ' + (gi * 3 + k), n8, +(n8 * 40 * f).toFixed(2), n10, +(n10 * 40 * f * sube * r(0.97, 1.03)).toFixed(2)]); }));
+  return { ok: true, meses: [{ m: '2026-10', nom: 'OCTUBRE', hasta: 13, dows: [0, 1, 2, 3], ops }], sin: [] };
+}
+
 /* ---------- Vista de supervisión: general, por grupo e individual ---------- */
 function ptAbrirGen() { if (!PG.datos) ptCargarGen(false); else ptRenderGen(); }
 function ptCargarGen(forzar) {
@@ -4981,6 +5080,7 @@ function ptRenderGen() {
   const d = PG.datos, c = document.getElementById('pgCuerpo');
   if (!d) return;
   document.getElementById('pgEst').textContent = ptEstado(d);
+  ptT10();
   const sem = ptSemanas(d), n = d.ultimo, semVis = sem.filter(s => s[0] <= Math.max(1, n));
   const todos = ptOperadores(d);
   const vis = todos.filter(x => (!PG.grupo || x.g.g === PG.grupo) && (!PG.jornada || x.o.j === PG.jornada) && (!PG.op || x.o.n === PG.op));
