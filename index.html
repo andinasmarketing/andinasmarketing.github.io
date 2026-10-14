@@ -16,10 +16,10 @@
 /* Puente con Google Sheets: la página pide y guarda los datos en el enlace /exec del proyecto (Web.gs). Imita google.script.run. */
 window.API_URL = 'https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec';
 (function () {
-  var n = 0, VER = 'web 26', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
+  var n = 0, VER = 'web 27', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
   document.addEventListener('DOMContentLoaded', function () { var v = document.createElement('div'); v.textContent = VER; v.style.cssText = 'position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999'; document.body.appendChild(v); });
   // Aviso de versión nueva: cada 5 minutos (y al volver a la pestaña) se mira si en GitHub hay una página distinta a la abierta
-  var HUELLA = 'b1b38e312e71';
+  var HUELLA = '49da05b1fa2d';
   function revisarVersion() {
     if (document.getElementById('avisoVersion')) return;
     fetch(location.pathname + '?huella=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -1504,6 +1504,7 @@ document.addEventListener('keydown', e => {
 
 /* ================== Preparación ================== */
 function preparar(d) {
+  d.filas = (d.filas || []).filter(f => !f.sinPerfil);      // "PERFIL / SIN PERFIL @día": esos días la fila no tiene perfil (no se muestra)
   const meses = d.meses.slice().sort((a, b) => a.clave < b.clave ? -1 : 1);
   const mesPorClave = {};
   meses.forEach(m => { m.conDatos = new Array(m.diasMes).fill(false); m.ultimoDia = 0; mesPorClave[m.clave] = m; });
