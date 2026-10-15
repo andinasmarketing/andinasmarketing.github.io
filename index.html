@@ -16,10 +16,10 @@
 /* Puente con Google Sheets: la página pide y guarda los datos en el enlace /exec del proyecto (Web.gs). Imita google.script.run. */
 window.API_URL = 'https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec';
 (function () {
-  var n = 0, VER = 'web 29', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
+  var n = 0, VER = 'web 30', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
   document.addEventListener('DOMContentLoaded', function () { var v = document.createElement('div'); v.textContent = VER; v.style.cssText = 'position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999'; document.body.appendChild(v); });
   // Aviso de versión nueva: cada 5 minutos (y al volver a la pestaña) se mira si en GitHub hay una página distinta a la abierta
-  var HUELLA = 'ba7306535931';
+  var HUELLA = '50780cd66fba';
   function revisarVersion() {
     if (document.getElementById('avisoVersion')) return;
     fetch(location.pathname + '?huella=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -3452,7 +3452,7 @@ function personalHtml(H, sem, iHoy) {
 /** Colores de cada horario, los mismos del archivo de horarios: { f: fondo, t: letra, b: borde }. */
 function colorHorario(n, entra) {
   const k = nrm(n), F = { 'MANANA': ['#FFF4B8', '#6B5600'], 'TARDE': ['#FFDCD2', '#8A3324'], 'NOCHE': ['#D7DBF7', '#2E3570'], 'DESCANSO': ['#0F7B5F', '#FFFFFF'],
-    'VACACIONES': ['#15161A', '#E7C35A'], 'PERMISO O INCAPACIDAD': ['#3A3B40', '#FFFFFF'], 'RETIRADO': ['#D9D9D9', '#6B6B6B'], 'MONITOR 6 A 18': ['#FFE7A8', '#6B4A00'], 'MONITOR 18 A 6': ['#2B2F45', '#FFE7A8'] }[k];
+    'VACACIONES': ['#15161A', '#E7C35A'], 'PERMISO O INCAPACIDAD': ['#3A3B40', '#FFFFFF'], 'RETIRADO': ['#D9D9D9', '#6B6B6B'], 'MONITOR 6 A 18': ['#FFE7A8', '#6B4A00'], 'MONITOR 18 A 6': ['#2B2F45', '#FFE7A8'], 'LARGO 6 A 18': ['#FFE7A8', '#6B4A00'], 'LARGO 18 A 6': ['#2B2F45', '#FFE7A8'] }[k];
   if (F) return { f: F[0], t: F[1] };
   if (entra) { const L = [[6, '#CFE3FF', '#0B3D6E'], [7, '#C9EFE0', '#0E5A43'], [8, '#DDF2C2', '#3B5A10'], [9, '#CDEDED', '#1F5C5C'], [10, '#FFC78A', '#6B3300'], [14, '#E4D3F7', '#4B2377'], [18, '#F8CFE0', '#7A1F47'], [20, '#1F4E9C', '#FFFFFF']];
     const hh = Number(String(entra).slice(0, 2)); let c = L[0]; L.forEach(x => { if (hh >= x[0]) c = x; }); return { f: c[1], t: c[2] }; }
@@ -3683,8 +3683,8 @@ function horAbrir() {
   if (HORPUB && HORPUB_K === llave && Date.now() - HORPUB_T < 60000) return horPintar();
   const listo = d => { HORPUB = d; HORPUB_T = Date.now(); HORPUB_K = llave; horPintar(); };
   if (!esApps) { const hd = Object.assign({ hoy: new Date().toISOString().slice(0, 10) }, demoTurnos(demo()).horarios); const l0 = (hd.semanas[hd.semanas.length - 1] || {}).l;
-    hd.personal = l0 ? [{ l: l0, b: [{ c: 'ENCARGADOS', f: [['ALEXANDER COLINA', 'Mañana', []], ['MAURICIO TORREALBA', 'Noche', []]] }, { c: 'SUPERVISORES', f: [['JESUS ENRIQUE', 'Mañana', ['Mañana', 'Mañana', 'Descanso', 'Mañana', 'Mañana', 'Monitor 6 a 18', 'Mañana']]] },
-      { c: 'MONITORES', f: [['LUIZZANA MUÑOZ', 'Mañana', ['Mañana', 'Mañana', 'Mañana', 'Descanso', 'Mañana', 'Mañana', 'Mañana']], ['ZHUHEY STAPER', 'Tarde', ['Tarde', 'Tarde', 'Tarde', 'Tarde', 'Descanso', 'Monitor 18 a 6', 'Tarde']]] }] }] : [];
+    hd.personal = l0 ? [{ l: l0, b: [{ c: 'ENCARGADOS', f: [['ALEXANDER COLINA', 'Mañana', []], ['MAURICIO TORREALBA', 'Noche', []]] }, { c: 'SUPERVISORES', f: [['JESUS ENRIQUE', 'Mañana', ['Mañana', 'Mañana', 'Descanso', 'Mañana', 'Mañana', 'Largo 6 a 18', 'Mañana']]] },
+      { c: 'MONITORES', f: [['LUIZZANA MUÑOZ', 'Mañana', ['Mañana', 'Mañana', 'Mañana', 'Descanso', 'Mañana', 'Mañana', 'Mañana']], ['ZHUHEY STAPER', 'Tarde', ['Tarde', 'Tarde', 'Tarde', 'Tarde', 'Descanso', 'Largo 18 a 6', 'Tarde']]] }] }] : [];
     return listo(hd); }
   if (!HORPUB || HORPUB_K !== llave) c.innerHTML = '<div class="state">Cargando…</div>';
   google.script.run.withFailureHandler(() => { c.innerHTML = '<div class="state">No se pudieron cargar los horarios. Intenta de nuevo.</div>'; })
