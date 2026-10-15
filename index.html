@@ -16,10 +16,10 @@
 /* Puente con Google Sheets: la página pide y guarda los datos en el enlace /exec del proyecto (Web.gs). Imita google.script.run. */
 window.API_URL = 'https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec';
 (function () {
-  var n = 0, VER = 'web 28', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
+  var n = 0, VER = 'web 29', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
   document.addEventListener('DOMContentLoaded', function () { var v = document.createElement('div'); v.textContent = VER; v.style.cssText = 'position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999'; document.body.appendChild(v); });
   // Aviso de versión nueva: cada 5 minutos (y al volver a la pestaña) se mira si en GitHub hay una página distinta a la abierta
-  var HUELLA = '5568d5a97fd5';
+  var HUELLA = 'ba7306535931';
   function revisarVersion() {
     if (document.getElementById('avisoVersion')) return;
     fetch(location.pathname + '?huella=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -569,6 +569,7 @@ window.API_URL = 'https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
     background: var(--surface); background-color: var(--surface) !important; color: var(--ink) !important; border-radius: 14px !important; border: 1px solid var(--line) !important; border-top: 3px solid #C9A227 !important;
     box-shadow: none !important; text-align: left !important; font-size: 15px !important; line-height: 1.45 !important; }
   .pr-clave > * { display: block !important; float: none !important; position: static !important; width: auto !important; max-width: none !important; }
+  .pr-clave > .ojo-w { position: relative !important; }      /* el ojo de la clave queda dentro de su casilla */
   .pr-clave h2 { margin: 0 0 6px !important; font-size: 18px !important; }
   .pr-clave .sub { color: var(--muted); font-size: 14px !important; margin: 0 !important; }
   .pr-clave input { display: block !important; width: 100% !important; height: auto !important; min-height: 42px !important; box-sizing: border-box !important; border: 1px solid var(--line) !important;
@@ -1298,9 +1299,10 @@ window.API_URL = 'https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
 
 <div class="pr-clave-fondo" id="keyModal">
   <div class="pr-clave" role="dialog" aria-modal="true" aria-labelledby="keyTitle">
-    <h2 id="keyTitle">Ingresa la clave de supervisión</h2>
-    <div class="sub">Esta vista es solo para el equipo de supervisión.</div>
-    <input type="password" id="keyInput" autocomplete="current-password">
+    <h2 id="keyTitle">Entrar a supervisión</h2>
+    <div class="sub">Solo para encargados, supervisores y administración. Escribe tu nombre y apellido y la clave.</div>
+    <input type="text" id="keyNombre" placeholder="Nombre y apellido" autocomplete="name" aria-label="Nombre y apellido" style="margin-bottom:8px">
+    <input type="password" id="keyInput" placeholder="Clave" autocomplete="current-password" aria-label="Clave">
     <div class="err" id="keyErr"></div>
     <div class="pr-botones">
       <button class="btn" id="keyBtn" type="button">Entrar</button>
@@ -1341,12 +1343,15 @@ const UI = { tendencia: 'jornada', mensual: 'prom', rank: 'perfiles', rankTodo: 
 const charts = {};
 const IDS = { mes: null, filas: [], cargando: false, existe: true, error: '', busqueda: null, perfil: '', todo: false };
 let clave = '';
-try { clave = sessionStorage.getItem('retr_clave') || ''; } catch (e) {}
+let supNombre = '';
+try { clave = sessionStorage.getItem('retr_clave') || ''; supNombre = sessionStorage.getItem('retr_nombre') || ''; } catch (e) {}
+if (clave && !supNombre) { clave = ''; try { sessionStorage.removeItem('retr_clave'); } catch (e) {} }      // sesión de antes: ahora también se pide el nombre
+window.supNombre = () => supNombre || '';
 /** Sesión de supervisión: con la clave ya puesta, las vistas de monitores y de operadores se ven completas sin pedir otra clave. */
 window.claveSup = () => clave || '';
 function marcarSesionSup() { document.body.classList.toggle('con-sup', !!clave); }
 function salirSupervision() {
-  clave = ''; try { sessionStorage.removeItem('retr_clave'); sessionStorage.removeItem('mon_clave'); } catch (e) {}
+  clave = ''; supNombre = ''; try { sessionStorage.removeItem('retr_clave'); sessionStorage.removeItem('retr_nombre'); sessionStorage.removeItem('mon_clave'); } catch (e) {}
   try { if (typeof MON !== 'undefined') MON.clave = ''; } catch (e) {}
   DATA = null; marcarSesionSup();
   try { if (window.ptLimpiar) window.ptLimpiar(); if (window.opLimpiar) window.opLimpiar(); } catch (e) {}
@@ -1362,7 +1367,7 @@ function cargar(forzar) {
     google.script.run
       .withSuccessHandler(t => { b.disabled = false; recibir(t); })
       .withFailureHandler(err => { b.disabled = false; mostrarError(err && err.message ? err.message : String(err)); })
-      .obtenerDatos(clave, !!forzar);
+      .obtenerDatos(clave, !!forzar, supNombre);
   } else {
     setTimeout(() => { b.disabled = false; recibir(JSON.stringify(demoTurnos(demo()))); }, 150);
   }
@@ -1373,10 +1378,13 @@ function recibir(texto) {
   try { d = JSON.parse(texto); } catch (e) { return mostrarError('La respuesta del servidor no se pudo leer.'); }
   marca(d);
   if (!d.ok) {
-    if (d.requiereClave) { clave = ''; try { sessionStorage.removeItem('retr_clave'); } catch (e) {} marcarSesionSup(); return pedirClave(d.error); }
+    if (d.requiereClave) { clave = ''; supNombre = ''; try { sessionStorage.removeItem('retr_clave'); sessionStorage.removeItem('retr_nombre'); } catch (e) {} marcarSesionSup(); return pedirClave(d.error); }
     return mostrarError(d.error || 'No se pudieron cargar los datos.');
   }
   document.getElementById('keyModal').style.display = 'none';
+  if (d.supNombre) { supNombre = d.supNombre; try { sessionStorage.setItem('retr_nombre', supNombre); localStorage.setItem('retr_nombre_ult', supNombre); } catch (e) {} }
+  // Entró desde "Panel de puntos": ya se revisaron la clave y el nombre, ahora se cargan los puntos
+  if (window.claveDestino === 'pts' && typeof ptCargarGen === 'function') { window.claveDestino = ''; setTimeout(() => ptCargarGen(false), 0); }
   // La hora del servidor viene con los datos, que pueden estar guardados desde hace rato: se corre con el tiempo que pasó desde que se armaron
   try {
     if (d.reloj && d.reloj.ahora && d.actualizado) {
@@ -1484,15 +1492,18 @@ function pedirClave(err) {
   if (m.parentNode !== document.body) document.body.appendChild(m);      // siempre colgado de la página, no de un panel
   m.style.display = 'flex'; ubicarClave();
   document.getElementById('keyErr').textContent = err || '';
-  const inp = document.getElementById('keyInput');
+  const inp = document.getElementById('keyInput'), nom = document.getElementById('keyNombre');
   inp.disabled = false; inp.readOnly = false;
-  setTimeout(() => { try { inp.focus(); } catch (e) {} }, 50);
+  if (!nom.value) { try { nom.value = localStorage.getItem('retr_nombre_ult') || ''; } catch (e) {} }      // se recuerda en este equipo
+  setTimeout(() => { try { (nom.value ? inp : nom).focus(); } catch (e) {} }, 50);
 }
 document.getElementById('keyBtn').onclick = () => {
   clave = document.getElementById('keyInput').value.trim();
+  supNombre = document.getElementById('keyNombre').value.replace(/\s+/g, ' ').trim();
+  if (!supNombre) { document.getElementById('keyErr').textContent = 'Escribe tu nombre y apellido.'; clave = ''; return; }
   marcarSesionSup();
-  try { sessionStorage.setItem('retr_clave', clave); } catch (e) {}
-  if (window.claveDestino === 'pts') ptCargarGen(false); else cargar(false);
+  try { sessionStorage.setItem('retr_clave', clave); sessionStorage.setItem('retr_nombre', supNombre); } catch (e) {}
+  cargar(false);
 };
 // Enter en cualquier parte de la ventana de la clave equivale a "Entrar" (aunque el cursor no esté en la casilla)
 document.addEventListener('keydown', e => {
@@ -5370,7 +5381,7 @@ function monVerificar(idx, res, boton) {
   };
   if (!esApps) return setTimeout(() => fin({ ok: true, quien: window.claveSup && window.claveSup() && MON.clave === window.claveSup() ? 'Supervisión' : (MON.datos.turno && MON.datos.turno.nombre) || 'Monitor', hora: '12/10 11:00' }), 250);
   google.script.run.withFailureHandler(e => fin({ ok: false, error: e && e.message })).withSuccessHandler(t => { let d; try { d = JSON.parse(t); } catch (e) { d = null; } fin(d); })
-    .verificarIds(MON.clave, JSON.stringify(xs.map(x => [MON.datos.mes, x[1], x[5]])), res, '');
+    .verificarIds(MON.clave, JSON.stringify(xs.map(x => [MON.datos.mes, x[1], x[5]])), res, window.claveSup && window.supNombre && MON.clave === window.claveSup() ? window.supNombre() : '');
 }
 function monRender() {
   const d = MON.datos, c = document.getElementById('monCuerpo');
