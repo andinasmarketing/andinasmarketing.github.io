@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 33", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 34", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "4e4418f0c031";
+ var HUELLA = "a2aa36d54576";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -7017,6 +7017,7 @@ function monRender() {
   aj: r[14] || "",
   dg: r[15] || 0
  })));
+ const btnLl = x => monEsSup() ? '<button type="button" class="mn-ok" data-ll="' + O.indexOf(x) + '">Llegó a tiempo</button>' : "";
  const nrm = t => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
  const mesCol = x => {
   const f = String(x.fecha || "");
@@ -7047,7 +7048,7 @@ function monRender() {
   const prox = O.filter((x => x.est === "turno")).sort(((a, b) => a.sale < b.sale ? -1 : a.sale > b.sale ? 1 : a.g.localeCompare(b.g)));
   const sinMarca = O.filter((x => x.est === "nomarco" && !x.aj));
   const chip = (x, fin) => '<span class="mn-chip"><b>' + esc(titulo(x.o)) + "</b><span>" + esc(titulo(x.g)) + "</span>" + fin + "</span>";
-  html += '<div class="mn-ops">' + (listos.length ? '<div class="mn-ops-f ok"><div class="mn-ops-t">✅ Ya salieron: digita sus clientes ahora</div><div class="mn-chips">' + listos.map((x => chip(x, "<em>Columna del día " + x.col + "</em>"))).join("") + "</div></div>" : "") + (sinMarca.length ? '<div class="mn-ops-f mal"><div class="mn-ops-t">⚠ Ya les toca y NO han marcado «Estoy de turno» en su tabla</div><div class="mn-chips">' + sinMarca.map((x => chip(x, "<em>Entra a las <b>" + esc(x.e) + '</b></em><button type="button" class="mn-ok" data-ll="' + O.indexOf(x) + '">Llegó a tiempo</button>'))).join("") + "</div>" + '<div class="sub" style="margin-top:6px">Si el operador sí está trabajando y se le olvidó marcar, toca «Llegó a tiempo»: queda confirmado y se le marca la casilla con la hora de su horario.</div></div>' : "") + (prox.length ? '<div class="mn-ops-f"><div class="mn-ops-t">⏳ Siguen trabajando: NO digites sus clientes todavía</div><div class="mn-chips">' + prox.slice(0, 8).map((x => chip(x, "<em>Sale a las <b>" + esc(x.sale) + "</b>" + (x.diez ? " · turno de 10 h" : "") + "</em>"))).join("") + "</div>" + '<button type="button" class="mn-ver" data-tab="tur">' + (prox.length > 8 ? "Ver los " + prox.length + " que siguen de turno" : "Ver la lista completa") + "</button></div>" : "") + "</div>";
+  html += '<div class="mn-ops">' + (listos.length ? '<div class="mn-ops-f ok"><div class="mn-ops-t">✅ Ya salieron: digita sus clientes ahora</div><div class="mn-chips">' + listos.map((x => chip(x, "<em>Columna del día " + x.col + "</em>"))).join("") + "</div></div>" : "") + (sinMarca.length ? '<div class="mn-ops-f mal"><div class="mn-ops-t">⚠ Ya les toca y NO han marcado «Estoy de turno» en su tabla</div><div class="mn-chips">' + sinMarca.map((x => chip(x, "<em>Entra a las <b>" + esc(x.e) + "</b></em>" + btnLl(x)))).join("") + "</div>" + (monEsSup() ? '<div class="sub" style="margin-top:6px">Si el operador sí está trabajando y se le olvidó marcar, toca «Llegó a tiempo»: queda confirmado y se le marca la casilla con la hora de su horario.</div>' : '<div class="sub" style="margin-top:6px">Avísale a supervisión si el operador sí está trabajando y se le olvidó marcar.</div>') + "</div>" : "") + (prox.length ? '<div class="mn-ops-f"><div class="mn-ops-t">⏳ Siguen trabajando: NO digites sus clientes todavía</div><div class="mn-chips">' + prox.slice(0, 8).map((x => chip(x, "<em>Sale a las <b>" + esc(x.sale) + "</b>" + (x.diez ? " · turno de 10 h" : "") + "</em>"))).join("") + "</div>" + '<button type="button" class="mn-ver" data-tab="tur">' + (prox.length > 8 ? "Ver los " + prox.length + " que siguen de turno" : "Ver la lista completa") + "</button></div>" : "") + "</div>";
  }
  html += '<div class="mn-tabs" role="tablist">' + tabs.map((t => '<button type="button" role="tab" data-tab="' + t[0] + '" aria-selected="' + (MON.tab === t[0]) + '">' + monIco(t[0]) + t[1] + "<i>" + fmt.format(t[2]) + "</i></button>")).join("") + "</div>";
  html += '<section class="panel mn-sec">';
@@ -7110,7 +7111,7 @@ function monRender() {
   html += cab("tur", "Turnos de operadores", "A qué hora entra y sale cada operador hoy, según su horario y la casilla «Estoy de turno». Digita los clientes de un operador cuando ya haya salido: antes la hoja no lo guarda. Los de 10 horas pasan por dos turnos de monitores; el cierre lo digita quien esté cuando salgan.");
   if (!O.length) html += '<div class="mon-ok"><b>Sin horarios</b>Todavía no hay horarios publicados para hoy.</div>'; else {
    const bandas = [ [ "ya", "Ya salieron: digita sus clientes", x => yaDig(x) && !hecho(x) ], [ "sal", "Salieron hace poco: espera unos minutos para digitar", x => (x.est === "salio" || x.est === "nomarco_fin") && !yaDig(x) ], [ "tur", "De turno ahora", x => x.est === "turno" ], [ "nom", "Ya les toca y no han marcado entrada", x => x.est === "nomarco" ], [ "ent", "Entran más tarde", x => x.est === "entra" ], [ "hec", "Ya digitados: no hay nada pendiente", x => hecho(x) ] ];
-   const pill = x => x.aj && (x.est === "turno" || x.est === "nomarco") ? '<span class="rv-pill ok">En turno</span>' : x.est === "turno" && x.tarde ? '<span class="rv-pill aviso">En turno · llegó ' + x.tarde + ' min tarde</span> <button type="button" class="mn-ok" data-ll="' + O.indexOf(x) + '">Llegó a tiempo</button>' : x.est === "nomarco" ? '<span class="rv-pill aviso">No ha marcado entrada</span> <button type="button" class="mn-ok" data-ll="' + O.indexOf(x) + '">Llegó a tiempo</button>' : x.est === "turno" ? '<span class="rv-pill ok">En turno</span>' : x.est === "entra" ? '<span class="rv-pill">Entra a las ' + esc(x.e) + "</span>" : x.est === "nomarco" ? '<span class="rv-pill aviso">No ha marcado entrada</span>' : hecho(x) ? '<span class="rv-pill ok">✓ Ya digitado</span>' : yaDig(x) && x.dg > 0 ? '<span class="rv-pill aviso">Digitado a medias: falta' + (x.falta === 1 ? " 1 perfil" : "n " + x.falta + " perfiles") + "</span>" : yaDig(x) ? '<span class="rv-pill info">Ya puedes digitar</span>' : '<span class="rv-pill">Digita desde las ' + esc(x.dig) + "</span>";
+   const pill = x => x.aj && (x.est === "turno" || x.est === "nomarco") ? '<span class="rv-pill ok">En turno</span>' : x.est === "turno" && x.tarde ? '<span class="rv-pill aviso">En turno · llegó ' + x.tarde + " min tarde</span> " + btnLl(x) : x.est === "nomarco" ? '<span class="rv-pill aviso">No ha marcado entrada</span> ' + btnLl(x) : x.est === "turno" ? '<span class="rv-pill ok">En turno</span>' : x.est === "entra" ? '<span class="rv-pill">Entra a las ' + esc(x.e) + "</span>" : x.est === "nomarco" ? '<span class="rv-pill aviso">No ha marcado entrada</span>' : hecho(x) ? '<span class="rv-pill ok">✓ Ya digitado</span>' : yaDig(x) && x.dg > 0 ? '<span class="rv-pill aviso">Digitado a medias: falta' + (x.falta === 1 ? " 1 perfil" : "n " + x.falta + " perfiles") + "</span>" : yaDig(x) ? '<span class="rv-pill info">Ya puedes digitar</span>' : '<span class="rv-pill">Digita desde las ' + esc(x.dig) + "</span>";
    html += '<div class="table-scroll as-t"><table class="sr-t"><thead><tr><th>Grupo</th><th>Operador</th><th>Horario</th><th>Entró</th><th>Sale</th><th>Estado</th><th class="num">Columna</th></tr></thead><tbody>' + bandas.map((bd => {
     const xs = O.filter(bd[2]).sort(((a, b) => bd[0] === "ent" ? a.e < b.e ? -1 : 1 : a.sale < b.sale ? -1 : a.sale > b.sale ? 1 : a.g.localeCompare(b.g)));
     if (!xs.length) return "";
