@@ -16,10 +16,10 @@
 /* Puente con Google Sheets: la página pide y guarda los datos en el enlace /exec del proyecto (Web.gs). Imita google.script.run. */
 window.API_URL = 'https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec';
 (function () {
-  var n = 0, VER = 'web 30', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
+  var n = 0, VER = 'web 32', MSG = 'No se pudo conectar con los datos de Google (' + VER + '). Si sigue pasando, avísale a supervisión.';
   document.addEventListener('DOMContentLoaded', function () { var v = document.createElement('div'); v.textContent = VER; v.style.cssText = 'position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999'; document.body.appendChild(v); });
   // Aviso de versión nueva: cada 5 minutos (y al volver a la pestaña) se mira si en GitHub hay una página distinta a la abierta
-  var HUELLA = '50780cd66fba';
+  var HUELLA = '05349ebe81cc';
   function revisarVersion() {
     if (document.getElementById('avisoVersion')) return;
     fetch(location.pathname + '?huella=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -759,6 +759,7 @@ window.API_URL = 'https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
   .vf-sec { font-size: 16px; margin: 18px 0 8px; display: flex; align-items: baseline; gap: 8px; } .vf-sec small { font-size: 12.5px; font-weight: 600; color: var(--muted); }
   .vf-sec.ant { padding-top: 14px; border-top: 1px dashed var(--line); }
   .vf-ant { margin: -2px 0 10px; font-size: 13px; color: var(--muted); }
+  .mn-por { display: block; margin-top: 4px; color: var(--ink, inherit) !important; opacity: .85; font-size: 12.5px; line-height: 1.4; }
   .vf-pasos { margin: 0 0 14px; padding: 12px 14px 12px 34px; border-radius: 12px; background: rgba(201,162,39,.12); border: 1px solid rgba(201,162,39,.45); font-size: 14px; line-height: 1.6; }
   .vf-mini { display: inline-block; font-size: 12px; font-weight: 800; border-radius: 999px; padding: 0 8px; }
   .vf-mini.si { background: #0F7B5F; color: #fff; } .vf-mini.no { border: 1px solid #D43C2F; color: #B3312A; background: var(--surface); }
@@ -3083,9 +3084,9 @@ function segMonRender() {
   if (!P) return;
   if (!P.length) { c.innerHTML = '<div class="mon-ok"><b>Todo al día</b>Los monitores no tienen números por corregir ni turnos cerrados sin digitar.</div>'; return; }
   const xs = P.slice().sort((a, b) => (a[0] < b[0] ? 1 : a[0] > b[0] ? -1 : b[1] - a[1]) || (a[8] === 'No coincide' ? 0 : 1) - (b[8] === 'No coincide' ? 0 : 1));
-  c.innerHTML = '<div class="table-scroll" style="max-height:520px;overflow-y:auto"><table><thead><tr><th>Día</th><th>Qué pasa</th><th>Grupo</th><th>Jornada</th><th>Operador</th><th>Perfil</th><th class="num">Digitó el monitor</th><th class="num">IDs del operador</th></tr></thead><tbody>' +
+  c.innerHTML = '<div class="table-scroll" style="max-height:520px;overflow-y:auto"><table><thead><tr><th>Día</th><th>Qué pasa</th><th>Grupo</th><th>Jornada</th><th>Operador</th><th>Perfil</th><th class="num">Digitó el monitor</th><th class="num">IDs del operador</th><th>Por qué</th></tr></thead><tbody>' +
     xs.map(r => '<tr><td><b>' + r[1] + '</b>' + (r[0] !== DATA.claveActual ? ' <small style="color:var(--faint)">mes anterior</small>' : '') + '</td><td><span class="rv-pill ' + (r[8] === 'No coincide' ? 'accion' : 'aviso') + '">' + esc(r[8]) + '</span></td><td>' + esc(titulo(r[2])) + '</td><td>' + (JL[J.indexOf(r[3])] || esc(r[3])) + '</td><td class="name">' + esc(titulo(r[4])) + '</td><td>' + esc(titulo(r[5])) +
-      '</td><td class="num">' + (r[6] === '' ? '—' : esc(r[6])) + '</td><td class="num"><b>' + esc(r[7]) + '</b></td></tr>').join('') + '</tbody></table></div>';
+      '</td><td class="num">' + (r[6] === '' ? '—' : esc(r[6])) + '</td><td class="num"><b>' + esc(r[7]) + '</b></td><td style="min-width:260px;font-size:13px">' + (r[8] === 'No coincide' && r[9] ? esc(r[9]) : '') + '</td></tr>').join('') + '</tbody></table></div>';
 }
 function segMonCargar() {
   if (!document.body.classList.contains('seg-mon')) return;
@@ -5340,7 +5341,7 @@ function monCargar() {
     MON.datos = d; monRender(); };
   if (esApps) google.script.run.withSuccessHandler(ok).withFailureHandler(e => ok(JSON.stringify({ ok: false, error: e && e.message ? e.message : String(e) }))).resumenMonitores(MON.clave);
   else setTimeout(() => ok(MON.clave === 'mala' ? JSON.stringify({ ok: false, clave: true }) : JSON.stringify({ ok: true, mes: '2026-10', hoy: 14, revisado: new Date().toISOString(), url: '', pendientes: [
-    ['2026-10', 4, 'GRUPO RIO', 'TARDE', 'EDGAR ORANCE', 'MIGUEL', 6, 5, 'No coincide'], ['2026-10', 4, 'GRUPO PEKIN', 'MAÑANA', 'AGUSTIN FEBRES', 'CASSIO 62', '', 2, 'Falta digitar'], ['2026-10', 3, 'GRUPO TOKYO', 'NOCHE', 'CARLOS MELENDEZ', 'MARTIN', 1, 3, 'No coincide']],
+    ['2026-10', 4, 'GRUPO RIO', 'TARDE', 'EDGAR ORANCE', 'MIGUEL', 6, 5, 'No coincide', 'El monitor digitó 6. No cuentan porque el monitor marcó "No está retraído": 193758829.'], ['2026-10', 4, 'GRUPO PEKIN', 'MAÑANA', 'AGUSTIN FEBRES', 'CASSIO 62', '', 2, 'Falta digitar'], ['2026-10', 3, 'GRUPO TOKYO', 'NOCHE', 'CARLOS MELENDEZ', 'MARTIN', 1, 3, 'No coincide']],
     sinRet: [[4, 'MAÑANA', 'GRUPO PEKIN', 'AGUSTIN FEBRES', 'ELEIDE 57', 1], [4, 'TARDE', 'GRUPO RIO', 'EDGAR ORANCE', 'ALDEMARO', 0], [4, 'NOCHE', 'GRUPO RIO', 'MARWIN OLLARVES', '', 2, 'Nilson Rojas (06:00 a 16:00) y Edgar Orance (12:00 a 22:00)', 'desc'], [4, 'TARDE', 'GRUPO DUBAI', 'LUIS MEDINA', '', 2, '', 'aus'], [3, 'NOCHE', 'GRUPO TOKYO', 'CARLOS MELENDEZ', 'MARTIN', 1]],
     revisar: [{ tipo: 'accion', tit: 'ID de perfil anotado como cliente, sin corregir', ayuda: 'El operador copió el ID de su perfil en lugar del ID del cliente.', items: ['Grupo Pekin, Agustin Febres: día 4, anotó 186380092 (ID del perfil Cassio 62)'] }, { tipo: 'aviso', tit: 'Asignados sin ningún registro en el mes', ayuda: 'Perfiles sin ningún número digitado.', items: ['Grupo Pekin, noche, sin operador asignado: Samuel 64, Cassio 62, Eleide 57'] }, { tipo: 'info', tit: 'Perfiles atendidos por contingencia', ayuda: 'Un operador atendió un perfil de otro grupo.', items: ['Día 4: Eliezer Orance atendió a Felipe 50 (Grupo Berna, tarde), 4 clientes', 'Día 4: Edgar Orance atendió a Fernando 46 (Grupo Brusela, tarde), 2 clientes', 'Día 4: Celio Ollarves atendió a Victor (Grupo Brusela, tarde), 3 clientes', 'Día 3: Edgar Orance atendió a Victor (Grupo Brusela, tarde), 1 cliente'] }],
     historial: [['06/10/2026 07:12:40', '2026-10', 5, 'GRUPO RIO', 'MAÑANA', 'NILSON ROJAS', 'MIGUEL', '', '7', 'Registro', 'Laura Pérez'], ['06/10/2026 07:10:02', '2026-10', 4, 'GRUPO RIO', 'TARDE', 'EDGAR ORANCE', 'ALDEMARO', '3', '2', 'Corrección', 'Sin identificar']], turno: { nombre: 'Laura Pérez', desde: '06:05', hayHoja: true },
@@ -5371,11 +5372,29 @@ function monLista(items) {
 /** Copiar cuando el navegador no deja usar el portapapeles moderno. */
 function monCopiarViejo(t) { const ta = document.createElement('textarea'); ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} ta.remove(); }
 /** El monitor marca uno o varios IDs: 'si' (está retraído), 'no' (no está) o '' (deshacer). Se guarda a nombre del monitor de turno. */
+/** Pausa obligatoria entre verificaciones (los monitores; supervisión no): segundos entre un ID y otro del mismo perfil, y al cambiar de perfil. */
+const VF_ESPERA = { ID: 6, PERFIL: 25 };
+const monEsSup = () => !!(window.claveSup && window.claveSup() && MON.clave === window.claveSup());
+function monEspera(x) {
+  if (monEsSup() || !MON.vfUlt) return 0;
+  const cambia = MON.vfUlt.p !== x[1] + '|' + x[4];
+  return { s: Math.ceil((cambia ? VF_ESPERA.PERFIL : VF_ESPERA.ID) - (Date.now() - MON.vfUlt.t) / 1000), cambia };
+}
 function monVerificar(idx, res, boton) {
   const V = MON.datos.ver || [], xs = idx.map(i => V[i]).filter(Boolean); if (!xs.length) return;
-  const txt = boton.textContent; boton.disabled = true; boton.textContent = 'Guardando…';
+  const txt = boton.textContent;
+  // Muy rápido: no se guarda. El botón cuenta los segundos que faltan (y al cambiar de perfil, más tiempo para entrar a ese perfil y buscar el ID)
+  const es = monEspera(xs[0]);
+  if (es && es.s > 0) {
+    if (boton.dataset.esperando) return; boton.dataset.esperando = '1'; boton.disabled = true;
+    let n = es.s; const pinta = () => { boton.textContent = (es.cambia ? 'Perfil nuevo: espera ' : 'Espera ') + n + ' s'; };
+    pinta(); const t = setInterval(() => { n--; if (n <= 0) { clearInterval(t); boton.disabled = false; boton.textContent = txt; delete boton.dataset.esperando; } else pinta(); }, 1000);
+    return;
+  }
+  boton.disabled = true; boton.textContent = 'Guardando…';
   const fin = d => {
     if (!d || !d.ok) { boton.disabled = false; boton.textContent = txt; alert((d && d.error) || 'No se pudo guardar. Intenta de nuevo.'); return; }
+    MON.vfUlt = { t: Date.now(), p: xs[0][1] + '|' + xs[0][4] };
     xs.forEach(x => { x[6] = res; x[7] = res ? (d.quien || '') : ''; x[8] = res ? (d.hora || '') : ''; });
     monRender();
   };
@@ -5389,7 +5408,7 @@ function monRender() {
   const ab = document.getElementById('monAbrir'); if (d.url) { ab.href = d.url; ab.hidden = false; }
   let h = ''; try { h = d.revisado ? new Date(d.revisado).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }).replace(/\.$/, '') : ''; } catch (e) {}
   document.getElementById('monEst').textContent = (h ? 'Última revisión a las ' + h + '. ' : '') + 'Se revisa lo que digitaste cuando el turno ya terminó.';
-  const P = d.pendientes.map(r => ({ m: r[0], d: r[1], g: r[2], t: r[3], o: r[4], p: r[5], v: r[6], tipo: r[8] }));
+  const P = d.pendientes.map(r => ({ m: r[0], d: r[1], g: r[2], t: r[3], o: r[4], p: r[5], v: r[6], tipo: r[8], det: r[9] || '' }));
   const dif = P.filter(x => x.tipo === 'No coincide'), fal = P.filter(x => x.tipo !== 'No coincide');
   const R = d.revisar || [], S = d.sinRet || [], nRev = R.reduce((a, x) => a + x.items.length, 0);
   // Verificación de IDs: los que faltan (días que aún no se digitan) y los ya revisados
@@ -5460,7 +5479,8 @@ function monRender() {
     const grupos = [...new Set(base.map(x => x.g))].sort();
     if (gru && grupos.indexOf(gru) < 0) MON.vfG = '';
     const lista = base.filter(x => !MON.vfG || x.g === MON.vfG);
-    if (MON.vf === 'pend') html += '<ol class="vf-pasos"><li><b>Copia el correo del perfil</b> (botón «Copiar» de cada recuadro) y entra con él a la plataforma.</li><li><b>Busca cada ID</b> y toca <span class="vf-mini si">✅ Sí</span> si está retraído o <span class="vf-mini no">❌ No</span> si no lo está.</li></ol>';
+    if (MON.vf === 'pend') html += '<ol class="vf-pasos"><li><b>Copia el correo del perfil</b> (botón «Copiar» de cada recuadro) y entra con él a la plataforma.</li><li><b>Busca cada ID</b> y toca <span class="vf-mini si">✅ Sí</span> si está retraído o <span class="vf-mini no">❌ No</span> si no lo está.</li>' +
+      (monEsSup() ? '' : '<li><b>Sin afán:</b> entre un ID y otro hay que esperar ' + VF_ESPERA.ID + ' segundos, y ' + VF_ESPERA.PERFIL + ' segundos al pasar a otro perfil (para que alcances a entrar con su correo y buscar el ID).</li>') + '</ol>';
     if (MON.vf === 'pend' && vfNuevos.length) html += '<button type="button" class="vf-nuevos" id="vfNuevos">' + (vfNuevos.length === 1 ? '🔔 Llegó 1 ID nuevo' : '🔔 Llegaron ' + vfNuevos.length + ' IDs nuevos') + '. Toca aquí cuando termines lo que estás revisando.</button>';
     if (grupos.length > 1) html += '<div class="vf-fil"><select class="vf-sel" id="vfGrupo" aria-label="Grupo"><option value="">Todos los grupos</option>' + grupos.map(g => '<option value="' + esc(g) + '"' + (g === MON.vfG ? ' selected' : '') + '>' + esc(titulo(g)) + '</option>').join('') + '</select></div>';
     if (!lista.length) html += base.length ? '<div class="vacio">No hay IDs con ese filtro.</div>' : MON.vf === 'pend' ? '<div class="mon-ok"><b>Nada por verificar</b>Todos los IDs anotados ya están revisados. Cuando un operador anote uno nuevo, aparece aquí.</div>' : '<div class="vacio">Todavía no hay IDs revisados en los últimos días.</div>';
@@ -5499,7 +5519,7 @@ function monRender() {
         return '<div class="mn-dia"><span class="mn-dn">' + xs[0].d + '</span><b>Día ' + xs[0].d + (xs[0].m !== d.mes ? ' · mes anterior' : '') + '</b><i>' + xs.length + (xs.length === 1 ? ' pendiente' : ' pendientes') + '</i></div><ul class="mon-l">' +
           xs.map(x => { const nc = x.tipo === 'No coincide';
             return '<li class="' + (nc ? 'dif' : '') + '"><span class="et">' + (nc ? 'No coincide' : 'Por diligenciar') + '</span><span class="q"><b>' + esc(titulo(x.p)) + '</b> · ' + esc(titulo(x.o)) +
-              '<small>' + esc(titulo(x.g)) + ' · jornada ' + (JL[J.indexOf(x.t)] || esc(x.t)).toLowerCase() + '</small></span>' +
+              '<small>' + esc(titulo(x.g)) + ' · jornada ' + (JL[J.indexOf(x.t)] || esc(x.t)).toLowerCase() + '</small>' + (nc && x.det ? '<small class="mn-por">Por qué: ' + esc(x.det) + '</small>' : '') + '</span>' +
               '<span class="n">' + (nc ? 'Digitaste <b>' + esc(x.v) + '</b>Revisa la tabla del operador y corrige' : '<b>Celda vacía</b>Pendiente por diligenciar') + '</span></li>'; }).join('') + '</ul>'; }).join('');
     }
   } else if (MON.tab === 'tur') {
