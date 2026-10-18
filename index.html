@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 35", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 37", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "2f1eb86f1b5a";
+ var HUELLA = "2049ec94a4df";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -6019,7 +6019,7 @@ function ptRenderOp() {
     d.metasP = r.metasP || {};
     ptRenderOp();
    };
-   if (esApps) google.script.run.withSuccessHandler(listo).withFailureHandler((() => listo("{}"))).guardarMetaPersonal(o.n, n, PT.pin); else {
+   if (esApps) google.script.run.withSuccessHandler(listo).withFailureHandler((() => listo("{}"))).guardarMetaPersonal(o.n, n, PT.pin || (window.claveSup ? window.claveSup() : "")); else {
     const mm = Object.assign({}, d.metasP || {});
     if (n > 0) mm[o.n] = n; else delete mm[o.n];
     if (window.DEMO_PUNTOS) window.DEMO_PUNTOS.metasP = mm;
@@ -7082,7 +7082,7 @@ function monRender() {
  const tabs = [ [ "ver", "Verificar IDs", vfPend.length ], [ "pend", "Pendientes", P.length ], [ "tur", "Turnos de operadores", O.filter((x => x.est === "turno")).length ], [ "rev", "Para revisar", nRev ], [ "cero", "Perfiles sin retraer", S.length ] ].concat(d.sup ? [ [ "reg", "Registros de los monitores", d.historial.length ] ] : []);
  const cab = (k, tit, sub) => '<div class="mn-h"><span class="mn-hi">' + monIco(k) + "</span><div><h2>" + tit + '</h2><div class="sub">' + sub + "</div></div></div>";
  let html = '<div class="mn-hero"><div class="mn-hero-t"><b>' + (P.length ? P.length === 1 ? "Tienes 1 pendiente" : "Tienes " + fmt.format(P.length) + " pendientes" : "Estás al día") + "</b>" + "<span>" + (P.length ? "Corrígelos en la hoja del mes: la celda está en rojo o en amarillo." : "No hay celdas por corregir ni por diligenciar.") + "</span></div>" + '<div class="mn-kp">' + '<button type="button" data-tab="ver" class="a"><b>' + fmt.format(vfPend.length) + "</b><span>IDs por verificar</span></button>" + '<button type="button" data-tab="pend" class="r"><b>' + fmt.format(dif.length) + "</b><span>No coinciden</span></button>" + '<button type="button" data-tab="pend" class="a"><b>' + fmt.format(fal.length) + "</b><span>Por diligenciar</span></button>" + '<button type="button" data-tab="rev"><b>' + fmt.format(nRev) + "</b><span>Para revisar</span></button>" + (d.sup ? '<button type="button" data-tab="reg" class="v"><b>' + fmt.format(d.hoy || 0) + "</b><span>Registros de hoy</span></button>" : "") + "</div></div>";
- if (d.turno && d.turno.hayHoja) html += d.turno.nombre ? '<div class="mn-turno ok"><b>Monitor de turno: ' + esc(d.turno.nombre) + "</b><span>" + (d.sup ? "Registrando desde las " + esc(d.turno.desde) + ". Lo que se digite queda a su nombre hasta el cambio de turno." : "Turno iniciado a las " + esc(d.turno.desde) + ".") + "</span></div>" : '<div class="mn-turno"><b>Empieza tu turno</b><span>Abre la hoja y elige tu nombre en la pestaña "MONITOR DE TURNO" (casilla roja).</span></div>';
+ if (d.turno && d.turno.hayHoja) html += d.turno.nombre ? '<div class="mn-turno ' + (d.turno.anterior ? "" : "ok") + '"><b>Monitor de turno: ' + esc(d.turno.nombre) + "</b><span>" + (d.turno.anterior ? "Registrado desde las " + esc(d.turno.desde) + '. Ya pasó la hora del cambio: sigue a su nombre (por si no ha terminado) hasta que el monitor que llega escriba su nombre en "MONITOR DE TURNO".' : d.sup ? "Registrando desde las " + esc(d.turno.desde) + ". Lo que se digite queda a su nombre hasta que el siguiente monitor se registre." : "Turno iniciado a las " + esc(d.turno.desde) + ".") + "</span></div>" : '<div class="mn-turno"><b>Empieza tu turno</b><span>Abre la hoja y elige tu nombre en la pestaña "MONITOR DE TURNO" (casilla roja).</span></div>';
  if (O.length) {
   const prox = O.filter((x => x.est === "turno")).sort(((a, b) => a.sale < b.sale ? -1 : a.sale > b.sale ? 1 : a.g.localeCompare(b.g)));
   const sinMarca = O.filter((x => x.est === "nomarco" && !x.aj));
