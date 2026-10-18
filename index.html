@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 41", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 42", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "28c919e4d34d";
+ var HUELLA = "3609eb18d6fc";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -2051,7 +2051,9 @@ function desempateBono(L, mes) {
   }
   if (!c) {
    b.empate = true;
-   if (nota && !a.desempate) a.desempate = "Empata con " + titulo(b.nombre) + " en " + fmt.format(a.total) + " clientes en todo lo que cuenta este mes." + nota;
+   const en = "mismo promedio por día trabajado (" + (a.prom || 0) + "), llegaron a ese total el mismo día (" + a.llego + ") y tienen los mismos clientes confirmados por el monitor (" + a.conf + ")";
+   if (!a.desempate) a.desempate = "Empate total con " + titulo(b.nombre) + ": los dos tienen " + fmt.format(a.total) + " clientes, " + en + ". Comparten el puesto; aparece primero solo por orden alfabético." + nota;
+   b.empCon = a.nombre;
    continue;
   }
   if (!a.desempate) a.desempate = "Empata con " + titulo(b.nombre) + " en " + fmt.format(a.total) + " clientes. Va arriba porque " + c[2](a, b) + "." + nota;
@@ -2084,7 +2086,11 @@ function renderBono() {
   const segundo = L[empatados.length];
   const ventaja = segundo ? top - segundo.total : null;
   const gan = empatados.map((r => '<div class="gan"><div class="tag">' + (empatados.length > 1 ? "Empate en el primer lugar" : "Primer lugar") + "</div>" + '<div class="nm">' + esc(titulo(r.nombre)) + "</div>" + '<div class="tot">' + fmt.format(r.total) + "<small>clientes" + (dcd > 1 ? ", " + fmt1.format(r.total / dcd) + " por día" : "") + "</small></div>" + '<div class="det">' + esc(Object.keys(r.grupos).join(", ")) + ". " + esc(detPerf(r)) + "</div>" + (ventaja && empatados.length === 1 ? '<div class="det">' + fmt.format(ventaja) + " más que el segundo lugar</div>" : "") + (r.desempate ? '<div class="det">⚖ ' + esc(r.desempate) + "</div>" : "") + "</div>")).join("");
-  const resto = L.slice(empatados.length).map(((r, k) => '<li><span class="p">' + (empatados.length + k + 1) + "</span><span>" + esc(titulo(r.nombre)) + "<small>" + esc(Object.keys(r.grupos).join(", ")) + ". " + esc(detPerf(r)) + (r.total === top ? ". Tiene los mismos clientes que el 1.º, pero perdió el desempate" : "") + (r.desempate ? ". ⚖ " + esc(r.desempate) : "") + "</small></span><b>" + fmt.format(r.total) + "</b></li>")).join("");
+  const P = [];
+  L.forEach(((r, q) => {
+   P[q] = q && r.empate && r.total === L[q - 1].total ? P[q - 1] : q + 1;
+  }));
+  const resto = L.slice(empatados.length).map(((r, k) => '<li><span class="p">' + P[empatados.length + k] + "</span><span>" + esc(titulo(r.nombre)) + "<small>" + esc(Object.keys(r.grupos).join(", ")) + ". " + esc(detPerf(r)) + (r.total === top ? ". Tiene los mismos clientes que el 1.º, pero perdió el desempate" : "") + (r.desempate ? ". ⚖ " + esc(r.desempate) : "") + (r.empate && r.empCon && !r.desempate ? ". ⚖ Empate total con " + esc(titulo(r.empCon)) + ": comparten el puesto" : "") + "</small></span><b>" + fmt.format(r.total) + "</b></li>")).join("");
   return '<div class="bono-col"><h3><span class="dot" style="background:' + JC[i] + '"></span>' + JL[i] + '</h3><div class="hor">' + JH[i] + "</div>" + gan + "<ol>" + resto + "</ol></div>";
  })).join("");
 }
@@ -7796,10 +7802,14 @@ function notaVivo() {
    for (let q = 1; q < L.length && L[q].empate && L[q].total === top; q++) emp.push(L[q]);
    const seg = L[emp.length];
    const gan = emp.map((r => '<div class="gan"><div class="tag">' + (emp.length > 1 ? "Empate en el primer lugar" : "Primer lugar") + "</div>" + '<div class="nm">' + esc(titulo(r.nombre)) + '</div><div class="tot">' + fmt.format(r.total) + "<small>clientes" + (dcd > 1 ? ", " + fmt1.format(r.total / dcd) + " por día" : "") + "</small></div>" + '<div class="hor" style="margin:4px 0 0">' + esc(r.grupos.map(titulo).join(", ")) + "</div>" + chips([ seg && emp.length === 1 && seg.total < top ? fmt.format(top - seg.total) + " más que el 2.º" : "" ], r.vivo) + (r.desempate ? '<div class="rk-des">⚖ ' + esc(r.desempate) + "</div>" : "") + "</div>")).join("");
+   const P = [];
+   L.forEach(((r, q) => {
+    P[q] = q && r.empate && r.total === L[q - 1].total ? P[q - 1] : q + 1;
+   }));
    const resto = L.slice(emp.length).map(((r, k) => {
-    const pos = emp.length + k + 1;
+    const pos = P[emp.length + k];
     const falta = top - r.total;
-    return '<li class="' + (yo && r.nombre.toUpperCase() === yo ? "yo" : "") + '"><span class="p">' + pos + '</span><div><span class="rk-n">' + esc(titulo(r.nombre)) + "</span>" + '<span class="rk-g">' + esc(r.grupos.map(titulo).join(", ")) + "</span>" + chips([ falta ? "Le faltan " + fmt.format(falta) + " para el 1.º" : "Mismo total que el 1.º, pero perdió el desempate" ], r.vivo) + (r.desempate ? '<div class="rk-des">⚖ ' + esc(r.desempate) + "</div>" : "") + "</div>" + '<div class="rk-t"><b>' + fmt.format(r.total) + "</b><small>clientes</small></div></li>";
+    return '<li class="' + (yo && r.nombre.toUpperCase() === yo ? "yo" : "") + '"><span class="p">' + pos + '</span><div><span class="rk-n">' + esc(titulo(r.nombre)) + "</span>" + '<span class="rk-g">' + esc(r.grupos.map(titulo).join(", ")) + "</span>" + chips([ falta ? "Le faltan " + fmt.format(falta) + " para el 1.º" : "Mismo total que el 1.º, pero perdió el desempate" ], r.vivo) + (r.desempate ? '<div class="rk-des">⚖ ' + esc(r.desempate) + "</div>" : "") + (r.empate && r.empCon && !r.desempate ? '<div class="rk-des">⚖ Empate total con ' + esc(titulo(r.empCon)) + ": comparten el puesto " + pos + ".</div>" : "") + "</div>" + '<div class="rk-t"><b>' + fmt.format(r.total) + "</b><small>clientes</small></div></li>";
    })).join("");
    return '<div class="rk-col">' + head + gan + "<ol>" + resto + "</ol></div>";
   })).join("");
