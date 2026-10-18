@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 45", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 46", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "346f82c33163";
+ var HUELLA = "2a88fb3a90a4";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -7023,10 +7023,23 @@ function monVerificar(idx, res, boton) {
  }
  boton.disabled = true;
  boton.textContent = "Guardando…";
+ MON.vfLocal = MON.vfLocal || {};
+ const claves = xs.map((x => x[1] + "|" + x[5])), antes = claves.map((k => MON.vfLocal[k]));
+ claves.forEach((k => {
+  MON.vfLocal[k] = {
+   r: res,
+   q: "",
+   h: "",
+   t: Date.now()
+  };
+ }));
  const fin = d => {
   if (!d || !d.ok) {
-   boton.disabled = false;
-   boton.textContent = txt;
+   claves.forEach(((k, i) => {
+    if (antes[i]) MON.vfLocal[k] = antes[i]; else delete MON.vfLocal[k];
+   }));
+   monLocal(MON.datos.ver);
+   monRender();
    alert(d && d.error || "No se pudo guardar. Intenta de nuevo.");
    return;
   }
@@ -7041,16 +7054,14 @@ function monVerificar(idx, res, boton) {
   }
   MON.vfLocal = MON.vfLocal || {};
   xs.forEach((x => {
-   x[6] = res;
-   x[7] = res ? d.quien || "" : "";
-   x[8] = res ? d.hora || "" : "";
    MON.vfLocal[x[1] + "|" + x[5]] = {
     r: res,
-    q: x[7],
-    h: x[8],
+    q: res ? d.quien || "" : "",
+    h: res ? d.hora || "" : "",
     t: Date.now()
    };
   }));
+  monLocal(MON.datos.ver);
   monRender();
  };
  if (!esApps) return setTimeout((() => fin({
