@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 40", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 41", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "0222516155cb";
+ var HUELLA = "28c919e4d34d";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -3347,7 +3347,7 @@ function personalHtml(H, sem, iHoy) {
  const P = personalSem(H, sem);
  if (!P) return "";
  const i = NOVUI.dimg >= 0 && NOVUI.dimg <= 6 ? NOVUI.dimg : iHoy >= 0 ? iHoy : 0;
- return '<section class="panel"><h2>Encargados, supervisores y monitores</h2><div class="sub">El mismo día que elegiste arriba, con tarjetas como las de los operadores: quién no está y quién trabaja.</div>' + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0"><button class="btn" type="button" data-pimg="dia">Descargar imagen del ' + DIAS_L[i].toLowerCase() + '</button><button class="btn ghost" type="button" data-pimg="sem">Descargar imagen de la semana</button></div>' + '<div class="pimg-prev" style="border-radius:12px;overflow:hidden;border:1px solid var(--line,#ddd)"></div></section>';
+ return '<section class="panel"><h2>Encargados, supervisores y monitores</h2><div class="sub">Quién no está cada día y quién trabaja, con tarjetas como las de los operadores. Elige el día aquí mismo.</div>' + '<div class="sub-barra" style="margin-top:12px">' + DIAS_L.map(((n, k) => '<button type="button" data-pdi="' + k + '" aria-selected="' + (k === i) + '">' + n.slice(0, 3) + " " + Number(ymdMas(sem.l, k).slice(8)) + (k === iHoy ? " · hoy" : "") + "</button>")).join("") + "</div>" + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0"><button class="btn" type="button" data-pimg="dia">Descargar imagen del ' + DIAS_L[i].toLowerCase() + '</button><button class="btn ghost" type="button" data-pimg="sem">Descargar imagen de la semana</button></div>' + '<div class="pimg-prev" style="border-radius:12px;overflow:hidden;border:1px solid var(--line,#ddd)"></div></section>';
 }
 
 function personalSem(H, sem) {
@@ -3385,9 +3385,15 @@ function personalDibujo(H, sem, dias) {
  }
 }
 
-function personalEnlazar(caja, sem, H) {
+function personalEnlazar(caja, sem, H, pintar) {
  const prev = caja.querySelector(".pimg-prev");
  if (!prev) return;
+ caja.querySelectorAll("[data-pdi]").forEach((q => q.onclick = () => {
+  NOVUI.dimg = Number(q.dataset.pdi);
+  const y = window.scrollY;
+  pintar();
+  requestAnimationFrame((() => window.scrollTo(0, y)));
+ }));
  try {
   const cv = personalDibujo(H, sem, [ NOVUI.dimg >= 0 ? NOVUI.dimg : 0 ]);
   if (cv) {
@@ -3798,7 +3804,7 @@ function horariosEnlazar(caja, pintar, H) {
  pintar = pintar || renderNovedades;
  if (window.HOR_SEM) descansosEnlazar(caja, window.HOR_SEM, H || window.HOR_H, pintar);
  if (window.HOR_SEM) try {
-  personalEnlazar(caja, window.HOR_SEM, H || window.HOR_H);
+  personalEnlazar(caja, window.HOR_SEM, H || window.HOR_H, pintar);
  } catch (e) {}
  caja.querySelectorAll("[data-hs]").forEach((q => q.onclick = () => {
   NOVUI.sem = q.dataset.hs;
