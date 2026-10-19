@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 52", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 53", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "107f35c607aa";
+ var HUELLA = "52b71aef1dc0";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -443,14 +443,20 @@ function marcarSesionSup() {
  document.body.classList.toggle("con-sup", !!clave);
 }
 
-function salirSupervision() {
+function salirSupervision(porTurno) {
  clave = "";
  supNombre = "";
  try {
   sessionStorage.removeItem("retr_clave");
   sessionStorage.removeItem("retr_nombre");
   sessionStorage.removeItem("mon_clave");
+  sessionStorage.removeItem("retr_hasta");
  } catch (e) {}
+ if (porTurno) {
+  try {
+   localStorage.removeItem("retr_nombre_ult");
+  } catch (e) {}
+ }
  try {
   if (typeof MON !== "undefined") MON.clave = "";
  } catch (e) {}
@@ -463,6 +469,17 @@ function salirSupervision() {
  ROL = "";
  verVista("inicio");
 }
+
+setInterval((() => {
+ let h = 0;
+ try {
+  h = Number(sessionStorage.getItem("retr_hasta") || 0);
+ } catch (e) {}
+ if (!clave || !h || Date.now() < h) return;
+ const n = supNombre;
+ salirSupervision(true);
+ setTimeout((() => alert("Terminó el turno de " + n + ": se cerró la sesión de supervisión. Para seguir, entra de nuevo con tu nombre y la clave.")), 50);
+}), 3e4);
 
 /* ================== Carga ================== */
 function cargar(forzar) {
@@ -513,6 +530,12 @@ function recibir(texto) {
    sessionStorage.setItem("retr_nombre", supNombre);
    localStorage.setItem("retr_nombre_ult", supNombre);
   } catch (e) {}
+ }
+ if (d.supHasta) {
+  try {
+   if (window.SUP_NUEVO || !sessionStorage.getItem("retr_hasta")) sessionStorage.setItem("retr_hasta", String(d.supHasta));
+  } catch (e) {}
+  window.SUP_NUEVO = false;
  }
  if (window.claveDestino === "pts" && typeof ptCargarGen === "function") {
   window.claveDestino = "";
@@ -684,7 +707,9 @@ document.getElementById("keyBtn").onclick = () => {
  try {
   sessionStorage.setItem("retr_clave", clave);
   sessionStorage.setItem("retr_nombre", supNombre);
+  sessionStorage.removeItem("retr_hasta");
  } catch (e) {}
+ window.SUP_NUEVO = true;
  cargar(false);
 };
 
