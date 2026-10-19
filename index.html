@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 63", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 64", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "14e2673f2b6c";
+ var HUELLA = "00c9304c3988";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -4421,7 +4421,8 @@ function renderNovedades() {
   const n = Math.round((new Date(hoy + "T12:00:00") - new Date(x.d + "T12:00:00")) / 864e5);
   return n < 0 ? "Desde el " + fe(x.d).slice(0, 5) : n === 0 ? "Hoy" : n === 1 ? "Ayer" : "Hace " + n + " días";
  };
- const botones = (x, i, est) => est === "Terminada" ? "" : '<button type="button" class="sr-x" data-qc="' + i + '">' + (retiro(x) ? "Cambiar fecha" : "Editar") + '</button><button type="button" class="sr-x" data-q="' + i + '">' + (x.t === "Retiro definitivo" ? "Deshacer" : est === "Programada" ? "Quitar" : "Ya volvió") + "</button>" + (x.t === "Retirado" ? '<button type="button" class="sr-x" data-qd="' + i + '">Es definitivo</button>' : "") + (est === "Vigente" ? '<button type="button" class="sr-x" data-qb="' + i + '">Borrar (fue un error)</button>' : "");
+ const botones = (x, i, est) => est === "Terminada" ? borrarBtn(i) : '<button type="button" class="sr-x" data-qc="' + i + '">' + (retiro(x) ? "Cambiar fecha" : "Editar") + '</button><button type="button" class="sr-x" data-q="' + i + '">' + (x.t === "Retiro definitivo" ? "Deshacer" : est === "Programada" ? "Quitar" : "Ya volvió") + "</button>" + (x.t === "Retirado" ? '<button type="button" class="sr-x" data-qd="' + i + '">Es definitivo</button>' : "") + borrarBtn(i);
+ const borrarBtn = i => '<button type="button" class="sr-x" data-qb="' + i + '">Borrar (fue un error)</button>';
  const sep = (t, cls, n, cols) => '<tr class="nv-sep"><td colspan="' + cols + '"><span class="nv-sep-t ' + cls + '">' + t + '</span><span class="nv-sep-n">' + n + "</span></td></tr>";
  const pill = x => '<span class="rv-pill ' + NOV_PILL[x.t] + '">' + esc(x.t === "Permiso o incapacidad" ? "Permiso / incapacidad" : x.t) + "</span>";
  const opG = x => '<td class="name"><b>' + esc(titulo(x.o)) + "</b></td><td>" + esc(titulo(x.g).replace(/^Grupo\s+/i, "")) + "</td>";
@@ -4546,7 +4547,37 @@ function renderNovedades() {
   const x = ver[Number(q.dataset.qb)];
   q.onclick = () => {
    if (!confirm("¿Borrar la novedad «" + x.t + "» de " + titulo(x.o) + " (desde el " + x.d.split("-").reverse().join("/") + ")? Se quita completa, como si nunca se hubiera registrado. Úsalo solo si fue un error.")) return;
-   guardarNovedadUI(x.g, x.o, "Activo", x.d, "", q, true);
+   if (!esApps) {
+    DATA.novedades = (DATA.novedades || []).filter((r => !(nrm(r[1]) === nrm(x.o) && r[2] === x.t && r[3] === x.d)));
+    renderNovedades.forzar = true;
+    try {
+     renderNovedades();
+    } finally {
+     renderNovedades.forzar = false;
+    }
+    return;
+   }
+   q.disabled = true;
+   q.textContent = "Borrando…";
+   google.script.run.withFailureHandler((e => {
+    q.disabled = false;
+    q.textContent = "Borrar (fue un error)";
+    alert("No se pudo borrar. " + (e && e.message ? e.message : ""));
+   })).withSuccessHandler((t => {
+    let d;
+    try {
+     d = JSON.parse(t);
+    } catch (e) {
+     d = {};
+    }
+    if (!d.ok) {
+     q.disabled = false;
+     q.textContent = "Borrar (fue un error)";
+     alert(d.error || "No se pudo borrar.");
+     return;
+    }
+    cargar(true);
+   })).borrarNovedad(clave, x.o, x.t, x.d);
   };
  }));
  caja.querySelectorAll("[data-qd]").forEach((q => {
