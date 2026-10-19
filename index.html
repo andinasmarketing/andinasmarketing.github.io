@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 53", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 54", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "52b71aef1dc0";
+ var HUELLA = "32614eca5dee";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -7285,7 +7285,7 @@ function monRender() {
      }));
      return '<div class="mn-dia"><span class="mn-dn">' + dia + "</span><b>Día " + dia + "</b><i>" + xsD.length + (xsD.length === 1 ? " ID" : " IDs") + "</i></div>" + Object.keys(porPerf).sort().map((kk => {
       const xs = porPerf[kk].sort(((a, b) => String(a.id).localeCompare(String(b.id)))), x0 = xs[0];
-      return '<div class="vf-op"><div class="vf-oh"><span class="vf-perf"><small>Perfil</small><b>' + esc(titulo(x0.p)) + "</b>" + (x0.mail ? '<button type="button" class="vf-mail" data-cm="' + esc(x0.mail) + '" title="Toca para copiar el correo">✉ <span>' + esc(x0.mail) + "</span><i>Copiar</i></button>" : '<span class="vf-sinmail">Sin correo registrado</span>') + '</span><span class="vf-de">' + esc(titulo(x0.g)) + "<br>Operador: <b>" + esc(titulo(x0.o)) + "</b></span>" + '<span class="vf-cnt">' + xs.length + (xs.length === 1 ? " ID" : " IDs") + "</span>" + '</div><ul class="vf-l">' + xs.map((x => '<li><button type="button" class="vf-id" data-cp="' + esc(x.id) + '" title="Toca para copiar el ID">' + esc(x.id) + "</button>" + (x.est ? '<span class="vf-est ' + x.est + '">' + (x.est === "si" ? "✓ Retraído" : "✕ No retraído") + (comoSup && x.vq ? " · " + esc(x.vq) + (x.vt ? " · " + esc(x.vt) : "") : "") + (x.cli ? " · Cliente: " + esc(x.cli) : "") + "</span>" : (comoSup ? "" : '<input type="text" class="vf-cli" data-ci="' + x.i + '" data-ck="' + esc(x.g + "|" + x.id) + '" value="' + esc((MON.vfNom || {})[x.g + "|" + x.id] || "") + '" placeholder="Nombre del cliente" maxlength="60" autocomplete="off" aria-label="Nombre del cliente que ves en el perfil">') + '<button type="button" class="vf-si" data-vs="' + x.i + '">✅ Sí está retraído</button><button type="button" class="vf-no" data-vn="' + x.i + '">❌ No está</button>') + "</li>")).join("") + "</ul></div>";
+      return '<div class="vf-op"><div class="vf-oh"><span class="vf-perf"><small>Perfil</small><b>' + esc(titulo(x0.p)) + "</b>" + (x0.mail ? '<button type="button" class="vf-mail" data-cm="' + esc(x0.mail) + '" title="Toca para copiar el correo">✉ <span>' + esc(x0.mail) + "</span><i>Copiar</i></button>" : '<span class="vf-sinmail">Sin correo registrado</span>') + '</span><span class="vf-de">' + esc(titulo(x0.g)) + "<br>Operador: <b>" + esc(titulo(x0.o)) + "</b></span>" + '<span class="vf-cnt">' + xs.length + (xs.length === 1 ? " ID" : " IDs") + "</span>" + '</div><ul class="vf-l">' + xs.map((x => '<li><button type="button" class="vf-id" data-cp="' + esc(x.id) + '" title="Toca para copiar el ID">' + esc(x.id) + "</button>" + (x.est ? '<span class="vf-est ' + x.est + '">' + (x.est === "si" ? "✓ Retraído" : "✕ No retraído") + (comoSup && x.vq ? " · " + esc(x.vq) + (x.vt ? " · " + esc(x.vt) : "") : "") + (x.cli ? " · Cliente: " + esc(x.cli) : "") + "</span>" : '<input type="text" class="vf-cli" data-ci="' + x.i + '" data-ck="' + esc(x.g + "|" + x.id) + '" value="' + esc((MON.vfNom || {})[x.g + "|" + x.id] || "") + '" placeholder="' + (comoSup ? "Nombre del cliente (opcional)" : "Nombre del cliente") + '" maxlength="60" autocomplete="off" aria-label="Nombre del cliente que ves en el perfil">' + '<button type="button" class="vf-si" data-vs="' + x.i + '">✅ Sí está retraído</button><button type="button" class="vf-no" data-vn="' + x.i + '">❌ No está</button>') + "</li>")).join("") + "</ul></div>";
      })).join("");
     })).join("");
    };
