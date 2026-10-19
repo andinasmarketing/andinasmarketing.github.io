@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 59", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 60", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "c79b798c8e4e";
+ var HUELLA = "f0af058e9c94";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -7168,7 +7168,7 @@ function monVerificar(idx, res, boton) {
    t: Date.now(),
    p: xs[0][1] + "|" + xs[0][4]
   };
-  if (res && monEsSup() && MON.datos.turno && MON.datos.turno.hayHoja && (!MON.datos.turno.nombre || MON.datos.turno.anterior) && d.quien) {
+  if (res && monEsSup() && MON.datos.turno && MON.datos.turno.hayHoja && (!MON.datos.turno.nombre || MON.datos.turno.anterior) && d.quien && d.tomo) {
    MON.datos.turno.nombre = String(d.quien).replace(/\s*\(supervisión\)$/i, "");
    MON.datos.turno.desde = String(d.hora || "").slice(-5);
    MON.datos.turno.anterior = false;
