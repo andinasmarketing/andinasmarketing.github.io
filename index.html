@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 57", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 58", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "d26676f34a60";
+ var HUELLA = "b704ae334245";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -4419,25 +4419,27 @@ function renderNovedades() {
  const sep = (t, cls, n, cols) => '<tr class="nv-sep"><td colspan="' + cols + '"><span class="nv-sep-t ' + cls + '">' + t + '</span><span class="nv-sep-n">' + n + "</span></td></tr>";
  const pill = x => '<span class="rv-pill ' + NOV_PILL[x.t] + '">' + esc(x.t === "Permiso o incapacidad" ? "Permiso / incapacidad" : x.t) + "</span>";
  const opG = x => '<td class="name"><b>' + esc(titulo(x.o)) + "</b></td><td>" + esc(titulo(x.g).replace(/^Grupo\s+/i, "")) + "</td>";
- const novs = ver.map(((x, i) => [ x, i ])).filter((z => !retiro(z[0]))), novVer = novs.filter((z => !NOVUI.tipo || z[0].t === NOVUI.tipo));
- const tipos = [ [ "", "Todas" ], [ "Vacaciones", "Vacaciones" ], [ "Permiso o incapacidad", "Permisos" ] ];
- h += '<section class="panel"><h2>Vacaciones y permisos</h2><div class="sub">Mientras están vigentes, el operador no sale en el histórico de perfiles sin retraer ni en las alertas, y al monitor no se le pide el 0.</div>' + '<div class="sub-barra" style="margin-top:12px">' + tipos.map((t => '<button type="button" data-nt="' + esc(t[0]) + '" aria-selected="' + (NOVUI.tipo === t[0]) + '">' + t[1] + " · " + novs.filter((z => !t[0] || z[0].t === t[0])).length + "</button>")).join("") + "</div>";
- if (!novVer.length) h += '<div class="state" style="padding:18px 0">' + (novs.length ? "No hay novedades de ese tipo." : "No hay vacaciones ni permisos registrados.") + "</div>"; else {
-  const titEst = {
-   Vigente: "Vigentes ahora",
-   Programada: "Programadas",
-   Terminada: "Terminadas"
-  };
-  h += '<div class="table-scroll"><table class="sr-t nv-t"><colgroup><col style="width:18%"><col style="width:13%"><col style="width:16%"><col style="width:13%"><col style="width:13%"><col style="width:6%"><col style="width:21%"></colgroup>' + '<thead><tr><th>Operador</th><th>Grupo</th><th>Novedad</th><th>Desde</th><th>Hasta</th><th class="num">Días</th><th></th></tr></thead><tbody>';
+ const titEst = {
+  Vigente: "Vigentes ahora",
+  Programada: "Programadas",
+  Terminada: "Terminadas"
+ };
+ [ [ "Vacaciones", "Vacaciones", "Mientras están vigentes, el operador no sale en el histórico de perfiles sin retraer ni en las alertas, y al monitor no se le pide el 0.", "No hay vacaciones registradas." ], [ "Permiso o incapacidad", "Permisos e incapacidades", "Mientras están vigentes, el operador no sale en el histórico de perfiles sin retraer ni en las alertas, y al monitor no se le pide el 0.", "No hay permisos ni incapacidades registrados." ] ].forEach((([tipo, tit, sub, vacio]) => {
+  const xs0 = ver.map(((x, i) => [ x, i ])).filter((z => z[0].t === tipo));
+  h += '<section class="panel"><h2>' + tit + '</h2><div class="sub">' + sub + "</div>";
+  if (!xs0.length) {
+   h += '<div class="state" style="padding:18px 0">' + vacio + "</div></section>";
+   return;
+  }
+  h += '<div class="table-scroll"><table class="sr-t nv-t"><colgroup><col style="width:22%"><col style="width:15%"><col style="width:15%"><col style="width:15%"><col style="width:7%"><col style="width:26%"></colgroup>' + '<thead><tr><th>Operador</th><th>Grupo</th><th>Desde</th><th>Hasta</th><th class="num">Días</th><th></th></tr></thead><tbody>';
   NOV_EST.forEach((est => {
-   const xs = novVer.filter((z => z[0].est === est));
+   const xs = xs0.filter((z => z[0].est === est));
    if (!xs.length) return;
-   h += sep(titEst[est], est.toLowerCase(), xs.length, 7);
-   h += xs.map((([x, i]) => "<tr" + (est === "Terminada" ? ' class="nv-fin"' : "") + ">" + opG(x) + "<td>" + pill(x) + "</td>" + "<td>" + fd(x.d) + "</td><td>" + (x.h ? fd(x.h) : '<span class="nv-nada">Sin fecha</span>') + '</td><td class="num">' + (dias(x) || '<span class="nv-nada">—</span>') + "</td>" + '<td class="nv-acc">' + botones(x, i, est) + "</td></tr>")).join("");
+   h += sep(titEst[est], est.toLowerCase(), xs.length, 6);
+   h += xs.map((([x, i]) => "<tr" + (est === "Terminada" ? ' class="nv-fin"' : "") + ">" + opG(x) + "<td>" + fd(x.d) + "</td><td>" + (x.h ? fd(x.h) : '<span class="nv-nada">Sin fecha</span>') + '</td><td class="num">' + (dias(x) || '<span class="nv-nada">—</span>') + "</td>" + '<td class="nv-acc">' + botones(x, i, est) + "</td></tr>")).join("");
   }));
-  h += "</tbody></table></div>";
- }
- h += "</section>";
+  h += "</tbody></table></div></section>";
+ }));
  const rets = ver.map(((x, i) => [ x, i ])).filter((z => retiro(z[0]))).sort(((a, b) => a[0].d < b[0].d ? 1 : -1));
  h += '<section class="panel"><h2>Retiros</h2><div class="sub">Operadores que ya no están trabajando. «Retirado» puede volver (usa «Ya volvió»); «Retiro definitivo» ya no vuelve. No salen en los reportes ni en las alertas.</div>';
  if (!rets.length) h += '<div class="state" style="padding:18px 0">No hay retiros registrados.</div>'; else {
