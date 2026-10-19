@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 61", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 62", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "550b9458af23";
+ var HUELLA = "cf2df1d166be";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -6927,7 +6927,7 @@ function monLocal(ver) {
 }
 
 function monCargarVer() {
- if (!esApps || !MON.datos || MON.cargando || MON.verCargando && Date.now() - MON.verCargando < 4e4) return;
+ if (!esApps || !MON.datos || MON.verCargando && Date.now() - MON.verCargando < 4e4) return;
  MON.verCargando = Date.now();
  const listo = t => {
   MON.verCargando = 0;
@@ -6944,8 +6944,14 @@ function monCargarVer() {
   MON.verT = Date.now();
   monRender();
  };
- google.script.run.withSuccessHandler(listo).withFailureHandler((() => {
+ google.script.run.withSuccessHandler((t => {
+  MON.verErr = 0;
+  listo(t);
+ })).withFailureHandler((() => {
   MON.verCargando = 0;
+  MON.verErr = Date.now();
+  MON.verT = Date.now() - 9e3;
+  monRender();
  })).idsMonitores(MON.clave);
 }
 
@@ -6958,6 +6964,7 @@ function monCargar() {
  }
  MON.cargando = true;
  MON.cargandoT = Date.now();
+ const pedidoT = Date.now();
  const b = document.getElementById("monRefresh");
  b.disabled = true;
  const ok = t => {
@@ -6984,9 +6991,10 @@ function monCargar() {
    document.getElementById("monEst").textContent = d.error || "No se pudo cargar.";
    return;
   }
-  monLocal(d.ver);
+  if (MON.datos && MON.datos.ver && (MON.verT || 0) > pedidoT) d.ver = MON.datos.ver; else monLocal(d.ver);
   MON.datos = d;
-  MON.cargadoT = MON.verT = Date.now();
+  MON.cargadoT = Date.now();
+  if (!((MON.verT || 0) > pedidoT)) MON.verT = Date.now();
   monRender();
  };
  if (esApps) google.script.run.withSuccessHandler(ok).withFailureHandler((e => ok(JSON.stringify({
@@ -7268,7 +7276,7 @@ function monRender() {
   minute: "2-digit",
   second: "2-digit"
  }) : "";
- document.getElementById("monEst").textContent = (hc ? "IDs al " + hc + ". " : "") + (h ? "Celdas revisadas a las " + h + "." : "");
+ document.getElementById("monEst").textContent = (MON.verErr ? "⚠ No se pudo actualizar la lista de IDs, reintentando… " : "") + (hc ? "IDs al " + hc + ". " : "") + (h ? "Celdas revisadas a las " + h + "." : "");
  const P = d.pendientes.map((r => ({
   m: r[0],
   d: r[1],
@@ -7696,6 +7704,8 @@ function monRender() {
 
 document.getElementById("monRefresh").onclick = () => {
  MON.vfVerTodo = true;
+ MON.verCargando = 0;
+ monCargarVer();
  monCargar();
 };
 
