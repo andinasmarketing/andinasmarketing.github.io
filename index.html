@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 68", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 69", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "a7d19f4b9d93";
+ var HUELLA = "6aee0630eac9";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -5587,7 +5587,7 @@ document.getElementById("navInicio").onclick = () => {
    return;
   }
   const mostrar = A.op && d && d.toca && !d.marco && ROL === "op" && Date.now() > A.cerrado;
-  if (!mostrar && !A.op && ROL === "op") {
+  if (!mostrar && !A.op && (ROL === "op" || ROL === "sup" || ROL === "mon")) {
    general();
    return;
   }
@@ -5655,19 +5655,23 @@ document.getElementById("navInicio").onclick = () => {
   if (!A.genT || Date.now() - A.genT > 2 * 6e4) {
    pedirGen();
   }
-  const G = A.gen;
+  const G0 = A.gen, G = G0 && G0.ok ? {
+   ok: true,
+   faltan: G0.faltan || [],
+   salen: ROL === "op" ? G0.salen || [] : []
+  } : G0;
   if (!G || !G.ok || Date.now() <= A.cerradoGen || !G.faltan.length && !G.salen.length) {
    caja.hidden = true;
    return;
   }
-  const sel = document.getElementById("fOperador"), yo = sel && sel.value ? nk(sel.value) : "";
+  const sel = ROL === "op" ? document.getElementById("fOperador") : null, yo = sel && sel.value ? nk(sel.value) : "";
   const miS = yo && G.salen.find((x => nk(x[1]) === yo)), miF = yo && G.faltan.find((x => nk(x[1]) === yo));
   let txt;
   if (miS) txt = "<b>" + esc(titulo(miS[1]).split(" ")[0]) + ", tu turno " + (miS[3] ? "terminó" : "termina") + " a las " + esc(miS[2]) + ".</b><br>Al salir, quita tu casilla «Estoy de turno» en la tabla de tu grupo."; else if (miF) txt = "<b>" + esc(titulo(miF[1]).split(" ")[0]) + ", no has marcado que estás de turno.</b><br>Tu horario es de " + esc(miF[2]) + " a " + esc(miF[3]) + ". Marca la casilla «Estoy de turno» en la tabla de tu grupo."; else {
    txt = "";
    if (G.salen.length) txt += "<b>Terminan su turno pronto, quiten su casilla «Estoy de turno» al salir:</b> " + esc(lista(G.salen, (x => titulo(x[1]).split(" ")[0] + " (" + titulo(x[0]).replace(/^Grupo /, "") + ", " + x[2] + ")")));
    if (G.faltan.length) txt += (txt ? "<br>" : "") + "<b>Ya les toca turno y no han marcado «Estoy de turno»:</b> " + esc(lista(G.faltan, (x => titulo(x[1]).split(" ")[0] + " (" + titulo(x[0]).replace(/^Grupo /, "") + ")")));
-   txt += '<br><small style="opacity:.75">Si no la quitan y no anotan más clientes, la salida se marca sola 5 minutos después de su hora.</small>';
+   txt += ROL === "op" ? '<br><small style="opacity:.75">Si no la quitan y no anotan más clientes, la salida se marca sola 5 minutos después de su hora.</small>' : '<br><small style="opacity:.75">Si alguien sí llegó, en Asistencia toca «Llegó a tiempo». Si faltó, regístralo en Novedades.</small>';
   }
   caja.hidden = false;
   caja.innerHTML = '<span class="at-i">⏰</span><span class="at-t">' + txt + '</span><span class="at-b"><button type="button" class="at-x" title="Ocultar 10 minutos">Entendido</button></span>';
@@ -5678,7 +5682,7 @@ document.getElementById("navInicio").onclick = () => {
  };
  A.cerradoGen = 0;
  setInterval((() => {
-  if (document.visibilityState === "visible" && ROL === "op" && !A.op) {
+  if (document.visibilityState === "visible" && (ROL === "op" || ROL === "sup" || ROL === "mon") && !A.op) {
    pedirGen();
   }
  }), 2 * 6e4);
