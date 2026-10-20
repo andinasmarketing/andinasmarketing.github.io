@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 84", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 85", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "020e5c83d744";
+ var HUELLA = "241fc74bdf4f";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -530,6 +530,11 @@ function recibir(texto) {
   try {
    sessionStorage.setItem("retr_nombre", supNombre);
    localStorage.setItem("retr_nombre_ult", supNombre);
+  } catch (e) {}
+ }
+ if (d.supNombre && !d.supHasta) {
+  try {
+   sessionStorage.removeItem("retr_hasta");
   } catch (e) {}
  }
  if (d.supHasta) {
