@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 83", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 84", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "a212b5c98771";
+ var HUELLA = "020e5c83d744";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -7848,7 +7848,7 @@ function monRepHtml(x) {
  if (MON.repHecho[k]) return ' <small class="vf-rep-ok">✓ Le avisaste a supervisión</small>';
  if (MON.repOpen !== k) return ' <button type="button" class="vf-rep" data-rep="' + esc(k) + '">⚠ Me equivoqué</button>';
  const v = MON.repVals || {}, que = v.que || "metodo";
- return '<div class="vf-rep-f" data-repk="' + esc(k) + '"><b>¿Qué quedó mal?</b> <select class="vf-rq"><option value="metodo"' + (que === "metodo" ? " selected" : "") + '>Cómo lo retrajo</option><option value="cliente"' + (que === "cliente" ? " selected" : "") + '>Nombre del cliente</option><option value="resultado"' + (que === "resultado" ? " selected" : "") + ">Lo marqué al revés (retraído / no retraído)</option></select> " + (que === "metodo" ? '<select class="vf-rv"><option value="">Debe decir…</option>' + VF_METODOS.filter((o => o !== "Otra")).map((o => "<option" + (v.val === o ? " selected" : "") + ">" + o + "</option>")).join("") + '<option value="Otra"' + (v.val === "Otra" ? " selected" : "") + ">Otra</option></select>" + (v.val === "Otra" ? ' <input type="text" class="vf-ro" placeholder="¿Cuál?" maxlength="80" value="' + esc(v.otra || "") + '">' : "") : que === "cliente" ? '<input type="text" class="vf-rv" placeholder="Debe decir: Nombre, edad" maxlength="60" value="' + esc(v.val || "") + '">' : "") + ' <input type="text" class="vf-rn" placeholder="Nota (opcional)" maxlength="200" value="' + esc(v.nota || "") + '"> <button type="button" class="vf-si vf-renv">Enviar a supervisión</button> <button type="button" class="vf-rep vf-rcan">Cancelar</button> <small class="vf-rerr"></small></div>';
+ return '<div class="vf-rep-f" data-repk="' + esc(k) + '"><b>¿Qué quedó mal?</b> <select class="vf-rq"><option value="metodo"' + (que === "metodo" ? " selected" : "") + '>Cómo lo retrajo</option><option value="cliente"' + (que === "cliente" ? " selected" : "") + ">Nombre del cliente</option></select> " + (que === "metodo" ? '<select class="vf-rv"><option value="">Debe decir…</option>' + VF_METODOS.filter((o => o !== "Otra")).map((o => "<option" + (v.val === o ? " selected" : "") + ">" + o + "</option>")).join("") + '<option value="Otra"' + (v.val === "Otra" ? " selected" : "") + ">Otra</option></select>" + (v.val === "Otra" ? ' <input type="text" class="vf-ro" placeholder="¿Cuál?" maxlength="80" value="' + esc(v.otra || "") + '">' : "") : que === "cliente" ? '<input type="text" class="vf-rv" placeholder="Debe decir: Nombre, edad" maxlength="60" value="' + esc(v.val || "") + '">' : "") + ' <input type="text" class="vf-rn" placeholder="Nota (opcional)" maxlength="200" value="' + esc(v.nota || "") + '"> <button type="button" class="vf-si vf-renv">Enviar a supervisión</button> <button type="button" class="vf-rep vf-rcan">Cancelar</button> <small class="vf-rerr"></small></div>';
 }
 
 function monRepEnlazar(c) {
