@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 78", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 79", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "58ea77908594";
+ var HUELLA = "1b3729aa17e4";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -2690,6 +2690,23 @@ function segMonCargar() {
   },
   ver: [ [ 12, "GRUPO RIO", "MAÑANA", "NILSON ROJAS", "MIGUEL", "193401122", "", "", "", 0, "", 0 ], [ 12, "GRUPO RIO", "MAÑANA", "NILSON ROJAS", "MIGUEL", "193401178", "si", "Laura Pérez", "12/10 10:40", 0, "", 0, "Rápido: 3 s después del anterior" ], [ 11, "GRUPO RIO", "NOCHE", "MARWIN OLLARVES", "MIGUEL", "193380045", "no", "Laura Pérez", "12/10 07:40", 0, "", 0, "Uno por uno" ], [ 11, "GRUPO TOKYO", "TARDE", "ELIEZER ORANCE", "MARTIN", "193375561", "", "", "", 1, "Pedro Gil", 1 ], [ 11, "GRUPO TOKYO", "MAÑANA", "YONAIKER VIVAS", "SELMO", "193370001", "si", "Pedro Gil", "11/10 09:12", 0, "", 0 ] ]
  }))), 100);
+ const okE = t => {
+  try {
+   SEGMON.err = JSON.parse(t);
+  } catch (e) {}
+  segMonVerRender();
+ };
+ if (esApps) google.script.run.withSuccessHandler(okE).withFailureHandler((() => {})).erroresMonitores(clave); else setTimeout((() => okE(JSON.stringify({
+  ok: true,
+  verifs: {
+   "2026-10": {
+    "Camilo Buitrago": 420,
+    "Jenny Villamizar": 310,
+    "Zhuhey Staper": 380
+   }
+  },
+  errores: [ [ "19/10 13:20", "2026-10", 18, "GRUPO LONDRES", "CELIO OLLARVES", "REGINALDO 48", "194305147", "Camilo Buitrago", "si", "Luizzana Muñoz", "18/10 20:20", "debi" ], [ "17/10 09:10", "2026-10", 16, "GRUPO RIO", "NILSON ROJAS", "MIGUEL", "193401178", "Camilo Buitrago", "no", "Luizzana Muñoz", "16/10 22:40", "" ] ]
+ }))), 200);
 }
 
 function segMonVerRender() {
@@ -2753,6 +2770,41 @@ function segMonVerRender() {
   const a = porMon[m];
   return '<tr><td class="name"><b>' + esc(m) + '</b></td><td class="num">' + a.si + '</td><td class="num">' + a.no + '</td><td class="num">' + a.uno + '</td><td class="num">' + (a.todos ? '<span class="rv-pill aviso">' + a.todos + "</span>" : "0") + '</td><td class="num">' + (a.rap ? '<span class="rv-pill accion">' + a.rap + "</span>" : "0") + '</td><td class="num">' + (dejo[m] ? '<span class="rv-pill accion">' + dejo[m] + "</span>" : "0") + "</td></tr>";
  })).join("") + '</tbody></table></div><div class="sub" style="margin:-4px 0 12px">"Muy rápidos": verificó ese ID menos de 10 segundos después del anterior; difícilmente alcanzó a buscarlo en la plataforma. "Dejó sin verificar": IDs anotados durante su turno que siguen sin revisar cuando su turno ya terminó. Los monitores no ven esta tabla.</div>' : '<div class="sub" style="margin:0 0 12px">Hoy todavía nadie ha verificado IDs.</div>') + '<div style="margin:0 0 10px"><input type="search" id="segVerQ" placeholder="Buscar un ID: quién lo verificó" value="' + esc(q) + '" style="width:100%;max-width:420px;padding:10px 14px;border:1px solid var(--line);border-radius:999px;font:inherit;background:var(--surface);color:var(--ink)" inputmode="numeric" autocomplete="off"></div>' + '<div style="display:grid;grid-template-columns:minmax(0,1fr);gap:10px">' + bloque("❌ El monitor dice que NO están retraídos", "No cuentan. Siguen en la tabla del operador: debe corregirlos o borrarlos. Si revisaste en la plataforma y el monitor se equivocó, toca «Sí está retraído»: vuelve a contar para el operador y queda a tu nombre.", rech, [ "<th>Revisó</th><th></th>", x => '<td data-l="Revisó">' + esc(x.vq) + ' <small style="color:var(--faint)">' + esc(x.vt) + '</small></td><td data-l=""><button type="button" class="sr-x" data-corr="' + x.i + '">✅ Sí está retraído</button></td>' ], "accion") + bloque("Digitados sin verificar", "El monitor pasó el número a su archivo sin revisar estos IDs en la plataforma.", sinVer, [ "<th>Digitó</th><th>Se anotó en el turno de</th>", x => '<td data-l="Digitó">' + esc(x.dq || "—") + '</td><td data-l="Turno de">' + esc(x.tq || "—") + ' <small style="color:var(--faint)">' + esc(x.tb) + "</small></td>" ], "accion") + bloque("Verificados que faltan por transcribir", "Ya están confirmados para el operador, pero de días anteriores y el monitor todavía no los pasa a su archivo.", sinTr, [ "<th>Verificó</th>", x => '<td data-l="Verificó">' + esc(x.vq) + ' <small style="color:var(--faint)">' + esc(x.vt) + "</small></td>" ], "aviso") + bloque("✓ Verificados: quién y cuándo", "Todos los IDs revisados este mes, con el monitor que los verificó." + (q ? ' Filtrado por "' + esc(q) + '".' : ""), X.filter((x => x.est && (!q || String(x.id).indexOf(q) >= 0))).sort(((a, b) => b.d - a.d)), [ "<th>Resultado</th><th>Cliente / cómo lo retrajo</th><th>Verificó</th><th></th>", x => '<td data-l="Resultado">' + (x.est === "si" ? '<span class="rv-pill ok">✓ Retraído</span>' : '<span class="rv-pill accion">✕ No retraído</span>') + "</td>" + '<td data-l="Cliente">' + (x.cli || x.met ? esc(x.cli || "—") + (x.met ? ' <small style="color:var(--faint)">· ' + esc(x.met) + "</small>" : "") : '<small style="color:var(--faint)">—</small>') + "</td>" + '<td data-l="Verificó"><b>' + esc(x.vq || "—") + '</b> <small style="color:var(--faint)">' + esc(x.vt) + "</small></td>" + '<td data-l="">' + (x.est === "si" ? '<button type="button" class="sr-x" data-corrno="' + x.i + '">❌ No está retraído</button>' : '<button type="button" class="sr-x" data-corr="' + x.i + '">✅ Sí está retraído</button>') + "</td>" ], q ? "accion" : "ver") + bloque("Por verificar", 'Anotados por el operador y todavía sin revisar por un monitor. "Le tocaba a": el monitor que estaba de turno cuando el operador lo anotó, según su horario (pestañas "Personal" del archivo de horarios). Lo anotado en los últimos 5 minutos de un turno le toca al monitor que entra.', pend, [ "<th>Le tocaba a</th>", x => '<td data-l="Le tocaba a">' + (x.act === 1 ? '<span class="rv-pill info">Turno actual</span> ' : "") + esc(x.tq || "—") + ' <small style="color:var(--faint)">' + esc(x.tb) + "</small></td>" ], "info") + "</div>";
+ if (SEGMON.err && SEGMON.err.ok) {
+  const E = SEGMON.err, meses = Array.from(new Set(E.errores.map((e => e[1])).concat(Object.keys(E.verifs || {})))).sort().reverse();
+  if (!SEGMON.errMes || meses.indexOf(SEGMON.errMes) < 0) SEGMON.errMes = meses[0] || "";
+  const mesSel = SEGMON.errMes, xs = E.errores.filter((e => !mesSel || e[1] === mesSel)), V = (E.verifs || {})[mesSel] || {}, por = {};
+  xs.forEach((e => {
+   const a = por[e[7]] || (por[e[7]] = {
+    no: 0,
+    si: 0
+   });
+   a[e[8]]++;
+  }));
+  Object.keys(V).forEach((m => {
+   if (!por[m]) por[m] = {
+    no: 0,
+    si: 0
+   };
+  }));
+  const filasM = Object.keys(por).map((m => ({
+   m: m,
+   no: por[m].no,
+   si: por[m].si,
+   tot: por[m].no + por[m].si,
+   v: V[m] || 0
+  }))).sort(((a, b) => b.tot - a.tot || b.v - a.v));
+  const nomMes = k => {
+   const x = DATA && DATA.mesPorClave && DATA.mesPorClave[k];
+   return x ? x.nombre : k;
+  };
+  const det = xs.map((e => '<tr><td data-l="Corrigió"><b>' + esc(e[0]) + '</b></td><td data-l="Monitor"><b>' + esc(e[7]) + '</b> <small style="color:var(--faint)">' + esc(e[10]) + '</small></td><td data-l="Marcó">' + (e[8] === "no" ? '<span class="rv-pill accion">✕ Dijo NO retraído</span>' : '<span class="rv-pill aviso">✓ Dijo retraído</span>') + "</td>" + '<td data-l="Era">' + (e[8] === "no" ? "Sí estaba retraído" : "No estaba retraído") + '</td><td data-l="ID"><b>' + esc(e[6]) + "</b>" + (e[11] ? ' <small style="color:var(--faint)">' + esc(e[11]) + "</small>" : "") + '</td><td data-l="Operador">' + esc(titulo(e[4])) + ' <small style="color:var(--faint)">' + esc(titulo(e[3])) + ", día " + e[2] + '</small></td><td data-l="Corrigió">' + esc(e[9]) + "</td></tr>")).join("");
+  c.insertAdjacentHTML("afterbegin", '<details class="rv accion"' + (xs.length ? " open" : "") + ' style="margin-bottom:12px"><summary><span class="rv-n">' + fmt.format(xs.length) + '</span><span class="rv-t"><b>Errores de los monitores</b><small>Verificaciones que supervisión tuvo que corregir: el monitor dijo «No está retraído» y sí lo estaba, o al revés. Queda el registro de cada uno.</small></span></summary><div class="rv-c">' + (meses.length > 1 ? '<div class="sub-barra" style="margin:0 0 10px">' + meses.map((m => '<button type="button" data-errmes="' + esc(m) + '" aria-selected="' + (m === mesSel) + '">' + esc(nomMes(m)) + "</button>")).join("") + "</div>" : "") + (filasM.length ? '<div class="table-scroll" style="margin-bottom:12px"><table><thead><tr><th>Monitor</th><th class="num">Dijo NO y sí estaba retraído</th><th class="num">Dijo SÍ y no estaba retraído</th><th class="num">Total de errores</th><th class="num">Verificó en el mes</th><th class="num">% de error</th></tr></thead><tbody>' + filasM.map((r => '<tr><td class="name"><b>' + esc(r.m) + '</b></td><td class="num">' + (r.no ? '<span class="rv-pill accion">' + r.no + "</span>" : "0") + '</td><td class="num">' + (r.si ? '<span class="rv-pill aviso">' + r.si + "</span>" : "0") + '</td><td class="num"><b>' + r.tot + '</b></td><td class="num">' + fmt.format(r.v) + '</td><td class="num">' + (r.v ? (Math.round(r.tot / r.v * 1e3) / 10).toString().replace(".", ",") + " %" : "—") + "</td></tr>")).join("") + "</tbody></table></div>" : "") + (xs.length ? '<div class="table-scroll vt-cel" style="max-height:420px;overflow-y:auto"><table><thead><tr><th>Corregido el</th><th>Monitor (cuándo verificó)</th><th>Marcó</th><th>En realidad</th><th>ID</th><th>Operador</th><th>Corrigió</th></tr></thead><tbody>' + det + "</tbody></table></div>" : "<p>Ningún error corregido en este mes.</p>") + "</div></details>");
+  c.querySelectorAll("[data-errmes]").forEach((b => b.onclick = () => {
+   SEGMON.errMes = b.dataset.errmes;
+   segMonVerRender();
+  }));
+ }
  c.querySelectorAll("[data-corr],[data-corrno]").forEach((b => b.onclick = () => {
   const si = b.hasAttribute("data-corr"), r = SEGMON.ver[Number(si ? b.dataset.corr : b.dataset.corrno)], txt = b.textContent;
   if (!r) return;
@@ -2776,6 +2828,12 @@ function segMonVerRender() {
    }
    segMonVerRender();
    if (window.toast) toast("Listo: el ID " + r[5] + (si ? " quedó como retraído." : " quedó como NO retraído."));
+   if (esApps) google.script.run.withSuccessHandler((t => {
+    try {
+     SEGMON.err = JSON.parse(t);
+    } catch (e) {}
+    segMonVerRender();
+   })).erroresMonitores(clave);
   };
   if (!esApps) return setTimeout((() => fin({
    ok: true,
