@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 67", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 68", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "73891d14bbf1";
+ var HUELLA = "a7d19f4b9d93";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -2953,6 +2953,23 @@ function entradaTurno(o, fecha, x) {
    }
   }
  }));
+ let lejos = false;
+ if (ent === null) (DATA.histTurnos || []).forEach((h => {
+  if (nrm(h[2]) !== k || !h[3]) return;
+  const t = minAbs(h[0], h[3]);
+  if (t >= S - 16 * 60 && t < S - ASIS_ANTES) {
+   let sl = null;
+   if (h[4]) {
+    sl = minAbs(h[0], h[4]);
+    if (sl < t) sl += 1440;
+   }
+   if ((sl === null || sl > S) && (ent === null || t < ent)) {
+    ent = t;
+    sal = sl;
+    lejos = true;
+   }
+  }
+ }));
  let ajuste = "";
  const aj = (DATA.ajustesAsis || []).some((r => r[0] === fecha && nrm(r[1]) === k)), d0 = DATA.asisDesde ? minAbs(DATA.asisDesde.slice(0, 10), DATA.asisDesde.slice(11, 16)) : 0;
  if (aj || S < d0) {
@@ -2966,7 +2983,8 @@ function entradaTurno(o, fecha, x) {
   ent: ent,
   sal: sal,
   fin: fin,
-  ajuste: ajuste
+  ajuste: ajuste,
+  lejos: lejos
  };
 }
 
@@ -4124,7 +4142,7 @@ function asistenciaHtml(soloFilas, diasF) {
     nota = ausA[2] ? "Ausencia justificada" : "Ausencia anotada";
    } else if (T.ent !== null) {
     est = T.ent > T.S + TOLER_LLEGADA ? "tarde" : "ok";
-    nota = T.ajuste === "sup" ? "Ajustado por supervisión" : T.ajuste === "antes" ? "Antes del control de asistencia" : T.ent < T.S - 15 ? "Llegó antes" : est === "tarde" ? T.ent - T.S + " min tarde" : "";
+    nota = T.ajuste === "sup" ? "Ajustado por supervisión" : T.ajuste === "antes" ? "Antes del control de asistencia" : T.lejos ? "Vino fuera de su horario: entró a las " + hmDe(T.ent) + ", " + (Math.round((T.S - T.ent) / 6) / 10).toString().replace(".", ",") + " h antes de su turno" : T.ent < T.S - 15 ? "Llegó antes" : est === "tarde" ? T.ent - T.S + " min tarde" : "";
    } else if (now < T.E) est = n > 0 ? "sinmarca" : "pend"; else est = n > 0 ? "sinmarca" : "aus";
    filas.push({
     f: f,
