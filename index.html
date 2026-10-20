@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 71", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 72", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "2aadc8b62fe2";
+ var HUELLA = "e7b995c78b0b";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -4790,18 +4790,83 @@ function renderAvisoAusencias() {
  try {
   rachas = histSinRetraer(DATA.claveActual).rachas;
  } catch (e) {}
- const ausR = ausenciasSinRegistrar(rachas);
- if (!ausR.length) {
+ const ausR = ausenciasSinRegistrar(rachas), sal = salidasPendHtml();
+ if (!ausR.length && !sal) {
   caja.hidden = true;
   caja.innerHTML = "";
   return;
  }
  caja.hidden = false;
- caja.innerHTML = '<div class="sr-al si-aus" style="margin:0"><b>' + (ausR.length === 1 ? "1 operador faltó a su turno" : ausR.length + " turnos sin presentarse") + " y no se ha registrado qué pasó</b><p>Tenía turno según el horario y no marcó entrada ni anotó clientes. Registra si fue una ausencia (marca «Justificada» si la justificó), un permiso, vacaciones o un retiro. Si sí trabajó, márcalo en Asistencia con «Llegó a tiempo».</p>" + ausR.map(((r, i) => '<div class="sr-al-f" data-i="' + i + '"><span><b>' + esc(titulo(r.o)) + "</b> · " + esc(titulo(r.g)) + "<small>Faltó el " + DSEMLARGO(r.desde).toLowerCase() + " " + r.desde.slice(8) + "/" + r.desde.slice(5, 7) + "</small></span>" + racCampos(r) + "</div>")).join("") + "</div>";
- racEnlazar(caja, ausR);
+ if (!ausR.length) {
+  caja.innerHTML = sal;
+  salidasPendEnlazar(caja);
+  return;
+ }
+ caja.innerHTML = sal + '<div class="sr-al si-aus" style="margin:0"><b>' + (ausR.length === 1 ? "1 operador faltó a su turno" : ausR.length + " turnos sin presentarse") + " y no se ha registrado qué pasó</b><p>Tenía turno según el horario y no marcó entrada ni anotó clientes. Registra si fue una ausencia (marca «Justificada» si la justificó), un permiso, vacaciones o un retiro. Si sí trabajó, márcalo en Asistencia con «Llegó a tiempo».</p>" + ausR.map(((r, i) => '<div class="sr-al-f" data-i="' + i + '"><span><b>' + esc(titulo(r.o)) + "</b> · " + esc(titulo(r.g)) + "<small>Faltó el " + DSEMLARGO(r.desde).toLowerCase() + " " + r.desde.slice(8) + "/" + r.desde.slice(5, 7) + "</small></span>" + racCampos(r) + "</div>")).join("") + "</div>";
+ racEnlazar(caja.querySelector(".si-aus"), ausR);
+ salidasPendEnlazar(caja);
 }
 
 window.renderAvisoAusencias = renderAvisoAusencias;
+
+function salidasPend() {
+ const hoy = DATA && DATA.reloj && DATA.reloj.ahora ? DATA.reloj.ahora.slice(0, 10) : "", lim = hoy ? ymdMas(hoy, -7) : "";
+ return (DATA && DATA.histTurnos || []).filter((h => !h[4] && /^No marcó la salida/.test(h[6] || "") && (!lim || h[0] >= lim)));
+}
+
+function salidasPendHtml() {
+ const xs = salidasPend();
+ if (!xs.length) return "";
+ return '<div class="sr-al si-sal" style="margin:0 0 12px"><b>' + (xs.length === 1 ? "1 turno quedó" : xs.length + " turnos quedaron") + " sin hora de salida</b><p>No quitó su casilla «Estoy de turno» al irse y su entrada no coincide con su horario, así que la salida no se puso sola. Escribe a qué hora salió y toca Guardar.</p>" + xs.map(((h, i) => '<div class="sr-al-f" data-si="' + i + '"><span><b>' + esc(titulo(h[2])) + "</b> · " + esc(titulo(h[1])) + "<small>Entró el " + DSEMLARGO(h[0]).toLowerCase() + " " + h[0].slice(8) + "/" + h[0].slice(5, 7) + " a las " + esc(h[3]) + "</small></span>" + '<label style="display:flex;align-items:center;gap:6px;font-size:13px">Salió a las <input type="time" class="sal-h" style="font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:8px"></label><button type="button" class="btn sal-g">Guardar</button><span class="rac-err" style="color:var(--down);font-size:12.5px"></span></div>')).join("") + "</div>";
+}
+
+function salidasPendEnlazar(caja) {
+ const xs = salidasPend();
+ caja.querySelectorAll("[data-si]").forEach((f => {
+  const h = xs[Number(f.dataset.si)], inp = f.querySelector(".sal-h"), b = f.querySelector(".sal-g"), err = f.querySelector(".rac-err");
+  if (!h) return;
+  b.onclick = () => {
+   if (!/^\d{2}:\d{2}$/.test(inp.value)) {
+    err.textContent = "Escribe la hora de salida.";
+    inp.focus();
+    return;
+   }
+   const listo = d => {
+    if (!d || !d.ok) {
+     b.disabled = false;
+     err.textContent = d && d.error || "No se pudo guardar.";
+     return;
+    }
+    h[4] = inp.value;
+    h[5] = d.horas;
+    h[6] = "Salida puesta por supervisión";
+    if (window.toast) toast("Listo: salida de " + titulo(h[2]) + " a las " + inp.value + ".");
+    renderAvisoAusencias();
+    if (typeof renderSupInicio === "function") try {
+     renderSupInicio();
+    } catch (e) {}
+   };
+   b.disabled = true;
+   err.textContent = "";
+   if (!esApps) return listo({
+    ok: true,
+    horas: 0
+   });
+   google.script.run.withFailureHandler((e => listo({
+    ok: false,
+    error: e && e.message
+   }))).withSuccessHandler((t => {
+    let d;
+    try {
+     d = JSON.parse(t);
+    } catch (e) {
+     d = null;
+    }
+    listo(d);
+   })).guardarSalidaTurno(clave, h[0], h[1], h[2], h[3], inp.value);
+  };
+ }));
+}
 
 function renderSupInicio() {
  const caja = document.getElementById("supInicio");
@@ -4819,6 +4884,7 @@ function renderSupInicio() {
  let h = rachas.length ? '<div class="sr-al"><b>' + (rachas.length === 1 ? "Hay 1 operador" : "Hay " + rachas.length + " operadores") + " con varios días seguidos sin presentarse: registra qué pasó</b><p>Son días en que tenía turno según el horario y no marcó entrada ni anotó clientes (los descansos del horario no cuentan), o días sin horario publicado. Con dos o más seguidos, indica si está de vacaciones o de permiso (con fecha de inicio y de fin) o si se retiró (desde qué fecha), para que deje de salir en los reportes.</p>" + rachas.map(((r, i) => '<div class="sr-al-f" data-i="' + i + '"><span><b>' + esc(titulo(r.o)) + "</b> · " + esc(titulo(r.g)) + " · " + (JL[J.indexOf(r.t)] || r.t).toLowerCase() + "<small>" + r.n + " días seguidos sin presentarse, desde el día " + r.d1 + "</small></span>" + racCampos(r) + "</div>")).join("") + "</div>" : '<div class="si-ok"><b>Sin novedades por registrar</b><span>Ningún operador lleva dos o más días seguidos sin presentarse.</span></div>';
  const ausR = ausenciasSinRegistrar(rachas);
  if (ausR.length) h = '<div class="sr-al si-aus"><b>' + (ausR.length === 1 ? "1 operador faltó a su turno" : ausR.length + " turnos sin presentarse") + " y no se ha registrado qué pasó</b><p>Tenía turno según el horario y no marcó entrada ni anotó clientes. Registra si fue una ausencia (marca «Justificada» si la justificó), un permiso, vacaciones o un retiro. Si sí trabajó, márcalo en Asistencia con «Llegó a tiempo».</p>" + ausR.map(((r, i) => '<div class="sr-al-f" data-i="' + i + '"><span><b>' + esc(titulo(r.o)) + "</b> · " + esc(titulo(r.g)) + "<small>Faltó el " + DSEMLARGO(r.desde).toLowerCase() + " " + r.desde.slice(8) + "/" + r.desde.slice(5, 7) + "</small></span>" + racCampos(r) + "</div>")).join("") + "</div>" + h;
+ h = salidasPendHtml() + h;
  let asisHoy = [];
  try {
   asisHoy = asistenciaHtml(true, 1);
@@ -4830,9 +4896,10 @@ function renderSupInicio() {
  h += '<h2 class="si-t">¿Qué panel quieres ver?</h2><div class="inicio-op">' + tarjeta("dash", '<path d="M5 20V10M12 20V4M19 20v-7"/>', "Panel de clientes", "Clientes retraídos, rankings, bono por jornada, perfiles sin retraer y lo que hay para revisar.", m ? fmt.format(totMes) + " clientes en " + m.nombre.split(" ")[0].toLowerCase() : "") + tarjeta("ptsgen", '<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/>', "Panel de puntos", "Puntos y metas: avance de cada grupo, proyección de cierre y operadores.", "") + tarjeta("segmon", '<path d="M9 11l2 2 4-4"/><rect x="4" y="4" width="16" height="16" rx="3"/>', "Seguimiento a monitores", "Pendientes de los monitores y el registro de lo que digitan, con su hora.", fmt.format(regHoy) + (regHoy === 1 ? " registro hoy" : " registros hoy")) + tarjeta("asis", '<circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/><path d="M16 11l2 2 4-4"/>', "Asistencia de operadores", "Quién llegó a tiempo, quién llegó tarde y quién no vino, por día y por jornada.", asisDato) + tarjeta("nov", '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/>', "Novedades de operadores", "Vacaciones, permisos y retiros: registrar, consultar y descargar.", novs.length + (novs.length === 1 ? " vigente o programada" : " vigentes o programadas")) + "</div>";
  if (novs.length) h += '<div class="sr-top si-nov" style="grid-template-columns:1fr"><div><b>Novedades registradas (' + novs.length + ")</b><small>Operadores que están de vacaciones, de permiso o retirados. No salen en los reportes mientras la novedad esté vigente.</small>" + novsHtml(novs) + "</div></div>";
  caja.innerHTML = h;
- racEnlazar(caja.querySelector(".sr-al:not(.si-aus)") || document.createElement("div"), rachas);
+ racEnlazar(caja.querySelector(".sr-al:not(.si-aus):not(.si-sal)") || document.createElement("div"), rachas);
  const cajaAus = caja.querySelector(".si-aus");
  if (cajaAus) racEnlazar(cajaAus, ausR);
+ salidasPendEnlazar(caja);
  caja.querySelectorAll(".sr-x[data-n]").forEach((b => {
   const r = novs[Number(b.dataset.n)];
   b.onclick = () => guardarNovedadUI(r[0], r[1], "Activo", r[3], "", b);
