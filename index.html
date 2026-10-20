@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 80", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 81", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "48c45c65e95d";
+ var HUELLA = "29502b5df4c9";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -7727,7 +7727,7 @@ function cliValido(v) {
  return !!m && m[1].replace(/[^\p{L}]/gu, "").length >= 2 && +m[2] >= 18;
 }
 
-const VF_METODOS = [ "Escuchó audio", "Respondió por carta", "Respondió por chat", "Otra" ];
+const VF_METODOS = [ "Escuchó audio", "Respondió por carta", "Respondió por chat", "Cliente envió mensaje por chat", "Cliente responde a post", "Otra" ];
 
 function metTexto(m) {
  if (!m || !m.s) return "";
@@ -7735,7 +7735,7 @@ function metTexto(m) {
 }
 
 function metValido(v) {
- return VF_METODOS.slice(0, 3).indexOf(v) >= 0 || /^Otra: /.test(v) && v.slice(6).replace(/[^\p{L}]/gu, "").length >= 3;
+ return VF_METODOS.filter((x => x !== "Otra")).indexOf(v) >= 0 || /^Otra: /.test(v) && v.slice(6).replace(/[^\p{L}]/gu, "").length >= 3;
 }
 
 function monVerificar(idx, res, boton) {
@@ -7794,7 +7794,7 @@ function monVerificar(idx, res, boton) {
     sel.classList.add("mal");
     sel.focus();
    }
-   alert(m.s === "Otra" ? "Escribe cómo lo retrajo el operador (en «Otra»)." : "Elige cómo retrajo el operador a ese cliente: escuchó audio, respondió por carta, respondió por chat u otra.");
+   alert(m.s === "Otra" ? "Escribe cómo lo retrajo el operador (en «Otra»)." : "Elige en la lista cómo retrajo el operador a ese cliente.");
    return;
   }
  }
@@ -8009,7 +8009,7 @@ function monRender() {
   const grupos = [ ...new Set(base.map((x => x.g))) ].sort();
   if (gru && grupos.indexOf(gru) < 0) MON.vfG = "";
   const lista = base.filter((x => !MON.vfG || x.g === MON.vfG));
-  if (MON.vf === "pend") html += '<ol class="vf-pasos"><li><b>Copia el correo del perfil</b> (botón «Copiar» de cada recuadro) y entra con él a la plataforma.</li><li><b>Busca cada ID</b>, escribe el <b>nombre y la edad del cliente</b> así: <b>Charito, 73</b> elige <b>cómo lo retrajo el operador</b> (audio, carta, chat u otra) y toca <span class="vf-mini si">✅ Sí</span> si está retraído o <span class="vf-mini no">❌ No</span> si no lo está.</li>' + (monEsSup() ? "" : "<li><b>Sin afán:</b> entre un ID y otro hay que esperar " + VF_ESPERA.ID + " segundos, y " + VF_ESPERA.PERFIL + " segundos al pasar a otro perfil (para que alcances a entrar con su correo y buscar el ID).</li>") + "</ol>";
+  if (MON.vf === "pend") html += '<ol class="vf-pasos"><li><b>Copia el correo del perfil</b> (botón «Copiar» de cada recuadro) y entra con él a la plataforma.</li><li><b>Busca cada ID</b>, escribe el <b>nombre y la edad del cliente</b> así: <b>Charito, 73</b> elige <b>cómo lo retrajo el operador</b> en la lista y toca <span class="vf-mini si">✅ Sí</span> si está retraído o <span class="vf-mini no">❌ No</span> si no lo está.</li>' + (monEsSup() ? "" : "<li><b>Sin afán:</b> entre un ID y otro hay que esperar " + VF_ESPERA.ID + " segundos, y " + VF_ESPERA.PERFIL + " segundos al pasar a otro perfil (para que alcances a entrar con su correo y buscar el ID).</li>") + "</ol>";
   if (MON.vf === "pend" && vfNuevos.length) html += '<button type="button" class="vf-nuevos" id="vfNuevos">' + (vfNuevos.length === 1 ? "🔔 Llegó 1 ID nuevo" : "🔔 Llegaron " + vfNuevos.length + " IDs nuevos") + ". Toca aquí cuando termines lo que estás revisando.</button>";
   if (grupos.length > 1) html += '<div class="vf-fil"><select class="vf-sel" id="vfGrupo" aria-label="Grupo"><option value="">Todos los grupos</option>' + grupos.map((g => '<option value="' + esc(g) + '"' + (g === MON.vfG ? " selected" : "") + ">" + esc(titulo(g)) + "</option>")).join("") + "</select></div>";
   if (!lista.length) html += base.length ? '<div class="vacio">No hay IDs con ese filtro.</div>' : MON.vf === "pend" ? '<div class="mon-ok"><b>Nada por verificar</b>Todos los IDs anotados ya están revisados. Cuando un operador anote uno nuevo, aparece aquí.</div>' : '<div class="vacio">Todavía no hay IDs revisados en los últimos días.</div>'; else {
