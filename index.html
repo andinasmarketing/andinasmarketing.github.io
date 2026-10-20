@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 65", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 66", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "32c1d8aa1e56";
+ var HUELLA = "688d0ccdd679";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -7082,11 +7082,14 @@ function monCargar() {
    document.getElementById("monEst").textContent = d.error || "No se pudo cargar.";
    return;
   }
-  if (MON.datos && MON.datos.ver && (MON.verT || 0) > pedidoT) d.ver = MON.datos.ver; else monLocal(d.ver);
+  const yaTenia = MON.datos && MON.datos.ver && MON.clave === MON.datosClave;
+  if (yaTenia) d.ver = MON.datos.ver; else monLocal(d.ver);
   MON.datos = d;
+  MON.datosClave = MON.clave;
   MON.cargadoT = Date.now();
-  if (!((MON.verT || 0) > pedidoT)) MON.verT = Date.now();
   monRender();
+  MON.verCargando = 0;
+  monCargarVer();
  };
  if (esApps) google.script.run.withSuccessHandler(ok).withFailureHandler((e => ok(JSON.stringify({
   ok: false,
