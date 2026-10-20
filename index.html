@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 66", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 67", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "688d0ccdd679";
+ var HUELLA = "73891d14bbf1";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -3340,6 +3340,70 @@ function horarioDia(o, fecha) {
  return null;
 }
 
+function horasRepuestas(o, fecha) {
+ const hoy = DATA.reloj && DATA.reloj.ahora ? DATA.reloj.ahora.slice(0, 10) : (new Date).toISOString().slice(0, 10);
+ const dur = x => {
+  if (!x || !x.e || !x.s) return 0;
+  let d = minAbs("2000-01-01", x.s) - minAbs("2000-01-01", x.e);
+  if (d <= 0) d += 1440;
+  return d;
+ };
+ const x0 = horarioDia(o, fecha), debe = (dur(x0) || 480) / 60;
+ const sched = f => {
+  const x = horarioDia(o, f);
+  if (!x || x.desc || !x.e || !x.s) return null;
+  const S = minAbs(f, x.e);
+  let E = minAbs(f, x.s);
+  if (E <= S) E += 1440;
+  return [ S, E ];
+ };
+ let min = 0, sinSalida = 0, estimado = 0;
+ const ahoraMin = DATA.reloj && DATA.reloj.ahora ? minAbs(DATA.reloj.ahora.slice(0, 10), DATA.reloj.ahora.slice(11, 16)) : minAbs(hoy, "23:59");
+ (DATA.histTurnos || []).forEach((h => {
+  if (nrm(h[2]) !== nrm(o) || !h[0] || h[0] <= fecha || h[0] > hoy || !h[3]) return;
+  const S = minAbs(h[0], h[3]);
+  let E;
+  if (h[4]) {
+   E = minAbs(h[0], h[4]);
+   if (E <= S) E += 1440;
+  } else if (/En turno/i.test(h[6] || "")) E = ahoraMin; else {
+   const iv = sched(h[0]);
+   if (iv && S < iv[0] && ahoraMin > iv[0]) {
+    E = iv[0];
+    estimado++;
+   } else {
+    sinSalida++;
+    return;
+   }
+  }
+  let fuera = E - S;
+  [ -1, 0, 1 ].forEach((k => {
+   const iv = sched(ymdMas(h[0], k));
+   if (iv) fuera -= Math.max(0, Math.min(E, iv[1]) - Math.max(S, iv[0]));
+  }));
+  if (fuera >= 15) min += fuera;
+ }));
+ const lleva = Math.round(min / 6) / 10;
+ return {
+  debe: Math.round(debe * 10) / 10,
+  lleva: lleva,
+  listo: lleva >= debe,
+  sinSalida: sinSalida,
+  estimado: estimado
+ };
+}
+
+const horasTxt = n => String(n).replace(".", ",") + " h";
+
+function horasCelda(a) {
+ if (a[2]) return '<small style="color:var(--faint)">No debe horas</small>';
+ const r = horasRepuestas(a[1], a[0]), falta = Math.round((r.debe - r.lleva) * 10) / 10;
+ let h = r.listo ? '<span class="rv-pill ok">✓ Ya repuso las ' + horasTxt(r.debe) + "</span> <small>(trabajó " + horasTxt(r.lleva) + " fuera de su horario)</small>" : '<span class="rv-pill aviso">Debe ' + horasTxt(falta) + "</span> <small>de " + horasTxt(r.debe) + (r.lleva ? "; lleva " + horasTxt(r.lleva) + " repuestas" : "") + "</small>";
+ if (r.estimado) h += '<br><small style="color:var(--faint)">' + (r.estimado === 1 ? "Un día no marcó la salida" : r.estimado + " días no marcó la salida") + ": se cuenta desde que llegó hasta que empezaba su turno</small>";
+ if (r.sinSalida) h += '<br><small style="color:var(--faint)">' + r.sinSalida + (r.sinSalida === 1 ? " turno" : " turnos") + " sin salida marcada no se cuenta" + (r.sinSalida === 1 ? "" : "n") + "</small>";
+ return h;
+}
+
 function horarioTipo(nombre, H) {
  const t = ((H || {}).tipos || []).filter((x => nrm(x[0]) === nrm(nombre)))[0];
  return {
@@ -4478,7 +4542,7 @@ function renderNovedades() {
   const sj = AUS.filter((a => !a[2])).length;
   h += cab("nv-aus", "Ausencias", AUS.length ? cuenta(AUS.length, "ausencia", "ausencias") + (sj ? ' · <span class="mal">' + sj + " sin justificar</span>" : "") : "", "Días en que un operador faltó (de los últimos 60 días). Si no está justificada, pierde su descanso; si la justificas, lo recupera. En los dos casos el horario de su grupo se acomoda solo. Se guardan en la pestaña AUSENCIAS del archivo de horarios.");
  }
- if (!AUS.length) h += '<div class="state" style="padding:18px 0">No hay ausencias anotadas. Para anotar una, elige "Ausencia" arriba.</div>'; else h += '<div class="table-scroll"><table class="sr-t"><thead><tr><th>Fecha</th><th>Operador</th><th>Grupo</th><th>Estado</th><th>Cómo quedó el horario</th><th></th></tr></thead><tbody>' + AUS.map(((a, i) => "<tr><td>" + DSEM[new Date(a[0] + "T12:00:00").getDay()] + " " + fe(a[0]) + '</td><td class="name"><b>' + esc(titulo(a[1])) + "</b></td><td>" + esc(titulo(grupoDe(a[1]))) + "</td>" + "<td>" + (a[2] ? '<span class="rv-pill info">Justificada</span>' : '<span class="rv-pill accion">Sin justificar</span>') + '</td><td style="white-space:normal;min-width:200px;max-width:340px"><small>' + esc(a[3] || "—") + "</small></td>" + '<td style="white-space:nowrap"><button type="button" class="sr-x" data-au="' + i + '" data-ac="' + (a[2] ? "injustificar" : "justificar") + '">' + (a[2] ? "Quitar justificación" : "Justificar") + '</button> <button type="button" class="sr-x" data-au="' + i + '" data-ac="quitar">Quitar</button></td></tr>')).join("") + "</tbody></table></div>";
+ if (!AUS.length) h += '<div class="state" style="padding:18px 0">No hay ausencias anotadas. Para anotar una, elige "Ausencia" arriba.</div>'; else h += '<div class="table-scroll"><table class="sr-t"><thead><tr><th>Fecha</th><th>Operador</th><th>Grupo</th><th>Estado</th><th>Horas por reponer</th><th>Cómo quedó el horario</th><th></th></tr></thead><tbody>' + AUS.map(((a, i) => "<tr><td>" + DSEM[new Date(a[0] + "T12:00:00").getDay()] + " " + fe(a[0]) + '</td><td class="name"><b>' + esc(titulo(a[1])) + "</b></td><td>" + esc(titulo(grupoDe(a[1]))) + "</td>" + "<td>" + (a[2] ? '<span class="rv-pill info">Justificada</span>' : '<span class="rv-pill accion">Sin justificar</span>') + "</td>" + '<td style="white-space:normal;min-width:170px">' + horasCelda(a) + "</td>" + '<td style="white-space:normal;min-width:200px;max-width:340px"><small>' + esc(a[3] || "—") + "</small></td>" + '<td style="white-space:nowrap"><button type="button" class="sr-x" data-au="' + i + '" data-ac="' + (a[2] ? "injustificar" : "justificar") + '">' + (a[2] ? "Quitar justificación" : "Justificar") + '</button> <button type="button" class="sr-x" data-au="' + i + '" data-ac="quitar">Quitar</button></td></tr>')).join("") + "</tbody></table></div>";
  h += "</section>";
  caja.innerHTML = h;
  caja.querySelectorAll("[data-au]").forEach((q => {
