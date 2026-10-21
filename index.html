@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 97", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 98", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "518e5915d34e";
+ var HUELLA = "ad874996d89c";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -5089,6 +5089,8 @@ function renderNovedades() {
   Terminada: "Terminadas"
  };
  const NV_ICO = {
+  "nv-inc": '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/>',
+  "nv-inca": '<path d="M12 21s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.6-7 10-7 10z"/><path d="M12 10v5M9.5 12.5h5"/>',
   "nv-vac": '<path d="M12 3a9 9 0 0 1 9 9H3a9 9 0 0 1 9-9z"/><path d="M12 12v7a2 2 0 0 0 4 0"/>',
   "nv-per": '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M12 9v8M8 13h8"/><path d="M8 3v4M16 3v4"/>',
   "nv-ret": '<path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M10 16l-4-4 4-4M6 12h10"/>',
@@ -5096,10 +5098,10 @@ function renderNovedades() {
  };
  const cab = (cls, tit, resumen, sub) => '<section class="panel nv-sec ' + cls + '"><div class="nv-cab"><span class="nv-ico" aria-hidden="true"><svg viewBox="0 0 24 24">' + NV_ICO[cls] + "</svg></span><h2>" + tit + "</h2>" + (resumen ? '<span class="nv-res">' + resumen + "</span>" : "") + '</div><div class="sub">' + sub + "</div>";
  const cuenta = (n, uno, varios) => n + " " + (n === 1 ? uno : varios);
- [ [ "Vacaciones", "Vacaciones", "Mientras están vigentes, el operador no sale en el histórico de perfiles sin retraer ni en las alertas, y al monitor no se le pide el 0.", "No hay vacaciones registradas." ], [ "Permiso o incapacidad", "Permisos e incapacidades", "Mientras están vigentes, el operador no sale en el histórico de perfiles sin retraer ni en las alertas, y al monitor no se le pide el 0.", "No hay permisos ni incapacidades registrados." ] ].forEach((([tipo, tit, sub, vacio]) => {
-  const xs0 = ver.map(((x, i) => [ x, i ])).filter((z => tipo === "Vacaciones" ? z[0].t === tipo : /permiso|incapacidad/i.test(z[0].t)));
+ [ [ "Vacaciones", "Vacaciones", "Mientras están vigentes, el operador no sale en el histórico de perfiles sin retraer ni en las alertas, y al monitor no se le pide el 0.", "No hay vacaciones registradas." ], [ "Permiso", "Permisos", "Mientras están vigentes, el operador no sale en el histórico de perfiles sin retraer ni en las alertas, y al monitor no se le pide el 0. Las horas del permiso las debe reponer.", "No hay permisos registrados." ], [ "Incapacidad", "Incapacidades", "Mientras están vigentes, el operador no sale en el histórico de perfiles sin retraer ni en las alertas, y al monitor no se le pide el 0. La incapacidad no repone horas.", "No hay incapacidades registradas." ] ].forEach((([tipo, tit, sub, vacio]) => {
+  const xs0 = ver.map(((x, i) => [ x, i ])).filter((z => tipo === "Vacaciones" ? z[0].t === tipo : tipo === "Incapacidad" ? z[0].t === "Incapacidad" : /permiso/i.test(z[0].t)));
   const nv0 = xs0.filter((z => z[0].est === "Vigente")).length, np0 = xs0.filter((z => z[0].est === "Programada")).length;
-  h += cab(tipo === "Vacaciones" ? "nv-vac" : "nv-per", tit, xs0.length ? [ nv0 ? cuenta(nv0, "vigente", "vigentes") : "Nadie ahora", np0 ? cuenta(np0, "programada", "programadas") : "" ].filter(Boolean).join(" · ") : "", sub);
+  h += cab(tipo === "Vacaciones" ? "nv-vac" : tipo === "Incapacidad" ? "nv-inca" : "nv-per", tit, xs0.length ? [ nv0 ? cuenta(nv0, "vigente", "vigentes") : "Nadie ahora", np0 ? cuenta(np0, "programada", "programadas") : "" ].filter(Boolean).join(" · ") : "", sub);
   if (!xs0.length) {
    h += '<div class="state" style="padding:18px 0">' + vacio + "</div></section>";
    return;
@@ -5139,7 +5141,7 @@ function renderNovedades() {
  {
   const INC = turnosIncompletos();
   const pend = INC.filter((x => !(deudasOp(x.o)["inc:" + x.f] || {}).listo)).length;
-  h += cab("nv-aus", "Turnos incompletos", INC.length ? cuenta(INC.length, "turno", "turnos") + (pend ? ' · <span class="mal">' + pend + " sin reponer</span>" : " · todos repuestos") : "", "No vino a su hora (por ejemplo vino de día en vez de noche) y se fue sin completar las horas de su turno. Lo que le faltó lo debe reponer: se va descontando con lo que trabaje de más después (en su descanso, fuera de su horario o quedándose más tiempo). De los últimos 35 días.");
+  h += cab("nv-inc", "Turnos incompletos", INC.length ? cuenta(INC.length, "turno", "turnos") + (pend ? ' · <span class="mal">' + pend + " sin reponer</span>" : " · todos repuestos") : "", "No vino a su hora (por ejemplo vino de día en vez de noche) y se fue sin completar las horas de su turno. Lo que le faltó lo debe reponer: se va descontando con lo que trabaje de más después (en su descanso, fuera de su horario o quedándose más tiempo). De los últimos 35 días.");
   if (!INC.length) h += '<div class="state" style="padding:18px 0">No hay turnos incompletos.</div>'; else h += '<div class="table-scroll"><table class="sr-t"><thead><tr><th>Fecha</th><th>Operador</th><th>Grupo</th><th>Su turno</th><th>Vino</th><th>Horas por reponer</th></tr></thead><tbody>' + INC.map((x => {
    const r = deudasOp(x.o)["inc:" + x.f] || {
     debe: Math.round(x.falta / 6) / 10,
@@ -5152,6 +5154,16 @@ function renderNovedades() {
   h += "</section>";
  }
  caja.innerHTML = h;
+ {
+  const secs = [ "nv-inc", "nv-aus", "nv-per", "nv-inca", "nv-vac", "nv-ret" ].map((c => caja.querySelector(".nv-sec." + c))).filter(Boolean);
+  const prim = caja.querySelector(".nv-sec");
+  if (prim && secs.length) {
+   const padre = prim.parentNode, ancla = document.createComment("nv");
+   padre.insertBefore(ancla, prim);
+   secs.forEach((x => padre.insertBefore(x, ancla)));
+   padre.removeChild(ancla);
+  }
+ }
  caja.querySelectorAll("[data-au]").forEach((q => {
   const a = AUS[Number(q.dataset.au)];
   q.onclick = () => {
