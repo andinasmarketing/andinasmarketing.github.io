@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 89", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 90", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "25fc2be867ec";
+ var HUELLA = "850403831647";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -4139,6 +4139,43 @@ function asistenciaHtml(soloFilas, diasF) {
  const H = DATA.horarios, ahora = DATA.reloj && DATA.reloj.ahora ? DATA.reloj.ahora : (new Date).toISOString().slice(0, 16), hoy = ahora.slice(0, 10), now = minAbs(hoy, ahora.slice(11, 16));
  const adel = !(DATA.reloj && DATA.reloj.nocheSig), fe = x => x.slice(8) + "/" + x.slice(5, 7);
  if (!H || !H.semanas || !H.semanas.length) return soloFilas ? [] : '<section class="panel"><h2>Asistencia</h2><div class="state" style="padding:18px 0">Todavía no hay horarios publicados. La asistencia se calcula con el horario de cada semana.</div></section>';
+ const R0 = (() => {
+  const min0 = ymdMas(hoy.slice(0, 7) + "-01", -1).slice(0, 7) + "-01", ad = DATA.asisDesde ? DATA.asisDesde.slice(0, 10) : "", min = ad && ad > min0 ? ad : min0;
+  let sel = NOVUI.adia || hoy;
+  if (!/^mes:\d{4}-\d{2}$/.test(sel) && !/^\d{4}-\d{2}-\d{2}$/.test(sel)) sel = hoy;
+  if (sel.indexOf("mes:") === 0) {
+   const m = sel.slice(4);
+   let d = m + "-01", fin = ymdMas(ymdMas(m + "-28", 4).slice(0, 7) + "-01", -1);
+   if (d < min) d = min;
+   if (fin > hoy) fin = hoy;
+   if (d > fin) {
+    sel = hoy;
+    return {
+     sel: sel,
+     desde: hoy,
+     hasta: hoy,
+     mes: false,
+     min: min
+    };
+   }
+   return {
+    sel: sel,
+    desde: d,
+    hasta: fin,
+    mes: true,
+    min: min
+   };
+  }
+  if (sel > hoy || sel < min) sel = hoy;
+  return {
+   sel: sel,
+   desde: sel,
+   hasta: sel,
+   mes: false,
+   min: min
+  };
+ })();
+ if (!soloFilas) diasF = Math.round((new Date(hoy + "T12:00:00") - new Date(R0.desde + "T12:00:00")) / 864e5) + 1;
  const RM = {}, R = c => c in RM ? RM[c] : RM[c] = DATA.mesPorClave[c] ? operacionMes(c) : null, filas = [], vistos = {}, ops = [];
  H.semanas.forEach((sem => sem.f.forEach((r => {
   if (!vistos[nrm(r[1])]) {
@@ -4307,23 +4344,49 @@ function asistenciaHtml(soloFilas, diasF) {
   }));
  }
  if (soloFilas) return filas;
+ // ---------- Vista: un día o el mes completo (se elige en el menú) ----------
+  filas.splice(0, filas.length, ...filas.filter((z => z.f >= R0.desde && z.f <= R0.hasta)));
  const g0 = NOVUI.g, grupos = Array.from(new Set(filas.map((z => z.g)))).sort(), base = filas.filter((z => !g0 || z.g === g0));
- const c = e => base.filter((z => z.est === e)).length;
- const ver = base.filter((z => !NOVUI.aest || z.est === NOVUI.aest)).sort(((p, q) => (p.f < q.f ? 1 : p.f > q.f ? -1 : 0) || p.g.localeCompare(q.g) || p.T.S - q.T.S));
- let h = '<div class="mon-k seg-k"><div class="v"><b>' + (c("ok") + c("tarde")) + '</b><span>Turnos con entrada marcada</span></div><div class="a"><b>' + c("tarde") + "</b><span>Llegaron tarde (más de " + TOLER_LLEGADA + " minutos)</span></div>" + '<div class="r"><b>' + c("aus") + "</b><span>Ausencias</span></div><div><b>" + c("sinmarca") + "</b><span>Sin marcar entrada pero anotaron clientes</span></div></div>";
- h += '<section class="panel"><h2>Asistencia por turno</h2><div class="sub">Cada turno del horario publicado contra la casilla «Estoy de turno». La entrada vale si se marca desde 4 horas antes de la hora del horario: quien entra a las 8 y llega a las 6 sale con «Llegó antes». Si el turno termina sin entrada marcada y sin clientes, es ausencia. Los descansos y las novedades (vacaciones, permisos) no cuentan como ausencia. Si un operador sí llegó a su hora y no salió así, toca «Llegó a tiempo». La asistencia cuenta desde ' + (DATA.asisDesde ? DATA.asisDesde.slice(8, 10) + "/" + DATA.asisDesde.slice(5, 7) + " a las " + DATA.asisDesde.slice(11) : "que se publicó el horario") + "; los turnos de antes salen a tiempo.</div>" + '<div class="sub-barra" style="margin-top:12px">' + [ [ 1, "Hoy" ], [ 7, "7 días" ], [ 31, "31 días" ] ].map((d => '<button type="button" data-ad="' + d[0] + '" aria-selected="' + (NOVUI.adias === d[0]) + '">' + d[1] + "</button>")).join("") + '<select class="asis-g" aria-label="Grupo" style="margin-left:8px"><option value="">Todos los grupos</option>' + grupos.map((g => '<option value="' + esc(g) + '"' + (g === g0 ? " selected" : "") + ">" + esc(titulo(g)) + "</option>")).join("") + "</select></div>" + '<div class="sub-barra" style="margin-top:8px">' + [ [ "", "Todos" ], [ "aus", "Ausencias" ], [ "tarde", "Llegaron tarde" ], [ "sinmarca", "Sin marcar entrada" ], [ "ok", "A tiempo" ], [ "pend", "En curso sin entrada" ], [ "vino", "Vinieron en su descanso" ], [ "fuera", "Vinieron fuera de horario" ], [ "otro", "Cambiaron de horario" ], [ "libre", "No tuvieron que cubrir" ] ].map((e => '<button type="button" data-ae="' + e[0] + '" aria-selected="' + (NOVUI.aest === e[0]) + '">' + e[1] + " · " + (e[0] ? c(e[0]) : base.length) + "</button>")).join("") + "</div>";
- const nt = z => {
-  const t = z.corta !== undefined ? z.corta : z.nota;
-  return t ? ' <small class="sr-cub" title="' + esc(z.nota || "") + '">' + esc(t) + "</small>" : "";
- };
- const pill = z => z.est === "ok" ? '<span class="rv-pill ok">Asistió</span>' + nt(z) : z.est === "tarde" ? '<span class="rv-pill aviso">Llegó tarde</span>' + nt(z) : z.est === "just" ? '<span class="rv-pill info">Ausencia justificada</span>' : z.est === "vino" ? '<span class="rv-pill ok">Vino en su descanso</span>' + nt(z) : z.est === "fuera" ? '<span class="rv-pill ok">Vino fuera de horario</span>' + nt(z) : z.est === "otro" ? (z.otroOk ? '<span class="rv-pill ok">Cumplió en otro horario</span>' : '<span class="rv-pill aviso">Vino en otro horario</span>') + nt(z) : z.est === "libre" ? '<span class="rv-pill info">No tuvo que cubrir</span> <small class="sr-cub">' + esc(z.nota) + "</small>" : z.est === "aus" ? '<span class="rv-pill accion">Ausencia</span>' + (z.nota ? ' <small class="sr-cub">' + z.nota + "</small>" : "") : z.est === "sinmarca" ? '<span class="rv-pill aviso">Sin marcar entrada</span> <small class="sr-cub">anotó clientes</small>' : z.est === "pend" ? '<span class="rv-pill">En curso · sin entrada todavía</span>' : '<span class="rv-pill info">' + esc(z.nov) + "</span>";
+ base.forEach((z => {
+  const hh = histDeEntrada(z);
+  z.h = hh;
+  z.sigue = !!(hh && !hh[4] && /^En turno/.test(hh[6] || "") && !(asisAhora() < z.T.E + 30 && !z.T.lejos && z.est !== "fuera" && z.est !== "otro"));
+  z.sinSal = !!(hh && !hh[4] && !/^En turno/.test(hh[6] || ""));
+  z.enCurso = !!(hh && !hh[4] && /^En turno/.test(hh[6] || "") && !z.sigue);
+ }));
+ const revisar = z => z.est === "aus" && z.nota !== "Ausencia anotada" || z.est === "tarde" || z.est === "sinmarca" || z.sigue || z.sinSal || z.est === "otro" && !z.otroOk;
+ const tipo = z => z.sigue || z.sinSal ? "mal" : z.est === "aus" ? "mal" : z.est === "tarde" || z.est === "sinmarca" || z.est === "otro" && !z.otroOk ? "av" : [ "just", "vino", "libre", "nov" ].indexOf(z.est) >= 0 ? "info" : z.est === "pend" ? "neu" : "ok";
+ const FIL = [ [ "", "Todos", () => true ], [ "rev", "Por revisar", revisar ], [ "aus", "Ausencias", z => z.est === "aus" ], [ "tarde", "Llegaron tarde", z => z.est === "tarde" ], [ "sal", "Sin salida", z => z.sigue || z.sinSal ], [ "sinmarca", "Sin marcar entrada", z => z.est === "sinmarca" ], [ "otro", "Otro horario", z => z.est === "otro" || z.est === "fuera" ], [ "vino", "En su descanso", z => z.est === "vino" ], [ "libre", "No tuvieron que cubrir", z => z.est === "libre" ] ];
+ if (!FIL.some((x => x[0] === NOVUI.aest))) NOVUI.aest = "";
+ const filtro = FIL.find((x => x[0] === NOVUI.aest))[2];
+ const ver = base.filter(filtro).sort(((p, q) => (p.f < q.f ? 1 : p.f > q.f ? -1 : 0) || p.g.localeCompare(q.g) || p.T.S - q.T.S));
+ const c = fn => base.filter(fn).length;
+ const MES = [ "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre" ];
+ const opciones = (() => {
+  let o = "", mesAct = "";
+  for (let f = hoy; f >= R0.min; f = ymdMas(f, -1)) {
+   const m = f.slice(0, 7);
+   if (m !== mesAct) {
+    if (mesAct) o += "</optgroup>";
+    mesAct = m;
+    const nm = MES[Number(m.slice(5)) - 1];
+    o += '<optgroup label="' + nm.charAt(0).toUpperCase() + nm.slice(1) + " " + m.slice(0, 4) + '"><option value="mes:' + m + '"' + (R0.sel === "mes:" + m ? " selected" : "") + ">▦ Todo " + nm + "</option>";
+   }
+   o += '<option value="' + f + '"' + (R0.sel === f ? " selected" : "") + ">" + DSEMLARGO(f) + " " + fe(f) + (f === hoy ? " · hoy" : f === ymdMas(hoy, -1) ? " · ayer" : "") + "</option>";
+  }
+  return o + (mesAct ? "</optgroup>" : "");
+ })();
+ let h = '<section class="panel as-v2"><div class="as2-top"><h2>Asistencia</h2><div class="as2-sel">' + '<label><span>Ver</span><select class="asis-dia" aria-label="Día o mes">' + opciones + "</select></label>" + '<label><span>Grupo</span><select class="asis-g" aria-label="Grupo"><option value="">Todos los grupos</option>' + grupos.map((g => '<option value="' + esc(g) + '"' + (g === g0 ? " selected" : "") + ">" + esc(titulo(g)) + "</option>")).join("") + "</select></label></div></div>" + '<div class="as2-k"><div class="ok"><b>' + c((z => z.est === "ok" || z.est === "otro" && z.otroOk)) + '</b><span>Asistieron</span></div><div class="av"><b>' + c((z => z.est === "tarde")) + "</b><span>Llegaron tarde</span></div>" + '<div class="mal"><b>' + c((z => z.est === "aus")) + '</b><span>Ausencias</span></div><div class="mal"><b>' + c((z => z.sigue || z.sinSal)) + '</b><span>Sin hora de salida</span></div><div class="av"><b>' + c((z => z.est === "sinmarca")) + "</b><span>Sin marcar entrada</span></div></div>" + '<div class="as2-fil">' + FIL.map((x => {
+  const n = c(x[2]);
+  return !x[0] || n || NOVUI.aest === x[0] ? '<button type="button" data-ae="' + x[0] + '" aria-selected="' + (NOVUI.aest === x[0]) + '">' + x[1] + " · " + n + "</button>" : "";
+ })).join("") + "</div>" + '<details class="as2-ayuda"><summary>¿Cómo se calcula?</summary>Cada turno del horario publicado contra la casilla «Estoy de turno». La entrada vale si se marca desde 4 horas antes de la hora del horario. Si el turno termina sin entrada marcada y sin clientes, es ausencia. Los descansos y las novedades (vacaciones, permisos) no cuentan como ausencia. Si un operador sí llegó a su hora, toca «Llegó a tiempo». La asistencia cuenta desde ' + (DATA.asisDesde ? DATA.asisDesde.slice(8, 10) + "/" + DATA.asisDesde.slice(5, 7) + " a las " + DATA.asisDesde.slice(11) : "que se publicó el horario") + ". Las horas van en formato de 24 horas.</details>";
  const jorDe = z => {
   if (z.est === "fuera") {
    const hh = Number(String(z.x.e).slice(0, 2));
    return hh >= 22 || hh < 6 ? 2 : hh >= 14 ? 1 : 0;
   }
   const jn = nrm(String(z.x && z.x.n || ""));
-  if (/^MANANA|^MAÑANA/.test(jn)) return 0;
+  if (/^MANANA/.test(jn)) return 0;
   if (/^TARDE/.test(jn)) return 1;
   if (/^NOCHE/.test(jn)) return 2;
   const m = z.f.slice(0, 7), d = Number(z.f.slice(8));
@@ -4337,47 +4400,50 @@ function asistenciaHtml(soloFilas, diasF) {
   z.dur = z.T.E - z.T.S;
   z.diez = z.dur >= 570;
  }));
- const BL = [ 0, 1, 2, "diez" ], nomBl = b => b === "diez" ? "Turnos de 10 horas" : JL[b], horBl = b => b === "diez" ? "cubren el día de descanso de un compañero" : JH[b];
+ const BL = [ 0, 1, 2, "diez" ], nomBl = b => b === "diez" ? "Turnos de 10 horas" : JL[b], horBl = b => b === "diez" ? "cubren el descanso de un compañero" : [ "06:15 – 14:15", "14:15 – 22:15", "22:15 – 06:15" ][b];
  const colBl = b => b === "diez" ? "var(--oro, #D4A82A)" : JC[b];
  const arreglable = z => z.T.ajuste !== "sup" && (z.est === "tarde" || z.est === "sinmarca" || z.est === "aus" && z.nota !== "Ausencia anotada");
- const salidaCelda = (z, i) => {
-  const h = histDeEntrada(z);
-  if (!h) return z.T.sal !== null && z.T.sal !== undefined && z.T.ajuste !== "sup" ? hmDe(z.T.sal) : '<span style="opacity:.4">—</span>';
-  const ed = (txt, tit) => ' <button type="button" class="sr-x" data-cs="' + i + '" title="' + tit + '" style="text-decoration:none;opacity:.6">' + txt + "</button>";
-  if (h[4]) {
-   const como = /automática/i.test(h[6] || "") ? "automática" : /supervisión/i.test(h[6] || "") ? "supervisión" : "";
-   return h[4] + ed("✎", "Corregir la hora de salida") + (como ? ' <small class="as-como" title="Salida ' + como + '">' + (como === "automática" ? "auto" : "sup.") + "</small>" : "");
-  }
-  if (/^En turno/.test(h[6] || "") && asisAhora() < z.T.E + 30 && !z.T.lejos && z.est !== "fuera" && z.est !== "otro") return '<span class="rv-pill">En turno</span>';
-  return '<span class="as-sin">' + (/^En turno/.test(h[6] || "") ? "Sigue marcado" : "Sin salida") + "</span>" + ed("✎", "Poner la hora en que salió");
+ const CHIP = z => z.sigue ? "Sigue marcado" : z.sinSal ? "Sin hora de salida" : z.est === "ok" ? "Asistió" : z.est === "tarde" ? "Llegó tarde" : z.est === "just" ? "Ausencia justificada" : z.est === "vino" ? "Vino en su descanso" : z.est === "fuera" ? "Vino fuera de horario" : z.est === "otro" ? z.otroOk ? "Cumplió en otro horario" : "Incompleto" : z.est === "libre" ? "No tuvo que cubrir" : z.est === "aus" ? z.nota === "Ausencia anotada" ? "Ausencia anotada" : "Ausencia" : z.est === "sinmarca" ? "Sin marcar entrada" : z.est === "pend" ? "En curso · sin entrada" : z.nov;
+ const fila = (z, i) => {
+  const t = tipo(z), hh = z.h, ent = z.T.ent !== null && z.T.ajuste !== "sup" ? hmDe(z.T.ent) : "";
+  const sal = hh && hh[4] ? hh[4] : !hh && z.T.sal !== null && z.T.sal !== undefined && z.T.ajuste !== "sup" ? hmDe(z.T.sal) : "";
+  const comoSal = hh && hh[4] ? /automática/i.test(hh[6] || "") ? "Salida automática" : /supervisión/i.test(hh[6] || "") ? "Salida puesta por supervisión" : /según el horario/i.test(hh[6] || "") ? "Salida según el horario" : "Marcó la salida" : "";
+  const dif = z.est === "vino" ? "Tenía descanso" : z.est === "fuera" ? "Sin turno a esa hora" : "Horario " + hmDe(z.T.S) + " – " + hmDe(z.T.E) + (z.T.ent !== null && z.T.ajuste !== "sup" && !z.T.lejos && z.est !== "otro" ? z.T.ent > z.T.S + TOLER_LLEGADA ? ' · <span class="r">' + (z.T.ent - z.T.S) + " min tarde</span>" : z.T.ent < z.T.S - 15 ? " · llegó antes" : ' · <span class="g">a tiempo</span>' : "");
+  const exp = z.sigue ? "Su turno terminó a las " + hmDe(z.T.E) + " y no ha quitado la casilla" : z.sinSal ? "No quedó registrada la hora en que se fue" : [ z.corta !== undefined ? z.corta : z.est === "ok" && /^(Llegó antes)$/.test(z.nota) ? "" : z.est === "tarde" ? "" : z.nota, comoSal ].filter(Boolean).join(" · ");
+  const tiempos = ent || sal ? "<span" + (z.T.ent !== null && hh ? ' class="ed" data-ce="' + i + '" title="Corregir la hora de entrada"' : "") + ">" + (ent || "—") + "</span><em>→</em>" + (sal ? "<span" + (hh ? ' class="ed" data-cs="' + i + '" title="Corregir la hora de salida"' : "") + ">" + sal + "</span>" : z.sigue || z.sinSal ? '<span class="q">¿?</span>' : z.enCurso ? '<span class="cur">en turno</span>' : '<span class="nada">—</span>') : '<span class="nada">—</span>';
+  let ac = "";
+  if (z.sigue || z.sinSal) ac += '<button type="button" class="as2-btn" data-cs="' + i + '">Poner salida</button>';
+  if (z.T.ajuste === "sup") ac += '<button type="button" class="as2-a" data-aj="' + i + '" data-v="">Quitar ajuste</button>'; else if (z.nota === "Ausencia anotada") ac += '<small class="as2-nota">Se cambia en Novedades → Ausencias</small>'; else if (z.est === "tarde" || z.est === "aus" || z.est === "sinmarca") ac += '<button type="button" class="as2-a" data-aj="' + i + '" data-v="A tiempo">Llegó a tiempo</button>';
+  if ((z.est === "pend" || (z.est === "sinmarca" || z.est === "aus") && z.T.ent === null && asisAhora() < z.T.E) && z.nota !== "Ausencia anotada") ac += '<button type="button" class="as2-btn" data-me="' + i + '">Ya llegó</button>';
+  if (z.est === "aus" && !(DATA.ausencias || []).some((a => a[0] === z.f && nrm(a[1]) === nrm(z.o)))) ac += '<button type="button" class="as2-a" data-an="' + i + '" data-j="">Anotar ausencia</button><button type="button" class="as2-a" data-an="' + i + '" data-j="1">Justificada</button><small class="an-msg"></small>';
+  if (!z.sigue && !z.sinSal && hh) ac += '<button type="button" class="as2-a" data-ce="' + i + '">✎ Entrada</button>' + (hh[4] ? '<button type="button" class="as2-a" data-cs="' + i + '">✎ Salida</button>' : "");
+  return '<div class="as2-r ' + t + '">' + '<div class="as2-nm">' + (arreglable(z) ? '<input type="checkbox" class="as-sel" data-i="' + i + '" aria-label="Seleccionar">' : '<span class="as2-sp"></span>') + "<div><b>" + esc(titulo(z.o)) + "</b><small>" + esc(titulo(z.g)) + (z.diez ? " · de " + JL[z.ji].toLowerCase() : "") + "</small></div></div>" + '<div class="as2-t"><div class="tt">' + tiempos + "</div><small>" + dif + "</small></div>" + '<div class="as2-st"><span class="as2-chip ' + t + '">' + esc(CHIP(z)) + "</span>" + (exp ? '<small title="' + esc(z.nota || "") + '">' + esc(exp) + "</small>" : "") + "</div>" + '<div class="as2-c"><b>' + fmt.format(z.n) + "</b><small>clientes</small></div>" + '<div class="as2-ac">' + ac + "</div></div>";
  };
- const fila = (z, i) => "<tr><td>" + (arreglable(z) ? '<input type="checkbox" class="as-sel" data-i="' + i + '" aria-label="Seleccionar" style="margin-right:8px;vertical-align:middle;width:16px;height:16px;cursor:pointer">' : '<span style="display:inline-block;width:24px"></span>') + esc(titulo(z.g)) + '</td><td class="name"><b>' + esc(titulo(z.o)) + "</b>" + (z.diez ? ' <small style="opacity:.65">(de ' + JL[z.ji].toLowerCase() + ")</small>" : "") + "</td>" + '<td><span class="as-h">' + hmDe(z.T.S) + " a " + hmDe(z.T.E) + '</span> <small style="opacity:.65">' + esc(z.x.n) + "</small></td>" + "<td>" + (z.T.ent !== null && z.T.ajuste !== "sup" ? hmDe(z.T.ent) + (histDeEntrada(z) ? ' <button type="button" class="sr-x" data-ce="' + i + '" title="Corregir la hora de entrada" aria-label="Corregir la hora de entrada" style="text-decoration:none;opacity:.6">✎</button>' : "") : "—") + "</td><td>" + salidaCelda(z, i) + "</td><td>" + pill(z) + '</td><td class="num">' + fmt.format(z.n) + "</td>" + "<td>" + (z.T.ajuste === "sup" ? '<button type="button" class="sr-x" data-aj="' + i + '" data-v="">Quitar ajuste</button>' : z.nota === "Ausencia anotada" ? '<small class="sr-cub">Ya está registrada (se cambia en Novedades → Ausencias)</small>' : z.est === "tarde" || z.est === "aus" || z.est === "sinmarca" ? '<button type="button" class="sr-x" data-aj="' + i + '" data-v="A tiempo">Llegó a tiempo</button>' : "") + ((z.est === "pend" || (z.est === "sinmarca" || z.est === "aus") && z.T.ent === null && asisAhora() < z.T.E) && z.nota !== "Ausencia anotada" ? ' <button type="button" class="sr-x" data-me="' + i + '">Ya llegó</button>' : "") + (z.est === "aus" && !(DATA.ausencias || []).some((a => a[0] === z.f && nrm(a[1]) === nrm(z.o))) ? ' <button type="button" class="sr-x" data-an="' + i + '" data-j="">Anotar ausencia</button> <button type="button" class="sr-x" data-an="' + i + '" data-j="1">Justificada</button> <small class="an-msg"></small>' : "") + "</td></tr>";
- if (!ver.length) h += '<div class="state" style="padding:18px 0">No hay turnos con esos filtros.</div>'; else {
-  const dias = Array.from(new Set(ver.map((z => z.f)))).sort().reverse();
-  let cuerpo = "";
-  dias.forEach((f => {
-   const delDia = ver.filter((z => z.f === f));
-   cuerpo += '<tr class="as-dia"><td colspan="8">' + DSEMLARGO(f) + " " + fe(f) + " <small>" + delDia.length + (delDia.length === 1 ? " turno" : " turnos") + "</small></td></tr>";
-   BL.forEach((b => {
-    const zs = delDia.filter((z => b === "diez" ? z.diez : !z.diez && z.ji === b)).sort(((p, q) => b === "diez" ? p.T.S - q.T.S || p.g.localeCompare(q.g) : p.g.localeCompare(q.g) || p.T.S - q.T.S));
-    if (!zs.length) return;
-    const malos = zs.filter((z => z.est === "aus" && z.nota !== "Ausencia anotada" || z.est === "tarde" || z.est === "sinmarca")).length;
-    cuerpo += '<tr class="as-jor"><td colspan="8"><span class="dot" style="background:' + colBl(b) + '"></span><b>' + nomBl(b) + "</b> <small>" + horBl(b) + "</small>" + '<span class="as-cnt">' + zs.length + (malos ? " · <em>" + malos + " por revisar</em>" : "") + "</span>" + (() => {
-     const ts = zs.filter((z => arreglable(z) && z.est !== "aus"));
-     return ts.length ? ' <button type="button" class="as-todos" data-todos="' + ts.map((z => ver.indexOf(z))).join(",") + '">✓ Todos a tiempo (' + ts.length + ")</button>" : "";
-    })() + "</td></tr>";
-    let ultimaH = null;
-    zs.forEach((z => {
-     if (b === "diez" && z.T.S !== ultimaH) {
-      ultimaH = z.T.S;
-      cuerpo += '<tr class="as-sub"><td colspan="8">Entran a las ' + hmDe(z.T.S) + " y salen a las " + hmDe(z.T.E) + "</td></tr>";
-     }
-     cuerpo += fila(z, ver.indexOf(z));
-    }));
-   }));
+ const cuerpoDia = delDia => {
+  let out = "";
+  BL.forEach((b => {
+   const zs = delDia.filter((z => b === "diez" ? z.diez : !z.diez && z.ji === b)).sort(((p, q) => b === "diez" ? p.T.S - q.T.S || p.g.localeCompare(q.g) : p.g.localeCompare(q.g) || p.T.S - q.T.S));
+   if (!zs.length) return;
+   const malos = zs.filter(revisar).length, ts = zs.filter((z => arreglable(z) && z.est !== "aus"));
+   out += '<div class="as2-jor"><i style="background:' + colBl(b) + '"></i>' + nomBl(b) + " <small>" + horBl(b) + " · " + zs.length + (zs.length === 1 ? " turno" : " turnos") + "</small>" + (malos ? "<em>" + malos + " por revisar</em>" : '<em class="g">Todo en orden</em>') + (ts.length ? '<button type="button" class="as-todos" data-todos="' + ts.map((z => ver.indexOf(z))).join(",") + '">✓ Todos a tiempo (' + ts.length + ")</button>" : "") + "</div>";
+   out += '<div class="as2-list">' + zs.map((z => fila(z, ver.indexOf(z)))).join("") + "</div>";
   }));
-  h += '<div class="as-bar" hidden><b class="as-bar-n"></b><button type="button" class="btn" data-selok>✓ Llegaron a tiempo</button><button type="button" class="btn ghost" data-selno>Quitar selección</button><small class="as-bar-msg"></small></div>';
-  h += '<div class="table-scroll as-t" style="max-height:680px;overflow-y:auto"><table class="sr-t"><thead><tr><th>Grupo</th><th>Operador</th><th>Horario</th><th>Entró</th><th>Salió</th><th>Estado</th><th class="num">Clientes</th><th></th></tr></thead><tbody>' + cuerpo + "</tbody></table></div>";
+  return out;
+ };
+ const resumenDia = delDia => {
+  const ok = delDia.filter((z => tipo(z) === "ok")).length, av = delDia.filter((z => tipo(z) === "av")).length, mal = delDia.filter((z => tipo(z) === "mal")).length;
+  return '<span class="as2-b ok" title="Asistieron">' + ok + "</span>" + (av ? '<span class="as2-b av" title="Tarde o incompleto">' + av + "</span>" : "") + (mal ? '<span class="as2-b mal" title="Ausencias o sin salida">' + mal + "</span>" : "");
+ };
+ h += '<div class="as-bar" hidden><b class="as-bar-n"></b><button type="button" class="btn" data-selok>✓ Llegaron a tiempo</button><button type="button" class="btn ghost" data-selno>Quitar selección</button><small class="as-bar-msg"></small></div>';
+ if (!ver.length) h += '<div class="state" style="padding:22px 0">No hay turnos con esos filtros.</div>'; else if (R0.mes) {
+  NOVUI.aabiertos = NOVUI.aabiertos || {};
+  Array.from(new Set(ver.map((z => z.f)))).sort().reverse().forEach((f => {
+   const delDia = ver.filter((z => z.f === f)), malos = delDia.filter(revisar).length;
+   h += '<details class="as2-dia" data-f="' + f + '"' + (NOVUI.aabiertos[f] ? " open" : "") + "><summary><b>" + DSEMLARGO(f) + " " + fe(f) + '</b><span class="as2-dn">' + delDia.length + (delDia.length === 1 ? " turno" : " turnos") + (malos ? " · <em>" + malos + " por revisar</em>" : "") + '</span><span class="as2-bs">' + resumenDia(delDia) + '</span><span class="as2-fl">▾</span></summary>' + cuerpoDia(delDia) + "</details>";
+  }));
+ } else {
+  const malos = ver.filter(revisar).length;
+  h += '<div class="as2-hd"><b>' + DSEMLARGO(R0.desde) + " " + fe(R0.desde) + "</b><span>" + ver.length + (ver.length === 1 ? " turno" : " turnos") + (malos ? " · " + malos + " por revisar" : " · todo en orden") + '</span><span class="as2-bs">' + resumenDia(ver) + "</span></div>" + cuerpoDia(ver);
  }
  NOVUI.asisVer = ver;
  return h + "</section>";
@@ -4385,7 +4451,7 @@ function asistenciaHtml(soloFilas, diasF) {
 
 (() => {
  const st = document.createElement("style");
- st.textContent = ".as-t td{vertical-align:middle;white-space:nowrap}.as-t td:nth-child(6){min-width:240px}.as-t th:nth-child(4),.as-t td:nth-child(4){width:80px}.as-t th:nth-child(5),.as-t td:nth-child(5){width:120px}" + ".as-t .as-como{font-size:11px;opacity:.55}.as-t .as-sin{color:#B7791F;font-weight:600;font-size:12.5px}.as-t td:nth-child(6) .sr-cub{display:inline-block;margin-left:6px;opacity:.7}" + ".si-asis{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;width:100%;text-align:left;font:inherit;cursor:pointer;margin:0 0 18px;padding:16px 18px;border-radius:16px;border:1px solid var(--line,rgba(127,127,127,.25));border-left:6px solid #3DBB85;background:var(--surface,#fff);color:inherit}" + ".si-asis.mal{border-left-color:#C0392B}.si-asis-t{flex:1;min-width:200px;display:flex;flex-direction:column}.si-asis-t b{font-size:18px}.si-asis-t small{opacity:.7}" + ".si-asis-n{display:flex;flex-direction:column;align-items:center;min-width:84px;font-size:12.5px;opacity:.85}.si-asis-n b{font-size:24px;line-height:1.1}.si-asis-n.v b{color:#2E9E6B}.si-asis-n.a b{color:#B7791F}.si-asis-n.r b{color:#C0392B}" + ".si .inicio-op{grid-template-columns:repeat(auto-fit,minmax(170px,1fr)) !important}" + ".si-asis em{font-style:normal;font-weight:800;background:#D4A82A;color:#15161A;border-radius:999px;padding:8px 16px;white-space:nowrap}";
+ st.textContent = ".as-v2{--ok:#2E9E6B;--okc:#3DBB85;--okb:rgba(61,187,133,.14);--av:#B7791F;--avc:#E2A63B;--avb:rgba(226,166,59,.16);--mal:#C0392B;--malc:#C0392B;--malb:rgba(192,57,43,.12);--inf:#5B4BB0;--infc:#8C7BD6;--infb:rgba(140,123,214,.16)}" + ".as2-top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px}.as2-top h2{margin:0}.as2-sel{display:flex;flex-wrap:wrap;gap:10px}" + ".as2-sel label{display:flex;flex-direction:column;gap:3px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint,#8A867C);font-weight:600}" + ".as2-sel select{font:inherit;font-size:14.5px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--ink);background:var(--surface,#fff);border:1px solid var(--line);border-radius:12px;padding:9px 34px 9px 12px;min-width:210px;cursor:pointer}" + ".as2-k{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:16px 0 12px}.as2-k div{border:1px solid var(--line);border-radius:14px;padding:10px 14px;display:flex;flex-direction:column}.as2-k b{font-size:24px;line-height:1.1}.as2-k span{font-size:12.5px;opacity:.75}" + ".as2-k .ok b{color:var(--ok)}.as2-k .av b{color:var(--av)}.as2-k .mal b{color:var(--mal)}" + ".as2-fil{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}.as2-fil button{font:inherit;font-size:13px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:99px;padding:6px 13px;cursor:pointer}.as2-fil button[aria-selected=true]{background:var(--oro,#C9A227);border-color:var(--oro,#C9A227);color:#15161A;font-weight:700}" + ".as2-ayuda{font-size:12.5px;color:var(--muted);margin:4px 0 12px}.as2-ayuda summary{cursor:pointer;color:var(--oro-tinta,#7A5D00);font-weight:600}" + ".as2-hd,.as2-dia>summary{display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:14px;background:#15161A;color:#F6F1E4;margin-top:10px}.as2-hd b,.as2-dia>summary b{font-size:18px;color:#E6C766}.as2-hd>span:not(.as2-bs),.as2-dn{font-size:13px;opacity:.8}.as2-dn em{font-style:normal;color:#F3A59C;font-weight:700}" + ".as2-bs{margin-left:auto;display:flex;gap:5px}.as2-b{font-size:12px;font-weight:700;padding:2px 9px;border-radius:99px}.as2-b.ok{background:rgba(61,187,133,.2);color:#6FD3A6}.as2-b.av{background:rgba(226,166,59,.22);color:#F0C27A}.as2-b.mal{background:rgba(192,57,43,.28);color:#F3A59C}" + ".as2-dia>summary{cursor:pointer;list-style:none}.as2-dia>summary::-webkit-details-marker{display:none}.as2-fl{transition:transform .15s;opacity:.7}.as2-dia[open] .as2-fl{transform:rotate(180deg)}.as2-dia[open]{padding-bottom:6px}" + ".as2-jor{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:16px 2px 8px;font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}.as2-jor i{width:9px;height:9px;border-radius:50%}.as2-jor small{font-weight:500;text-transform:none;letter-spacing:0}" + ".as2-jor em{margin-left:auto;font-style:normal;text-transform:none;letter-spacing:0;font-weight:700;color:var(--mal);font-size:12.5px}.as2-jor em.g{color:var(--ok)}.as2-jor .as-todos{text-transform:none;letter-spacing:0}" + ".as2-list{display:flex;flex-direction:column;gap:8px}" + ".as2-r{display:grid;grid-template-columns:minmax(170px,1.1fr) minmax(220px,1.3fr) minmax(200px,1.5fr) 64px minmax(150px,1fr);align-items:center;gap:14px;border:1px solid var(--line);border-left:5px solid var(--okc);border-radius:12px;padding:10px 16px;background:var(--surface,#fff)}" + ".as2-r.av{border-left-color:var(--avc)}.as2-r.mal{border-left-color:var(--malc)}.as2-r.info{border-left-color:var(--infc)}.as2-r.neu{border-left-color:var(--line)}" + ".as2-nm{display:flex;align-items:center;gap:10px}.as2-nm input{width:16px;height:16px;cursor:pointer;flex:none;margin:0}.as2-sp{width:16px;flex:none}.as2-nm b{display:block;font-size:15px}.as2-nm small{color:var(--faint,#8A867C);font-size:12.5px}" + ".as2-t .tt{font-size:21px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em;white-space:nowrap}.as2-t em{font-style:normal;opacity:.45;font-weight:500;margin:0 7px}.as2-t .q{color:var(--mal)}.as2-t .cur{font-size:13px;font-weight:700;color:var(--ok)}.as2-t .nada{opacity:.35}" + ".as2-t .ed{cursor:pointer;border-bottom:1px dashed transparent}.as2-t .ed:hover{border-bottom-color:currentColor}.as2-t small{display:block;font-size:11.5px;color:var(--faint,#8A867C)}.as2-t small .r{color:var(--mal);font-weight:700}.as2-t small .g{color:var(--ok);font-weight:700}" + ".as2-chip{display:inline-block;font-size:12px;font-weight:700;padding:3px 10px;border-radius:99px;background:var(--okb);color:var(--ok)}.as2-chip.av{background:var(--avb);color:var(--av)}.as2-chip.mal{background:var(--malb);color:var(--mal)}.as2-chip.info{background:var(--infb);color:var(--inf)}.as2-chip.neu{background:rgba(127,127,127,.12);color:var(--muted)}" + ".as2-st small{display:block;font-size:12px;color:var(--muted);margin-top:4px}.as2-c{text-align:right}.as2-c b{display:block;font-size:18px}.as2-c small{font-size:10.5px;color:var(--faint,#8A867C)}" + ".as2-ac{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:4px 10px}.as2-a{font:inherit;font-size:12.5px;font-weight:700;color:var(--oro-tinta,#7A5D00);background:none;border:0;padding:2px 0;cursor:pointer}.as2-a:hover{text-decoration:underline}" + ".as2-btn{font:inherit;font-size:12.5px;font-weight:700;background:var(--oro,#C9A227);color:#15161A;border:0;border-radius:99px;padding:6px 13px;cursor:pointer}.as2-nota{font-size:11.5px;color:var(--faint,#8A867C);text-align:right}" + "@media (max-width:900px){.as2-k{grid-template-columns:repeat(2,1fr)}.as2-r{grid-template-columns:1fr auto;gap:8px 12px}.as2-t{grid-column:1/-1;order:3}.as2-st{grid-column:1/-1;order:4}.as2-ac{grid-column:1/-1;order:5;justify-content:flex-start}.as2-c{order:2}}" + ":root[data-theme=oscuro] .as-v2{--ok:#6FD3A6;--av:#F0C27A;--mal:#F3A59C;--inf:#B7AAF0}" + ".as-t td{vertical-align:middle;white-space:nowrap}.as-t td:nth-child(6){min-width:240px}.as-t th:nth-child(4),.as-t td:nth-child(4){width:80px}.as-t th:nth-child(5),.as-t td:nth-child(5){width:120px}" + ".as-t .as-como{font-size:11px;opacity:.55}.as-t .as-sin{color:#B7791F;font-weight:600;font-size:12.5px}.as-t td:nth-child(6) .sr-cub{display:inline-block;margin-left:6px;opacity:.7}" + ".si-asis{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;width:100%;text-align:left;font:inherit;cursor:pointer;margin:0 0 18px;padding:16px 18px;border-radius:16px;border:1px solid var(--line,rgba(127,127,127,.25));border-left:6px solid #3DBB85;background:var(--surface,#fff);color:inherit}" + ".si-asis.mal{border-left-color:#C0392B}.si-asis-t{flex:1;min-width:200px;display:flex;flex-direction:column}.si-asis-t b{font-size:18px}.si-asis-t small{opacity:.7}" + ".si-asis-n{display:flex;flex-direction:column;align-items:center;min-width:84px;font-size:12.5px;opacity:.85}.si-asis-n b{font-size:24px;line-height:1.1}.si-asis-n.v b{color:#2E9E6B}.si-asis-n.a b{color:#B7791F}.si-asis-n.r b{color:#C0392B}" + ".si .inicio-op{grid-template-columns:repeat(auto-fit,minmax(170px,1fr)) !important}" + ".si-asis em{font-style:normal;font-weight:800;background:#D4A82A;color:#15161A;border-radius:999px;padding:8px 16px;white-space:nowrap}";
  document.head.appendChild(st);
 })();
 
@@ -4753,6 +4819,24 @@ function renderNovedades() {
    }
    caja.querySelectorAll("[data-todos]").forEach((q => q.onclick = () => ajusteAsisLote(q.dataset.todos.split(",").map((i => NOVUI.asisVer[Number(i)])), q)));
   }
+  {
+   const sd = caja.querySelector(".asis-dia");
+   if (sd) sd.onchange = () => {
+    NOVUI.adia = sd.value;
+    NOVUI.aest = "";
+    sd.blur();
+    renderNovedades.forzar = true;
+    try {
+     renderNovedades();
+    } finally {
+     renderNovedades.forzar = false;
+    }
+   };
+   caja.querySelectorAll(".as2-dia").forEach((d => d.ontoggle = () => {
+    NOVUI.aabiertos = NOVUI.aabiertos || {};
+    NOVUI.aabiertos[d.dataset.f] = d.open;
+   }));
+  }
   caja.querySelectorAll("[data-aj]").forEach((q => q.onclick = () => ajusteAsisUI(NOVUI.asisVer[Number(q.dataset.aj)], q.dataset.v, q)));
   caja.querySelectorAll("[data-me]").forEach((q => q.onclick = () => marcarEntradaUI(NOVUI.asisVer[Number(q.dataset.me)], q)));
   caja.querySelectorAll("[data-ce]").forEach((q => q.onclick = () => {
@@ -4778,7 +4862,13 @@ function renderNovedades() {
   const ag = caja.querySelector(".asis-g");
   if (ag) ag.onchange = () => {
    NOVUI.g = ag.value;
-   renderNovedades();
+   ag.blur();
+   renderNovedades.forzar = true;
+   try {
+    renderNovedades();
+   } finally {
+    renderNovedades.forzar = false;
+   }
   };
   return;
  }
