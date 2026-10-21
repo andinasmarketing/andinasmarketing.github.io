@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 91", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 93", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "d8a7be69d039";
+ var HUELLA = "aee800e29b0e";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -3291,7 +3291,7 @@ function novsHtml(novs) {
 
 function racCampos(r) {
  const sel = v => r.tipo === v ? " selected" : "";
- return '<select aria-label="Qué pasó"><option' + sel("Vacaciones") + ">Vacaciones</option><option" + sel("Permiso o incapacidad") + ">Permiso o incapacidad</option><option" + sel("Retirado") + '>Retirado</option><option value="Ausencia"' + sel("Ausencia") + ">Ausencia (faltó un día)</option></select>" + '<label class="rac-d">Desde <input type="date" class="rac-desde" value="' + esc(r.desde) + '" aria-label="Desde qué fecha"></label>' + '<label class="rac-h">Hasta <input type="date" class="rac-hasta" min="' + esc(r.desde) + '" aria-label="Hasta qué fecha"></label>' + '<label class="rac-def" title="El operador no va a volver: queda aparte en la lista de novedades"><input type="checkbox" class="rac-defc"> Retiro definitivo</label>' + '<label class="rac-just" title="Si la justificó (incapacidad, calamidad…), no pierde su descanso" hidden><input type="checkbox" class="rac-justc"> Justificada</label>' + '<button class="btn" type="button">Guardar</button><small class="rac-err" role="alert"></small>';
+ return '<select aria-label="Qué pasó"><option' + sel("Vacaciones") + ">Vacaciones</option><option" + sel("Permiso") + ' value="Permiso">Permiso (debe reponer las horas)</option><option' + sel("Incapacidad") + ' value="Incapacidad">Incapacidad (no repone horas)</option><option' + sel("Retirado") + '>Retirado</option><option value="Ausencia"' + sel("Ausencia") + ">Ausencia (faltó un día)</option></select>" + '<label class="rac-d">Desde <input type="date" class="rac-desde" value="' + esc(r.desde) + '" aria-label="Desde qué fecha"></label>' + '<label class="rac-h">Hasta <input type="date" class="rac-hasta" min="' + esc(r.desde) + '" aria-label="Hasta qué fecha"></label>' + '<label class="rac-def" title="El operador no va a volver: queda aparte en la lista de novedades"><input type="checkbox" class="rac-defc"> Retiro definitivo</label>' + '<label class="rac-just" title="Si la justificó (incapacidad, calamidad…), no pierde su descanso" hidden><input type="checkbox" class="rac-justc"> Justificada</label>' + '<button class="btn" type="button">Guardar</button><small class="rac-err" role="alert"></small>';
 }
 
 function racEnlazar(caja, rachas) {
@@ -3423,6 +3423,35 @@ function horarioDia(o, fecha) {
   return horarioTipo(r[2][dif], H);
  }
  return null;
+}
+
+function deudaHoras(o, fecha) {
+ const desde = ymdMas(fecha, -21), dias = {}, DS = [ "domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado" ];
+ const tieneTurno = d => {
+  const x = horarioDia(o, d);
+  return !(x && x.desc && /descanso/i.test(x.n || ""));
+ };
+ (DATA.novedades || []).forEach((r => {
+  if (nrm(r[1]) !== nrm(o) || !/permiso/i.test(r[2] || "") || !r[3]) return;
+  for (let d = r[3] < desde ? desde : r[3], k = 0; d <= (r[4] || r[3]) && d < fecha && k < 10; d = ymdMas(d, 1), 
+  k++) if (tieneTurno(d)) dias[d] = "el permiso";
+ }));
+ (DATA.ausencias || []).forEach((a => {
+  if (nrm(a[1]) === nrm(o) && !a[2] && a[0] >= desde && a[0] < fecha && !dias[a[0]]) dias[a[0]] = "la ausencia";
+ }));
+ const ds = Object.keys(dias).sort();
+ if (!ds.length) return null;
+ const que = d => dias[d] + " del " + DS[new Date(d + "T12:00:00").getDay()] + " " + d.slice(8) + "/" + d.slice(5, 7);
+ for (const d of ds) {
+  const r = horasRepuestas(o, d);
+  if (!r.listo) return Object.assign(r, {
+   que: que(d)
+  });
+ }
+ const d = ds[ds.length - 1];
+ return Object.assign(horasRepuestas(o, d), {
+  que: que(d)
+ });
 }
 
 function horasRepuestas(o, fecha) {
@@ -4246,7 +4275,7 @@ function asistenciaHtml(soloFilas, diasF) {
       n: a ? a.act[Number(col.slice(8)) - 1] || 0 : 0,
       est: "vino",
       nota: "Tenía descanso · entró a las " + v.e + (v.s ? " y salió a las " + v.s : ""),
-      corta: "Tenía descanso",
+      corta: "",
       nov: ""
      });
     }
@@ -4348,9 +4377,11 @@ function asistenciaHtml(soloFilas, diasF) {
   filas.splice(0, filas.length, ...filas.filter((z => z.f >= R0.desde && z.f <= R0.hasta)));
  const g0 = NOVUI.g, grupos = Array.from(new Set(filas.map((z => z.g)))).sort(), base = filas.filter((z => !g0 || z.g === g0));
  base.forEach((z => {
-  const hh = histDeEntrada(z);
+  let hh = histDeEntrada(z);
+  if (!hh && z.T.ajuste === "sup") hh = (DATA.histTurnos || []).find((h => nrm(h[2]) === nrm(z.o) && h[3] && minAbs(h[0], h[3]) >= z.T.S - ASIS_ANTES && minAbs(h[0], h[3]) < z.T.E)) || null;
   z.h = hh;
-  z.sigue = !!(hh && !hh[4] && /^En turno/.test(hh[6] || "") && !(asisAhora() < z.T.E + 30 && !z.T.lejos && z.est !== "fuera" && z.est !== "otro"));
+  const libre = z.T.lejos || [ "fuera", "otro", "vino" ].indexOf(z.est) >= 0, limite = libre ? z.T.ent + 480 : z.T.E;
+  z.sigue = !!(hh && !hh[4] && /^En turno/.test(hh[6] || "") && asisAhora() >= limite + 30);
   z.sinSal = !!(hh && !hh[4] && !/^En turno/.test(hh[6] || ""));
   z.enCurso = !!(hh && !hh[4] && /^En turno/.test(hh[6] || "") && !z.sigue);
  }));
@@ -4405,11 +4436,12 @@ function asistenciaHtml(soloFilas, diasF) {
  const arreglable = z => z.T.ajuste !== "sup" && (z.est === "tarde" || z.est === "sinmarca" || z.est === "aus" && z.nota !== "Ausencia anotada");
  const CHIP = z => z.sigue ? "Sigue marcado" : z.sinSal ? "Sin hora de salida" : z.est === "ok" ? "Asistió" : z.est === "tarde" ? "Llegó tarde" : z.est === "just" ? "Ausencia justificada" : z.est === "vino" ? "Vino en su descanso" : z.est === "fuera" ? "Vino fuera de horario" : z.est === "otro" ? z.otroOk ? "Cumplió en otro horario" : "Incompleto" : z.est === "libre" ? "No tuvo que cubrir" : z.est === "aus" ? z.nota === "Ausencia anotada" ? "Ausencia anotada" : "Ausencia" : z.est === "sinmarca" ? "Sin marcar entrada" : z.est === "pend" ? "En curso · sin entrada" : z.nov;
  const fila = (z, i) => {
-  const t = tipo(z), hh = z.h, ent = z.T.ent !== null && z.T.ajuste !== "sup" ? hmDe(z.T.ent) : "";
+  const t = tipo(z), hh = z.h, ent = z.T.ajuste === "sup" ? hmDe(z.T.S) : z.T.ent !== null ? hmDe(z.T.ent) : "";
   const sal = hh && hh[4] ? hh[4] : !hh && z.T.sal !== null && z.T.sal !== undefined && z.T.ajuste !== "sup" ? hmDe(z.T.sal) : "";
   const comoSal = hh && hh[4] ? /automática/i.test(hh[6] || "") ? "Salida automática" : /supervisión/i.test(hh[6] || "") ? "Salida puesta por supervisión" : /según el horario/i.test(hh[6] || "") ? "Salida según el horario" : "Marcó la salida" : "";
   const dif = z.T.ajuste === "sup" ? "Horario " + hmDe(z.T.S) + " – " + hmDe(z.T.E) + ' · <span class="g">supervisión lo dio a tiempo</span>' : z.est === "vino" ? "Tenía descanso" : z.est === "fuera" ? "Sin turno a esa hora" : "Horario " + hmDe(z.T.S) + " – " + hmDe(z.T.E) + (z.T.ent !== null && z.T.ajuste !== "sup" && !z.T.lejos && z.est !== "otro" ? z.T.ent > z.T.S + TOLER_LLEGADA ? ' · <span class="r">' + (z.T.ent - z.T.S) + " min tarde</span>" : z.T.ent < z.T.S - 15 ? " · llegó antes" : ' · <span class="g">a tiempo</span>' : "");
-  const exp = z.sigue ? "Su turno terminó a las " + hmDe(z.T.E) + " y no ha quitado la casilla" : z.sinSal ? "No quedó registrada la hora en que se fue" : [ z.T.ajuste === "sup" ? "No marcó la casilla; supervisión confirmó que llegó" : "", hh && hh[4] && z.est !== "fuera" && z.est !== "vino" && (() => {
+  const rep = [ "vino", "fuera", "otro" ].indexOf(z.est) >= 0 || z.T.lejos ? deudaHoras(z.o, z.f) : null;
+  const exp = z.sigue ? "Su turno terminó a las " + hmDe(z.T.E) + " y no ha quitado la casilla" : z.sinSal ? "No quedó registrada la hora en que se fue" : [ rep ? rep.listo ? "✓ Ya repuso las " + horasTxt(rep.debe) + " " + rep.que : "Repone " + rep.que + ": lleva " + horasTxt(rep.lleva) + " de " + horasTxt(rep.debe) : "", z.T.ajuste === "sup" ? hh ? "Marcó la casilla a las " + hh[3] + "; supervisión lo dio a tiempo" : "No marcó la casilla; supervisión confirmó que llegó" : "", hh && hh[4] && z.est !== "fuera" && z.est !== "vino" && (() => {
    let e2 = minAbs(hh[0], hh[4]);
    if (e2 <= minAbs(hh[0], hh[3])) e2 += 1440;
    return e2 - z.T.E >= 20;
@@ -4418,13 +4450,13 @@ function asistenciaHtml(soloFilas, diasF) {
    if (e2 <= minAbs(hh[0], hh[3])) e2 += 1440;
    return "Se quedó " + horasTxt(Math.round((e2 - z.T.E) / 6) / 10) + " más";
   })() : "", z.T.ajuste === "sup" ? "" : z.corta !== undefined ? z.corta : z.est === "ok" && /^(Llegó antes)$/.test(z.nota) ? "" : z.est === "tarde" ? "" : z.nota, comoSal ].filter(Boolean).join(" · ");
-  const tiempos = z.T.ajuste === "sup" && !ent && !sal ? '<span class="sup">Sin marca</span>' : ent || sal ? "<span" + (z.T.ent !== null && hh ? ' class="ed" data-ce="' + i + '" title="Corregir la hora de entrada"' : "") + ">" + (ent || "—") + "</span><em>→</em>" + (sal ? "<span" + (hh ? ' class="ed" data-cs="' + i + '" title="Corregir la hora de salida"' : "") + ">" + sal + "</span>" : z.sigue || z.sinSal ? '<span class="q">¿?</span>' : z.enCurso ? '<span class="cur">en turno</span>' : '<span class="nada">—</span>') : '<span class="nada">—</span>';
+  const tiempos = ent || sal ? "<span" + (z.T.ent !== null && hh ? ' class="ed" data-ce="' + i + '" title="Corregir la hora de entrada"' : "") + ">" + (ent || "—") + "</span><em>→</em>" + (sal ? "<span" + (hh ? ' class="ed" data-cs="' + i + '" title="Corregir la hora de salida"' : "") + ">" + sal + "</span>" : z.sigue || z.sinSal ? '<span class="q">¿?</span>' : z.enCurso ? '<span class="cur">en turno</span>' : '<span class="nada">—</span>') : '<span class="nada">—</span>';
   let ac = "";
   if (z.sigue || z.sinSal) ac += '<button type="button" class="as2-btn" data-cs="' + i + '">Poner salida</button>';
   if (z.T.ajuste === "sup") ac += '<button type="button" class="as2-a" data-aj="' + i + '" data-v="">Quitar ajuste</button>'; else if (z.nota === "Ausencia anotada") ac += '<small class="as2-nota">Se cambia en Novedades → Ausencias</small>'; else if (z.est === "tarde" || z.est === "aus" || z.est === "sinmarca") ac += '<button type="button" class="as2-a" data-aj="' + i + '" data-v="A tiempo">Llegó a tiempo</button>';
   if ((z.est === "pend" || (z.est === "sinmarca" || z.est === "aus") && z.T.ent === null && asisAhora() < z.T.E) && z.nota !== "Ausencia anotada") ac += '<button type="button" class="as2-btn" data-me="' + i + '">Ya llegó</button>';
   if (z.est === "aus" && !(DATA.ausencias || []).some((a => a[0] === z.f && nrm(a[1]) === nrm(z.o)))) ac += '<button type="button" class="as2-a" data-an="' + i + '" data-j="">Anotar ausencia</button><button type="button" class="as2-a" data-an="' + i + '" data-j="1">Justificada</button><small class="an-msg"></small>';
-  if (!z.sigue && !z.sinSal && hh) ac += '<button type="button" class="as2-a" data-ce="' + i + '">✎ Entrada</button>' + (hh[4] ? '<button type="button" class="as2-a" data-cs="' + i + '">✎ Salida</button>' : "");
+  if (hh) ac += '<button type="button" class="as2-a" data-ce="' + i + '">✎ Entrada</button>' + (hh[4] && !z.sigue && !z.sinSal ? '<button type="button" class="as2-a" data-cs="' + i + '">✎ Salida</button>' : "");
   return '<div class="as2-r ' + t + '">' + '<div class="as2-nm">' + (arreglable(z) ? '<input type="checkbox" class="as-sel" data-i="' + i + '" aria-label="Seleccionar">' : '<span class="as2-sp"></span>') + "<div><b>" + esc(titulo(z.o)) + "</b><small>" + esc(titulo(z.g)) + (z.diez ? " · de " + JL[z.ji].toLowerCase() : "") + "</small></div></div>" + '<div class="as2-t"><div class="tt">' + tiempos + "</div><small>" + dif + "</small></div>" + '<div class="as2-st"><span class="as2-chip ' + t + '">' + esc(CHIP(z)) + "</span>" + (exp ? '<small title="' + esc(z.nota || "") + '">' + esc(exp) + "</small>" : "") + "</div>" + '<div class="as2-c"><b>' + fmt.format(z.n) + "</b><small>clientes</small></div>" + '<div class="as2-ac">' + ac + "</div></div>";
  };
  const cuerpoDia = delDia => {
@@ -4767,11 +4799,13 @@ function histTurnosEnlazar(caja) {
  }));
 }
 
-const NOV_EST = [ "Vigente", "Programada", "Terminada" ], NOV_TIP = [ "Vacaciones", "Permiso o incapacidad", "Retirado", "Retiro definitivo" ];
+const NOV_EST = [ "Vigente", "Programada", "Terminada" ], NOV_TIP = [ "Vacaciones", "Permiso", "Incapacidad", "Permiso o incapacidad", "Retirado", "Retiro definitivo" ];
 
 const NOV_PILL = {
  Vacaciones: "ok",
  "Permiso o incapacidad": "info",
+ Permiso: "info",
+ Incapacidad: "info",
  Retirado: "aviso",
  "Retiro definitivo": "accion"
 };
@@ -4913,7 +4947,7 @@ function renderNovedades() {
   };
  }));
  const lista = Object.keys(ops).map((k => ops[k])).sort(((a, b) => a.g.localeCompare(b.g) || a.o.localeCompare(b.o)));
- let h = barra + '<div class="mon-k seg-k"><div class="a"><b>' + vig.filter((x => x.t === "Vacaciones")).length + "</b><span>De vacaciones ahora</span></div>" + "<div><b>" + vig.filter((x => x.t === "Permiso o incapacidad")).length + "</b><span>De permiso o incapacidad ahora</span></div>" + '<div class="r"><b>' + todas.filter((x => x.t === "Retirado" || x.t === "Retiro definitivo")).length + "</b><span>Retirados (" + todas.filter((x => x.t === "Retiro definitivo")).length + " definitivos)</span></div>" + '<div class="v"><b>' + todas.filter((x => x.est === "Programada")).length + "</b><span>Programadas para más adelante</span></div></div>";
+ let h = barra + '<div class="mon-k seg-k"><div class="a"><b>' + vig.filter((x => x.t === "Vacaciones")).length + "</b><span>De vacaciones ahora</span></div>" + "<div><b>" + vig.filter((x => /permiso|incapacidad/i.test(x.t))).length + "</b><span>De permiso o incapacidad ahora</span></div>" + '<div class="r"><b>' + todas.filter((x => x.t === "Retirado" || x.t === "Retiro definitivo")).length + "</b><span>Retirados (" + todas.filter((x => x.t === "Retiro definitivo")).length + " definitivos)</span></div>" + '<div class="v"><b>' + todas.filter((x => x.est === "Programada")).length + "</b><span>Programadas para más adelante</span></div></div>";
  h += '<section class="panel"><h2>Registrar una novedad</h2><div class="sub">Sirve también para dejarla registrada por adelantado, por ejemplo unas vacaciones que empiezan la otra semana. Para alargar o acortar una que ya está registrada, usa «Cambiar fechas» en la lista de abajo.</div>' + '<div class="sr-al-f nov-f" data-i="0" style="border-top:0"><select class="nov-op" id="novOp" aria-label="Operador"><option value="">Elige el operador…</option>' + lista.map(((x, i) => '<option value="' + i + '">' + esc(titulo(x.o)) + " · " + esc(titulo(x.g)) + "</option>")).join("") + "</select>" + racCampos({
   desde: hoy
  }) + "</div></section>";
@@ -4933,7 +4967,7 @@ function renderNovedades() {
  const botones = (x, i, est) => est === "Terminada" ? borrarBtn(i) : '<button type="button" class="sr-x" data-qc="' + i + '">' + (retiro(x) ? "Cambiar fecha" : "Editar") + '</button><button type="button" class="sr-x" data-q="' + i + '">' + (x.t === "Retiro definitivo" ? "Deshacer" : est === "Programada" ? "Quitar" : "Ya volvió") + "</button>" + (x.t === "Retirado" ? '<button type="button" class="sr-x" data-qd="' + i + '">Es definitivo</button>' : "") + borrarBtn(i);
  const borrarBtn = i => '<button type="button" class="sr-x" data-qb="' + i + '">Borrar (fue un error)</button>';
  const sep = (t, cls, n, cols) => '<tr class="nv-sep"><td colspan="' + cols + '"><span class="nv-sep-t ' + cls + '">' + t + '</span><span class="nv-sep-n">' + n + "</span></td></tr>";
- const pill = x => '<span class="rv-pill ' + NOV_PILL[x.t] + '">' + esc(x.t === "Permiso o incapacidad" ? "Permiso / incapacidad" : x.t) + "</span>";
+ const pill = x => '<span class="rv-pill ' + NOV_PILL[x.t] + '">' + esc(x.t === "Permiso o incapacidad" ? "Permiso" : x.t) + "</span>";
  const opG = x => '<td class="name"><b>' + esc(titulo(x.o)) + "</b></td><td>" + esc(titulo(x.g).replace(/^Grupo\s+/i, "")) + "</td>";
  const titEst = {
   Vigente: "Vigentes ahora",
@@ -4949,7 +4983,7 @@ function renderNovedades() {
  const cab = (cls, tit, resumen, sub) => '<section class="panel nv-sec ' + cls + '"><div class="nv-cab"><span class="nv-ico" aria-hidden="true"><svg viewBox="0 0 24 24">' + NV_ICO[cls] + "</svg></span><h2>" + tit + "</h2>" + (resumen ? '<span class="nv-res">' + resumen + "</span>" : "") + '</div><div class="sub">' + sub + "</div>";
  const cuenta = (n, uno, varios) => n + " " + (n === 1 ? uno : varios);
  [ [ "Vacaciones", "Vacaciones", "Mientras están vigentes, el operador no sale en el histórico de perfiles sin retraer ni en las alertas, y al monitor no se le pide el 0.", "No hay vacaciones registradas." ], [ "Permiso o incapacidad", "Permisos e incapacidades", "Mientras están vigentes, el operador no sale en el histórico de perfiles sin retraer ni en las alertas, y al monitor no se le pide el 0.", "No hay permisos ni incapacidades registrados." ] ].forEach((([tipo, tit, sub, vacio]) => {
-  const xs0 = ver.map(((x, i) => [ x, i ])).filter((z => z[0].t === tipo));
+  const xs0 = ver.map(((x, i) => [ x, i ])).filter((z => tipo === "Vacaciones" ? z[0].t === tipo : /permiso|incapacidad/i.test(z[0].t)));
   const nv0 = xs0.filter((z => z[0].est === "Vigente")).length, np0 = xs0.filter((z => z[0].est === "Programada")).length;
   h += cab(tipo === "Vacaciones" ? "nv-vac" : "nv-per", tit, xs0.length ? [ nv0 ? cuenta(nv0, "vigente", "vigentes") : "Nadie ahora", np0 ? cuenta(np0, "programada", "programadas") : "" ].filter(Boolean).join(" · ") : "", sub);
   if (!xs0.length) {
@@ -5097,7 +5131,7 @@ function renderNovedades() {
   const x = ver[Number(q.dataset.qc)];
   q.onclick = () => {
    const td = q.parentNode, ret = x.t === "Retirado" || x.t === "Retiro definitivo";
-   td.innerHTML = '<div class="nov-ed" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">' + (ret ? "" : '<label>Novedad <select class="e-t">' + [ "Vacaciones", "Permiso o incapacidad" ].map((t => "<option" + (t === x.t ? " selected" : "") + ">" + t + "</option>")).join("") + "</select></label>") + '<label>Desde <input type="date" class="e-d" value="' + x.d + '"></label>' + (ret ? "" : '<label>Hasta <input type="date" class="e-h" value="' + (x.h || "") + '" min="' + x.d + '"></label>') + '<button type="button" class="btn">Guardar</button><button type="button" class="sr-x e-c">Cancelar</button><small class="rac-err" role="alert"></small></div>';
+   td.innerHTML = '<div class="nov-ed" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">' + (ret ? "" : '<label>Novedad <select class="e-t">' + [ "Vacaciones", "Permiso", "Incapacidad" ].map((t => "<option" + (t === x.t || t === "Permiso" && x.t === "Permiso o incapacidad" ? " selected" : "") + ">" + t + "</option>")).join("") + "</select></label>") + '<label>Desde <input type="date" class="e-d" value="' + x.d + '"></label>' + (ret ? "" : '<label>Hasta <input type="date" class="e-h" value="' + (x.h || "") + '" min="' + x.d + '"></label>') + '<button type="button" class="btn">Guardar</button><button type="button" class="sr-x e-c">Cancelar</button><small class="rac-err" role="alert"></small></div>';
    const d = td.querySelector(".e-d"), h = td.querySelector(".e-h"), err = td.querySelector(".rac-err");
    d.onchange = () => {
     if (h) h.min = d.value;
