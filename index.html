@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 93", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 94", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "aee800e29b0e";
+ var HUELLA = "60644c9f8597";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -4435,8 +4435,9 @@ function asistenciaHtml(soloFilas, diasF) {
  const colBl = b => b === "diez" ? "var(--oro, #D4A82A)" : JC[b];
  const arreglable = z => z.T.ajuste !== "sup" && (z.est === "tarde" || z.est === "sinmarca" || z.est === "aus" && z.nota !== "Ausencia anotada");
  const CHIP = z => z.sigue ? "Sigue marcado" : z.sinSal ? "Sin hora de salida" : z.est === "ok" ? "Asistió" : z.est === "tarde" ? "Llegó tarde" : z.est === "just" ? "Ausencia justificada" : z.est === "vino" ? "Vino en su descanso" : z.est === "fuera" ? "Vino fuera de horario" : z.est === "otro" ? z.otroOk ? "Cumplió en otro horario" : "Incompleto" : z.est === "libre" ? "No tuvo que cubrir" : z.est === "aus" ? z.nota === "Ausencia anotada" ? "Ausencia anotada" : "Ausencia" : z.est === "sinmarca" ? "Sin marcar entrada" : z.est === "pend" ? "En curso · sin entrada" : z.nov;
+ const enTol = z => z.T.ent !== null && !z.T.lejos && [ "ok", "tarde" ].indexOf(z.est) >= 0 && z.T.ent >= z.T.S && z.T.ent <= z.T.S + TOLER_LLEGADA;
  const fila = (z, i) => {
-  const t = tipo(z), hh = z.h, ent = z.T.ajuste === "sup" ? hmDe(z.T.S) : z.T.ent !== null ? hmDe(z.T.ent) : "";
+  const t = tipo(z), hh = z.h, ent = z.T.ajuste === "sup" ? hmDe(z.T.S) : z.T.ent !== null ? hmDe(enTol(z) ? z.T.S : z.T.ent) : "";
   const sal = hh && hh[4] ? hh[4] : !hh && z.T.sal !== null && z.T.sal !== undefined && z.T.ajuste !== "sup" ? hmDe(z.T.sal) : "";
   const comoSal = hh && hh[4] ? /automática/i.test(hh[6] || "") ? "Salida automática" : /supervisión/i.test(hh[6] || "") ? "Salida puesta por supervisión" : /según el horario/i.test(hh[6] || "") ? "Salida según el horario" : "Marcó la salida" : "";
   const dif = z.T.ajuste === "sup" ? "Horario " + hmDe(z.T.S) + " – " + hmDe(z.T.E) + ' · <span class="g">supervisión lo dio a tiempo</span>' : z.est === "vino" ? "Tenía descanso" : z.est === "fuera" ? "Sin turno a esa hora" : "Horario " + hmDe(z.T.S) + " – " + hmDe(z.T.E) + (z.T.ent !== null && z.T.ajuste !== "sup" && !z.T.lejos && z.est !== "otro" ? z.T.ent > z.T.S + TOLER_LLEGADA ? ' · <span class="r">' + (z.T.ent - z.T.S) + " min tarde</span>" : z.T.ent < z.T.S - 15 ? " · llegó antes" : ' · <span class="g">a tiempo</span>' : "");
@@ -4450,7 +4451,7 @@ function asistenciaHtml(soloFilas, diasF) {
    if (e2 <= minAbs(hh[0], hh[3])) e2 += 1440;
    return "Se quedó " + horasTxt(Math.round((e2 - z.T.E) / 6) / 10) + " más";
   })() : "", z.T.ajuste === "sup" ? "" : z.corta !== undefined ? z.corta : z.est === "ok" && /^(Llegó antes)$/.test(z.nota) ? "" : z.est === "tarde" ? "" : z.nota, comoSal ].filter(Boolean).join(" · ");
-  const tiempos = ent || sal ? "<span" + (z.T.ent !== null && hh ? ' class="ed" data-ce="' + i + '" title="Corregir la hora de entrada"' : "") + ">" + (ent || "—") + "</span><em>→</em>" + (sal ? "<span" + (hh ? ' class="ed" data-cs="' + i + '" title="Corregir la hora de salida"' : "") + ">" + sal + "</span>" : z.sigue || z.sinSal ? '<span class="q">¿?</span>' : z.enCurso ? '<span class="cur">en turno</span>' : '<span class="nada">—</span>') : '<span class="nada">—</span>';
+  const tiempos = ent || sal ? "<span" + (z.T.ent !== null && hh ? ' class="ed" data-ce="' + i + '" title="' + (enTol(z) && z.T.ent !== z.T.S ? "Marcó la casilla a las " + hmDe(z.T.ent) + " (dentro de los " + TOLER_LLEGADA + " minutos del cambio de turno). " : "") + 'Toca para corregir la hora de entrada"' : "") + ">" + (ent || "—") + "</span><em>→</em>" + (sal ? "<span" + (hh ? ' class="ed" data-cs="' + i + '" title="Corregir la hora de salida"' : "") + ">" + sal + "</span>" : z.sigue || z.sinSal ? '<span class="q">¿?</span>' : z.enCurso ? '<span class="cur">en turno</span>' : '<span class="nada">—</span>') : '<span class="nada">—</span>';
   let ac = "";
   if (z.sigue || z.sinSal) ac += '<button type="button" class="as2-btn" data-cs="' + i + '">Poner salida</button>';
   if (z.T.ajuste === "sup") ac += '<button type="button" class="as2-a" data-aj="' + i + '" data-v="">Quitar ajuste</button>'; else if (z.nota === "Ausencia anotada") ac += '<small class="as2-nota">Se cambia en Novedades → Ausencias</small>'; else if (z.est === "tarde" || z.est === "aus" || z.est === "sinmarca") ac += '<button type="button" class="as2-a" data-aj="' + i + '" data-v="A tiempo">Llegó a tiempo</button>';
