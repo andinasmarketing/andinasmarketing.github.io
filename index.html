@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 95", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 97", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "919b106a70b2";
+ var HUELLA = "518e5915d34e";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -3427,8 +3427,30 @@ function horarioDia(o, fecha) {
 
 const DEUDAS_MEMO = {
  k: null,
- v: {}
+ v: {},
+ inc: null
 };
+
+function turnosIncompletos() {
+ if (!DEUDAS_MEMO.calc) deudasOp("");
+ if (DEUDAS_MEMO.inc) return DEUDAS_MEMO.inc;
+ let fs = [];
+ try {
+  fs = asistenciaHtml(true, 35) || [];
+ } catch (e) {
+  fs = [];
+ }
+ return DEUDAS_MEMO.inc = fs.filter((z => z.est === "otro" && !z.otroOk && z.T && z.T.ent !== null && z.T.sal !== null && z.T.sal !== undefined)).map((z => ({
+  f: z.f,
+  g: z.g,
+  o: z.o,
+  S: z.T.S,
+  E: z.T.E,
+  ent: z.T.ent,
+  sal: z.T.sal,
+  falta: z.T.E - z.T.S - (z.T.sal - z.T.ent)
+ }))).filter((x => x.falta >= 15)).sort(((a, b) => a.f < b.f ? 1 : a.f > b.f ? -1 : 0));
+}
 
 function deudasOp(o) {
  const hoy = DATA.reloj && DATA.reloj.ahora ? DATA.reloj.ahora.slice(0, 10) : (new Date).toISOString().slice(0, 10);
@@ -3436,7 +3458,17 @@ function deudasOp(o) {
  if (DEUDAS_MEMO.k !== memoK) {
   DEUDAS_MEMO.k = memoK;
   DEUDAS_MEMO.v = {};
+  DEUDAS_MEMO.inc = null;
  }
+ if (!DEUDAS_MEMO.inc && !DEUDAS_MEMO.calc) {
+  DEUDAS_MEMO.calc = true;
+  try {
+   turnosIncompletos();
+  } finally {
+   DEUDAS_MEMO.calc = false;
+  }
+ }
+ if (!o) return {};
  if (DEUDAS_MEMO.v[nrm(o)]) return DEUDAS_MEMO.v[nrm(o)];
  const desde = ymdMas(hoy, -60), DS = [ "domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado" ];
  const dur = x => {
@@ -3486,9 +3518,20 @@ function deudasOp(o) {
   min: porDia[d].min - dur(horarioDia(o, d)),
   ses: porDia[d].ses
  }))).filter((x => x.min >= 15));
- const out = {};
- Object.keys(dias).sort().forEach((f => {
-  const debeMin = dur(horarioDia(o, f)) || 480;
+ const out = {}, deudas = Object.keys(dias).map((f => ({
+  k: f,
+  f: f,
+  debeMin: dur(horarioDia(o, f)) || 480,
+  que: dias[f] + " del " + DS[new Date(f + "T12:00:00").getDay()] + " " + f.slice(8) + "/" + f.slice(5, 7)
+ })));
+ if (DEUDAS_MEMO.inc) DEUDAS_MEMO.inc.filter((x => nrm(x.o) === nrm(o) && x.f >= desde)).forEach((x => deudas.push({
+  k: "inc:" + x.f,
+  f: x.f,
+  debeMin: x.falta,
+  que: "el turno incompleto del " + DS[new Date(x.f + "T12:00:00").getDay()] + " " + x.f.slice(8) + "/" + x.f.slice(5, 7)
+ })));
+ deudas.sort(((a, b) => a.f < b.f ? -1 : a.f > b.f ? 1 : 0)).forEach((dd => {
+  const f = dd.f, debeMin = dd.debeMin;
   let lleva = 0;
   const piezas = [];
   extras.forEach((x => {
@@ -3502,12 +3545,12 @@ function deudasOp(o) {
     ses: x.ses.join(", ")
    });
   }));
-  out[f] = {
+  out[dd.k] = {
    debe: Math.round(debeMin / 6) / 10,
    lleva: Math.round(lleva / 6) / 10,
    listo: lleva >= debeMin - 5,
    piezas: piezas,
-   que: dias[f] + " del " + DS[new Date(f + "T12:00:00").getDay()] + " " + f.slice(8) + "/" + f.slice(5, 7),
+   que: dd.que,
    sinSalida: Object.keys(sin).filter((d => d > f)).reduce(((n, d) => n + sin[d]), 0),
    estimado: 0
   };
@@ -3515,8 +3558,25 @@ function deudasOp(o) {
  return DEUDAS_MEMO.v[nrm(o)] = out;
 }
 
+function reposicionDia(o, f) {
+ const D = deudasOp(o), ks = Object.keys(D);
+ if (!ks.length) return "";
+ const deDia = [], r1 = v => Math.round(v * 10) / 10;
+ let pend = 0;
+ ks.forEach((k => {
+  const x = D[k];
+  pend += Math.max(0, x.debe - x.lleva);
+  x.piezas.forEach((p => {
+   if (p.d === f) deDia.push(horasTxt(p.h) + (" de " + x.que).replace(" de el ", " del "));
+  }));
+ }));
+ pend = r1(pend);
+ if (deDia.length) return "Repuso " + deDia.join(" y ") + (pend > 0 ? " · aún debe " + horasTxt(pend) : " · ya no debe horas");
+ return pend > 0 ? "Debe " + horasTxt(pend) + " por reponer" : "";
+}
+
 function deudaHoras(o, fecha) {
- const D = deudasOp(o), ds = Object.keys(D).filter((d => d < fecha)).sort();
+ const D = deudasOp(o), fd = k => k.replace(/^inc:/, ""), ds = Object.keys(D).filter((k => fd(k) < fecha)).sort(((a, b) => fd(a) < fd(b) ? -1 : 1));
  if (!ds.length) return null;
  return D[ds.find((d => !D[d].listo)) || ds[ds.length - 1]];
 }
@@ -4491,8 +4551,11 @@ function asistenciaHtml(soloFilas, diasF) {
   const sal = hh && hh[4] ? hh[4] : !hh && z.T.sal !== null && z.T.sal !== undefined && z.T.ajuste !== "sup" ? hmDe(z.T.sal) : "";
   const comoSal = hh && hh[4] ? /automática/i.test(hh[6] || "") ? "Salida automática" : /supervisión/i.test(hh[6] || "") ? "Salida puesta por supervisión" : /según el horario/i.test(hh[6] || "") ? "Salida según el horario" : "Marcó la salida" : "";
   const dif = z.T.ajuste === "sup" ? "Horario " + hmDe(z.T.S) + " – " + hmDe(z.T.E) + ' · <span class="g">supervisión lo dio a tiempo</span>' : z.est === "vino" ? "Tenía descanso" : z.est === "fuera" ? "Sin turno a esa hora" : "Horario " + hmDe(z.T.S) + " – " + hmDe(z.T.E) + (z.T.ent !== null && z.T.ajuste !== "sup" && !z.T.lejos && z.est !== "otro" ? z.T.ent > z.T.S + TOLER_LLEGADA ? ' · <span class="r">' + (z.T.ent - z.T.S) + " min tarde</span>" : z.T.ent < z.T.S - 15 ? " · llegó antes" : ' · <span class="g">a tiempo</span>' : "");
-  const rep = [ "vino", "fuera", "otro" ].indexOf(z.est) >= 0 || z.T.lejos ? deudaHoras(z.o, z.f) : null;
-  const exp = z.sigue ? "Su turno terminó a las " + hmDe(z.T.E) + " y no ha quitado la casilla" : z.sinSal ? "No quedó registrada la hora en que se fue" : [ rep ? rep.listo ? "✓ Ya repuso las " + horasTxt(rep.debe) + " " + rep.que : "Repone " + rep.que + ": lleva " + horasTxt(rep.lleva) + " de " + horasTxt(rep.debe) : "", z.T.ajuste === "sup" ? hh ? "Marcó la casilla a las " + hh[3] + "; supervisión lo dio a tiempo" : "No marcó la casilla; supervisión confirmó que llegó" : "", hh && hh[4] && z.est !== "fuera" && z.est !== "vino" && (() => {
+  const rep = z.est === "otro" && !z.otroOk ? deudasOp(z.o)["inc:" + z.f] ? Object.assign({}, deudasOp(z.o)["inc:" + z.f], {
+   que: ""
+  }) : null : null;
+  const repTxt = [ "vino", "fuera" ].indexOf(z.est) >= 0 || z.T.lejos ? reposicionDia(z.o, z.f) : "";
+  const exp = z.sigue ? "Su turno terminó a las " + hmDe(z.T.E) + " y no ha quitado la casilla" : z.sinSal ? "No quedó registrada la hora en que se fue" : [ repTxt, rep ? rep.listo ? "✓ Ya repuso las " + horasTxt(rep.debe) + (rep.que ? " " + rep.que : "") : rep.lleva ? "Repone " + (rep.que || "lo que le faltó") + ": lleva " + horasTxt(rep.lleva) + " de " + horasTxt(rep.debe) : "Debe reponer " + horasTxt(rep.debe) + (rep.que ? " (" + rep.que + ")" : "") : "", z.T.ajuste === "sup" ? hh ? "Marcó la casilla a las " + hh[3] + "; supervisión lo dio a tiempo" : "No marcó la casilla; supervisión confirmó que llegó" : "", hh && hh[4] && z.est !== "fuera" && z.est !== "vino" && (() => {
    let e2 = minAbs(hh[0], hh[4]);
    if (e2 <= minAbs(hh[0], hh[3])) e2 += 1440;
    return e2 - z.T.E >= 20;
@@ -5073,6 +5136,21 @@ function renderNovedades() {
  }
  if (!AUS.length) h += '<div class="state" style="padding:18px 0">No hay ausencias anotadas. Para anotar una, elige "Ausencia" arriba.</div>'; else h += '<div class="table-scroll"><table class="sr-t"><thead><tr><th>Fecha</th><th>Operador</th><th>Grupo</th><th>Estado</th><th>Horas por reponer</th><th>Cómo quedó el horario</th><th></th></tr></thead><tbody>' + AUS.map(((a, i) => "<tr><td>" + DSEM[new Date(a[0] + "T12:00:00").getDay()] + " " + fe(a[0]) + '</td><td class="name"><b>' + esc(titulo(a[1])) + "</b></td><td>" + esc(titulo(grupoDe(a[1]))) + "</td>" + "<td>" + (a[2] ? '<span class="rv-pill info">Justificada</span>' : '<span class="rv-pill accion">Sin justificar</span>') + "</td>" + '<td style="white-space:normal;min-width:170px">' + horasCelda(a) + "</td>" + '<td style="white-space:normal;min-width:200px;max-width:340px"><small>' + esc(a[3] || "—") + "</small></td>" + '<td style="white-space:nowrap"><button type="button" class="sr-x" data-au="' + i + '" data-ac="' + (a[2] ? "injustificar" : "justificar") + '">' + (a[2] ? "Quitar justificación" : "Justificar") + '</button> <button type="button" class="sr-x" data-au="' + i + '" data-ac="quitar">Quitar</button></td></tr>')).join("") + "</tbody></table></div>";
  h += "</section>";
+ {
+  const INC = turnosIncompletos();
+  const pend = INC.filter((x => !(deudasOp(x.o)["inc:" + x.f] || {}).listo)).length;
+  h += cab("nv-aus", "Turnos incompletos", INC.length ? cuenta(INC.length, "turno", "turnos") + (pend ? ' · <span class="mal">' + pend + " sin reponer</span>" : " · todos repuestos") : "", "No vino a su hora (por ejemplo vino de día en vez de noche) y se fue sin completar las horas de su turno. Lo que le faltó lo debe reponer: se va descontando con lo que trabaje de más después (en su descanso, fuera de su horario o quedándose más tiempo). De los últimos 35 días.");
+  if (!INC.length) h += '<div class="state" style="padding:18px 0">No hay turnos incompletos.</div>'; else h += '<div class="table-scroll"><table class="sr-t"><thead><tr><th>Fecha</th><th>Operador</th><th>Grupo</th><th>Su turno</th><th>Vino</th><th>Horas por reponer</th></tr></thead><tbody>' + INC.map((x => {
+   const r = deudasOp(x.o)["inc:" + x.f] || {
+    debe: Math.round(x.falta / 6) / 10,
+    lleva: 0,
+    listo: false,
+    piezas: []
+   }, falta = Math.round((r.debe - r.lleva) * 10) / 10;
+   return "<tr><td>" + DSEM[new Date(x.f + "T12:00:00").getDay()] + " " + fe(x.f) + '</td><td class="name"><b>' + esc(titulo(x.o)) + "</b></td><td>" + esc(titulo(x.g)) + "</td>" + "<td>" + hmDe(x.S) + " – " + hmDe(x.E) + "</td><td>" + hmDe(x.ent) + " – " + hmDe(x.sal) + ' <small style="color:var(--faint)">(' + horasTxt(Math.round((x.sal - x.ent) / 6) / 10) + " de " + horasTxt(Math.round((x.E - x.S) / 6) / 10) + ")</small></td>" + '<td style="white-space:normal;min-width:190px">' + (r.listo ? '<span class="rv-pill ok">✓ Ya repuso las ' + horasTxt(r.debe) + "</span>" : '<span class="rv-pill aviso">Debe ' + horasTxt(falta) + "</span>" + (r.lleva ? " <small>de " + horasTxt(r.debe) + "</small>" : "")) + (r.piezas.length ? '<div class="nv-rep">' + r.piezas.map((p => "<span>" + DSEMLARGO(p.d).slice(0, 3).toLowerCase() + " " + p.d.slice(8) + "/" + p.d.slice(5, 7) + " · <b>" + horasTxt(p.h) + "</b> <small>(" + esc(p.ses) + ")</small></span>")).join("") + "</div>" : "") + "</td></tr>";
+  })).join("") + "</tbody></table></div>";
+  h += "</section>";
+ }
  caja.innerHTML = h;
  caja.querySelectorAll("[data-au]").forEach((q => {
   const a = AUS[Number(q.dataset.au)];
