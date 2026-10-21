@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 99", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 100", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "f9443bc6d9d2";
+ var HUELLA = "051324d86229";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -3484,6 +3484,11 @@ function deudasOp(o) {
   if (d <= 0) d += 1440;
   return d;
  };
+ const perdioDia = d => {
+  const lun = ymdMas(d, -((new Date(d + "T12:00:00").getDay() + 6) % 7)), sem = ((DATA.horarios || {}).semanas || []).find((w => w.l === lun));
+  return !!(sem && sem.perd && (sem.perd[nrm(o)] || []).indexOf(Math.round((new Date(d + "T12:00:00") - new Date(lun + "T12:00:00")) / 864e5)) >= 0);
+ };
+ const turnoDe = d => perdioDia(d) ? 0 : dur(horarioDia(o, d));
  const tieneTurno = d => {
   const x = horarioDia(o, d);
   return !(x && x.desc && /descanso/i.test(x.n || ""));
@@ -3522,8 +3527,9 @@ function deudasOp(o) {
  }));
  const extras = Object.keys(porDia).sort().map((d => ({
   d: d,
-  min: porDia[d].min - dur(horarioDia(o, d)),
-  ses: porDia[d].ses
+  min: porDia[d].min - turnoDe(d),
+  ses: porDia[d].ses,
+  perdio: perdioDia(d)
  }))).filter((x => x.min >= 15));
  const out = {}, deudas = Object.keys(dias).map((f => ({
   k: f,
@@ -3549,7 +3555,7 @@ function deudasOp(o) {
    piezas.push({
     d: x.d,
     h: Math.round(usa / 6) / 10,
-    ses: x.ses.join(", ")
+    ses: x.ses.join(", ") + (x.perdio ? " · su descanso perdido" : "")
    });
   }));
   out[dd.k] = {
