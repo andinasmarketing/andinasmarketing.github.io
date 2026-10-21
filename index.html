@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 88", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 89", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "e62d9395b9b3";
+ var HUELLA = "25fc2be867ec";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -4209,6 +4209,7 @@ function asistenciaHtml(soloFilas, diasF) {
       n: a ? a.act[Number(col.slice(8)) - 1] || 0 : 0,
       est: "vino",
       nota: "Tenía descanso · entró a las " + v.e + (v.s ? " y salió a las " + v.s : ""),
+      corta: "Tenía descanso",
       nov: ""
      });
     }
@@ -4229,7 +4230,7 @@ function asistenciaHtml(soloFilas, diasF) {
     nota = ausA[2] ? "Ausencia justificada" : "Ausencia anotada";
    } else if (T.ent !== null) {
     est = T.ent > T.S + TOLER_LLEGADA ? "tarde" : "ok";
-    nota = T.ajuste === "sup" ? "Ajustado por supervisión" : T.ajuste === "antes" ? "Antes del control de asistencia" : T.lejos ? "Vino fuera de su horario: entró a las " + hmDe(T.ent) + ", " + (Math.round((T.S - T.ent) / 6) / 10).toString().replace(".", ",") + " h antes de su turno" : T.ent < T.S - 15 ? "Llegó antes" : est === "tarde" ? T.ent - T.S + " min tarde" : "";
+    nota = T.ajuste === "sup" ? "Ajustado por supervisión" : T.ajuste === "antes" ? "Antes del control de asistencia" : T.lejos ? "Vino " + (Math.round((T.S - T.ent) / 6) / 10).toString().replace(".", ",") + " h antes de su turno" : T.ent < T.S - 15 ? "Llegó antes" : est === "tarde" ? T.ent - T.S + " min tarde" : "";
    } else if (now < T.E) est = n > 0 ? "sinmarca" : "pend"; else est = n > 0 ? "sinmarca" : "aus";
    filas.push({
     f: f,
@@ -4276,6 +4277,7 @@ function asistenciaHtml(soloFilas, diasF) {
     turnoDia.T.sal = sal;
     turnoDia.est = "otro";
     turnoDia.otroOk = trab >= debeT - 15;
+    turnoDia.corta = turnoDia.otroOk ? "Hizo sus " + horasTxt(Math.round(debeT / 6) / 10) + " en otra hora" : "Hizo " + horasTxt(Math.round(trab / 6) / 10) + " de " + horasTxt(Math.round(debeT / 6) / 10);
     turnoDia.nota = (turnoDia.otroOk ? "Cumplió sus " + horasTxt(Math.round(debeT / 6) / 10) + " en otro horario: " : "Vino en otro horario (" + horasTxt(Math.round(trab / 6) / 10) + " de " + horasTxt(Math.round(debeT / 6) / 10) + "): ") + nota.charAt(0).toLowerCase() + nota.slice(1);
     return;
    }
@@ -4299,6 +4301,7 @@ function asistenciaHtml(soloFilas, diasF) {
     n: 0,
     est: "fuera",
     nota: nota,
+    corta: sal !== null ? horasTxt(Math.round((sal - ent) / 6) / 10) + " trabajadas" : "",
     nov: ""
    });
   }));
@@ -4309,7 +4312,11 @@ function asistenciaHtml(soloFilas, diasF) {
  const ver = base.filter((z => !NOVUI.aest || z.est === NOVUI.aest)).sort(((p, q) => (p.f < q.f ? 1 : p.f > q.f ? -1 : 0) || p.g.localeCompare(q.g) || p.T.S - q.T.S));
  let h = '<div class="mon-k seg-k"><div class="v"><b>' + (c("ok") + c("tarde")) + '</b><span>Turnos con entrada marcada</span></div><div class="a"><b>' + c("tarde") + "</b><span>Llegaron tarde (más de " + TOLER_LLEGADA + " minutos)</span></div>" + '<div class="r"><b>' + c("aus") + "</b><span>Ausencias</span></div><div><b>" + c("sinmarca") + "</b><span>Sin marcar entrada pero anotaron clientes</span></div></div>";
  h += '<section class="panel"><h2>Asistencia por turno</h2><div class="sub">Cada turno del horario publicado contra la casilla «Estoy de turno». La entrada vale si se marca desde 4 horas antes de la hora del horario: quien entra a las 8 y llega a las 6 sale con «Llegó antes». Si el turno termina sin entrada marcada y sin clientes, es ausencia. Los descansos y las novedades (vacaciones, permisos) no cuentan como ausencia. Si un operador sí llegó a su hora y no salió así, toca «Llegó a tiempo». La asistencia cuenta desde ' + (DATA.asisDesde ? DATA.asisDesde.slice(8, 10) + "/" + DATA.asisDesde.slice(5, 7) + " a las " + DATA.asisDesde.slice(11) : "que se publicó el horario") + "; los turnos de antes salen a tiempo.</div>" + '<div class="sub-barra" style="margin-top:12px">' + [ [ 1, "Hoy" ], [ 7, "7 días" ], [ 31, "31 días" ] ].map((d => '<button type="button" data-ad="' + d[0] + '" aria-selected="' + (NOVUI.adias === d[0]) + '">' + d[1] + "</button>")).join("") + '<select class="asis-g" aria-label="Grupo" style="margin-left:8px"><option value="">Todos los grupos</option>' + grupos.map((g => '<option value="' + esc(g) + '"' + (g === g0 ? " selected" : "") + ">" + esc(titulo(g)) + "</option>")).join("") + "</select></div>" + '<div class="sub-barra" style="margin-top:8px">' + [ [ "", "Todos" ], [ "aus", "Ausencias" ], [ "tarde", "Llegaron tarde" ], [ "sinmarca", "Sin marcar entrada" ], [ "ok", "A tiempo" ], [ "pend", "En curso sin entrada" ], [ "vino", "Vinieron en su descanso" ], [ "fuera", "Vinieron fuera de horario" ], [ "otro", "Cambiaron de horario" ], [ "libre", "No tuvieron que cubrir" ] ].map((e => '<button type="button" data-ae="' + e[0] + '" aria-selected="' + (NOVUI.aest === e[0]) + '">' + e[1] + " · " + (e[0] ? c(e[0]) : base.length) + "</button>")).join("") + "</div>";
- const pill = z => z.est === "ok" ? '<span class="rv-pill ok">Asistió</span>' + (z.nota ? ' <small class="sr-cub">' + z.nota + "</small>" : "") : z.est === "tarde" ? '<span class="rv-pill aviso">Llegó tarde</span> <small class="sr-cub">' + z.nota + "</small>" : z.est === "just" ? '<span class="rv-pill info">Ausencia justificada</span>' : z.est === "vino" ? '<span class="rv-pill ok">Vino en su descanso</span> <small class="sr-cub">' + esc(z.nota) + "</small>" : z.est === "fuera" ? '<span class="rv-pill ok">Vino fuera de su horario</span> <small class="sr-cub">' + esc(z.nota) + "</small>" : z.est === "otro" ? (z.otroOk ? '<span class="rv-pill ok">Cumplió en otro horario</span>' : '<span class="rv-pill aviso">Vino en otro horario</span>') + ' <small class="sr-cub">' + esc(z.nota) + "</small>" : z.est === "libre" ? '<span class="rv-pill info">No tuvo que cubrir</span> <small class="sr-cub">' + esc(z.nota) + "</small>" : z.est === "aus" ? '<span class="rv-pill accion">Ausencia</span>' + (z.nota ? ' <small class="sr-cub">' + z.nota + "</small>" : "") : z.est === "sinmarca" ? '<span class="rv-pill aviso">Sin marcar entrada</span> <small class="sr-cub">anotó clientes</small>' : z.est === "pend" ? '<span class="rv-pill">En curso · sin entrada todavía</span>' : '<span class="rv-pill info">' + esc(z.nov) + "</span>";
+ const nt = z => {
+  const t = z.corta !== undefined ? z.corta : z.nota;
+  return t ? ' <small class="sr-cub" title="' + esc(z.nota || "") + '">' + esc(t) + "</small>" : "";
+ };
+ const pill = z => z.est === "ok" ? '<span class="rv-pill ok">Asistió</span>' + nt(z) : z.est === "tarde" ? '<span class="rv-pill aviso">Llegó tarde</span>' + nt(z) : z.est === "just" ? '<span class="rv-pill info">Ausencia justificada</span>' : z.est === "vino" ? '<span class="rv-pill ok">Vino en su descanso</span>' + nt(z) : z.est === "fuera" ? '<span class="rv-pill ok">Vino fuera de horario</span>' + nt(z) : z.est === "otro" ? (z.otroOk ? '<span class="rv-pill ok">Cumplió en otro horario</span>' : '<span class="rv-pill aviso">Vino en otro horario</span>') + nt(z) : z.est === "libre" ? '<span class="rv-pill info">No tuvo que cubrir</span> <small class="sr-cub">' + esc(z.nota) + "</small>" : z.est === "aus" ? '<span class="rv-pill accion">Ausencia</span>' + (z.nota ? ' <small class="sr-cub">' + z.nota + "</small>" : "") : z.est === "sinmarca" ? '<span class="rv-pill aviso">Sin marcar entrada</span> <small class="sr-cub">anotó clientes</small>' : z.est === "pend" ? '<span class="rv-pill">En curso · sin entrada todavía</span>' : '<span class="rv-pill info">' + esc(z.nov) + "</span>";
  const jorDe = z => {
   if (z.est === "fuera") {
    const hh = Number(String(z.x.e).slice(0, 2));
@@ -4333,18 +4340,29 @@ function asistenciaHtml(soloFilas, diasF) {
  const BL = [ 0, 1, 2, "diez" ], nomBl = b => b === "diez" ? "Turnos de 10 horas" : JL[b], horBl = b => b === "diez" ? "cubren el día de descanso de un compañero" : JH[b];
  const colBl = b => b === "diez" ? "var(--oro, #D4A82A)" : JC[b];
  const arreglable = z => z.T.ajuste !== "sup" && (z.est === "tarde" || z.est === "sinmarca" || z.est === "aus" && z.nota !== "Ausencia anotada");
- const fila = (z, i) => "<tr><td>" + (arreglable(z) ? '<input type="checkbox" class="as-sel" data-i="' + i + '" aria-label="Seleccionar" style="margin-right:8px;vertical-align:middle;width:16px;height:16px;cursor:pointer">' : "") + esc(titulo(z.g)) + '</td><td class="name"><b>' + esc(titulo(z.o)) + "</b>" + (z.diez ? ' <small style="opacity:.65">(de ' + JL[z.ji].toLowerCase() + ")</small>" : "") + "</td>" + '<td><span class="as-h">' + hmDe(z.T.S) + " a " + hmDe(z.T.E) + '</span> <small style="opacity:.65">' + esc(z.x.n) + "</small></td>" + "<td>" + (z.T.ent !== null && z.T.ajuste !== "sup" ? hmDe(z.T.ent) + (histDeEntrada(z) ? ' <button type="button" class="sr-x" data-ce="' + i + '" title="Corregir la hora de entrada" aria-label="Corregir la hora de entrada" style="text-decoration:none;opacity:.6">✎</button>' : "") : "—") + "</td><td>" + pill(z) + (h => h && (h[4] || h[7] === "unido") ? ' <button type="button" class="sr-x" data-cs="' + i + '" title="Corregir la hora de salida" style="text-decoration:none;opacity:.7;white-space:nowrap">✎ salida</button>' : h && !h[4] && (!/^En turno/.test(h[6] || "") || asisAhora() - z.T.ent >= 720 || z.T.lejos || z.est === "fuera" || z.est === "otro") ? ' <button type="button" class="sr-x" data-cs="' + i + '" title="Poner la hora en que salió" style="text-decoration:none;white-space:nowrap;font-weight:600">✎ poner salida</button>' : "")(histDeEntrada(z)) + '</td><td class="num">' + fmt.format(z.n) + "</td>" + "<td>" + (z.T.ajuste === "sup" ? '<button type="button" class="sr-x" data-aj="' + i + '" data-v="">Quitar ajuste</button>' : z.nota === "Ausencia anotada" ? '<small class="sr-cub">Ya está registrada (se cambia en Novedades → Ausencias)</small>' : z.est === "tarde" || z.est === "aus" || z.est === "sinmarca" ? '<button type="button" class="sr-x" data-aj="' + i + '" data-v="A tiempo">Llegó a tiempo</button>' : "") + ((z.est === "pend" || (z.est === "sinmarca" || z.est === "aus") && z.T.ent === null && asisAhora() < z.T.E) && z.nota !== "Ausencia anotada" ? ' <button type="button" class="sr-x" data-me="' + i + '">Ya llegó</button>' : "") + (z.est === "aus" && !(DATA.ausencias || []).some((a => a[0] === z.f && nrm(a[1]) === nrm(z.o))) ? ' <button type="button" class="sr-x" data-an="' + i + '" data-j="">Anotar ausencia</button> <button type="button" class="sr-x" data-an="' + i + '" data-j="1">Justificada</button> <small class="an-msg"></small>' : "") + "</td></tr>";
+ const salidaCelda = (z, i) => {
+  const h = histDeEntrada(z);
+  if (!h) return z.T.sal !== null && z.T.sal !== undefined && z.T.ajuste !== "sup" ? hmDe(z.T.sal) : '<span style="opacity:.4">—</span>';
+  const ed = (txt, tit) => ' <button type="button" class="sr-x" data-cs="' + i + '" title="' + tit + '" style="text-decoration:none;opacity:.6">' + txt + "</button>";
+  if (h[4]) {
+   const como = /automática/i.test(h[6] || "") ? "automática" : /supervisión/i.test(h[6] || "") ? "supervisión" : "";
+   return h[4] + ed("✎", "Corregir la hora de salida") + (como ? ' <small class="as-como" title="Salida ' + como + '">' + (como === "automática" ? "auto" : "sup.") + "</small>" : "");
+  }
+  if (/^En turno/.test(h[6] || "") && asisAhora() < z.T.E + 30 && !z.T.lejos && z.est !== "fuera" && z.est !== "otro") return '<span class="rv-pill">En turno</span>';
+  return '<span class="as-sin">' + (/^En turno/.test(h[6] || "") ? "Sigue marcado" : "Sin salida") + "</span>" + ed("✎", "Poner la hora en que salió");
+ };
+ const fila = (z, i) => "<tr><td>" + (arreglable(z) ? '<input type="checkbox" class="as-sel" data-i="' + i + '" aria-label="Seleccionar" style="margin-right:8px;vertical-align:middle;width:16px;height:16px;cursor:pointer">' : '<span style="display:inline-block;width:24px"></span>') + esc(titulo(z.g)) + '</td><td class="name"><b>' + esc(titulo(z.o)) + "</b>" + (z.diez ? ' <small style="opacity:.65">(de ' + JL[z.ji].toLowerCase() + ")</small>" : "") + "</td>" + '<td><span class="as-h">' + hmDe(z.T.S) + " a " + hmDe(z.T.E) + '</span> <small style="opacity:.65">' + esc(z.x.n) + "</small></td>" + "<td>" + (z.T.ent !== null && z.T.ajuste !== "sup" ? hmDe(z.T.ent) + (histDeEntrada(z) ? ' <button type="button" class="sr-x" data-ce="' + i + '" title="Corregir la hora de entrada" aria-label="Corregir la hora de entrada" style="text-decoration:none;opacity:.6">✎</button>' : "") : "—") + "</td><td>" + salidaCelda(z, i) + "</td><td>" + pill(z) + '</td><td class="num">' + fmt.format(z.n) + "</td>" + "<td>" + (z.T.ajuste === "sup" ? '<button type="button" class="sr-x" data-aj="' + i + '" data-v="">Quitar ajuste</button>' : z.nota === "Ausencia anotada" ? '<small class="sr-cub">Ya está registrada (se cambia en Novedades → Ausencias)</small>' : z.est === "tarde" || z.est === "aus" || z.est === "sinmarca" ? '<button type="button" class="sr-x" data-aj="' + i + '" data-v="A tiempo">Llegó a tiempo</button>' : "") + ((z.est === "pend" || (z.est === "sinmarca" || z.est === "aus") && z.T.ent === null && asisAhora() < z.T.E) && z.nota !== "Ausencia anotada" ? ' <button type="button" class="sr-x" data-me="' + i + '">Ya llegó</button>' : "") + (z.est === "aus" && !(DATA.ausencias || []).some((a => a[0] === z.f && nrm(a[1]) === nrm(z.o))) ? ' <button type="button" class="sr-x" data-an="' + i + '" data-j="">Anotar ausencia</button> <button type="button" class="sr-x" data-an="' + i + '" data-j="1">Justificada</button> <small class="an-msg"></small>' : "") + "</td></tr>";
  if (!ver.length) h += '<div class="state" style="padding:18px 0">No hay turnos con esos filtros.</div>'; else {
   const dias = Array.from(new Set(ver.map((z => z.f)))).sort().reverse();
   let cuerpo = "";
   dias.forEach((f => {
    const delDia = ver.filter((z => z.f === f));
-   cuerpo += '<tr class="as-dia"><td colspan="7">' + DSEMLARGO(f) + " " + fe(f) + " <small>" + delDia.length + (delDia.length === 1 ? " turno" : " turnos") + "</small></td></tr>";
+   cuerpo += '<tr class="as-dia"><td colspan="8">' + DSEMLARGO(f) + " " + fe(f) + " <small>" + delDia.length + (delDia.length === 1 ? " turno" : " turnos") + "</small></td></tr>";
    BL.forEach((b => {
     const zs = delDia.filter((z => b === "diez" ? z.diez : !z.diez && z.ji === b)).sort(((p, q) => b === "diez" ? p.T.S - q.T.S || p.g.localeCompare(q.g) : p.g.localeCompare(q.g) || p.T.S - q.T.S));
     if (!zs.length) return;
     const malos = zs.filter((z => z.est === "aus" && z.nota !== "Ausencia anotada" || z.est === "tarde" || z.est === "sinmarca")).length;
-    cuerpo += '<tr class="as-jor"><td colspan="7"><span class="dot" style="background:' + colBl(b) + '"></span><b>' + nomBl(b) + "</b> <small>" + horBl(b) + "</small>" + '<span class="as-cnt">' + zs.length + (malos ? " · <em>" + malos + " por revisar</em>" : "") + "</span>" + (() => {
+    cuerpo += '<tr class="as-jor"><td colspan="8"><span class="dot" style="background:' + colBl(b) + '"></span><b>' + nomBl(b) + "</b> <small>" + horBl(b) + "</small>" + '<span class="as-cnt">' + zs.length + (malos ? " · <em>" + malos + " por revisar</em>" : "") + "</span>" + (() => {
      const ts = zs.filter((z => arreglable(z) && z.est !== "aus"));
      return ts.length ? ' <button type="button" class="as-todos" data-todos="' + ts.map((z => ver.indexOf(z))).join(",") + '">✓ Todos a tiempo (' + ts.length + ")</button>" : "";
     })() + "</td></tr>";
@@ -4352,14 +4370,14 @@ function asistenciaHtml(soloFilas, diasF) {
     zs.forEach((z => {
      if (b === "diez" && z.T.S !== ultimaH) {
       ultimaH = z.T.S;
-      cuerpo += '<tr class="as-sub"><td colspan="7">Entran a las ' + hmDe(z.T.S) + " y salen a las " + hmDe(z.T.E) + "</td></tr>";
+      cuerpo += '<tr class="as-sub"><td colspan="8">Entran a las ' + hmDe(z.T.S) + " y salen a las " + hmDe(z.T.E) + "</td></tr>";
      }
      cuerpo += fila(z, ver.indexOf(z));
     }));
    }));
   }));
   h += '<div class="as-bar" hidden><b class="as-bar-n"></b><button type="button" class="btn" data-selok>✓ Llegaron a tiempo</button><button type="button" class="btn ghost" data-selno>Quitar selección</button><small class="as-bar-msg"></small></div>';
-  h += '<div class="table-scroll as-t" style="max-height:680px;overflow-y:auto"><table class="sr-t"><thead><tr><th>Grupo</th><th>Operador</th><th>Horario</th><th>Entró</th><th>Estado</th><th class="num">Clientes</th><th></th></tr></thead><tbody>' + cuerpo + "</tbody></table></div>";
+  h += '<div class="table-scroll as-t" style="max-height:680px;overflow-y:auto"><table class="sr-t"><thead><tr><th>Grupo</th><th>Operador</th><th>Horario</th><th>Entró</th><th>Salió</th><th>Estado</th><th class="num">Clientes</th><th></th></tr></thead><tbody>' + cuerpo + "</tbody></table></div>";
  }
  NOVUI.asisVer = ver;
  return h + "</section>";
@@ -4367,7 +4385,7 @@ function asistenciaHtml(soloFilas, diasF) {
 
 (() => {
  const st = document.createElement("style");
- st.textContent = ".si-asis{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;width:100%;text-align:left;font:inherit;cursor:pointer;margin:0 0 18px;padding:16px 18px;border-radius:16px;border:1px solid var(--line,rgba(127,127,127,.25));border-left:6px solid #3DBB85;background:var(--surface,#fff);color:inherit}" + ".si-asis.mal{border-left-color:#C0392B}.si-asis-t{flex:1;min-width:200px;display:flex;flex-direction:column}.si-asis-t b{font-size:18px}.si-asis-t small{opacity:.7}" + ".si-asis-n{display:flex;flex-direction:column;align-items:center;min-width:84px;font-size:12.5px;opacity:.85}.si-asis-n b{font-size:24px;line-height:1.1}.si-asis-n.v b{color:#2E9E6B}.si-asis-n.a b{color:#B7791F}.si-asis-n.r b{color:#C0392B}" + ".si .inicio-op{grid-template-columns:repeat(auto-fit,minmax(170px,1fr)) !important}" + ".si-asis em{font-style:normal;font-weight:800;background:#D4A82A;color:#15161A;border-radius:999px;padding:8px 16px;white-space:nowrap}";
+ st.textContent = ".as-t td{vertical-align:middle;white-space:nowrap}.as-t td:nth-child(6){min-width:240px}.as-t th:nth-child(4),.as-t td:nth-child(4){width:80px}.as-t th:nth-child(5),.as-t td:nth-child(5){width:120px}" + ".as-t .as-como{font-size:11px;opacity:.55}.as-t .as-sin{color:#B7791F;font-weight:600;font-size:12.5px}.as-t td:nth-child(6) .sr-cub{display:inline-block;margin-left:6px;opacity:.7}" + ".si-asis{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;width:100%;text-align:left;font:inherit;cursor:pointer;margin:0 0 18px;padding:16px 18px;border-radius:16px;border:1px solid var(--line,rgba(127,127,127,.25));border-left:6px solid #3DBB85;background:var(--surface,#fff);color:inherit}" + ".si-asis.mal{border-left-color:#C0392B}.si-asis-t{flex:1;min-width:200px;display:flex;flex-direction:column}.si-asis-t b{font-size:18px}.si-asis-t small{opacity:.7}" + ".si-asis-n{display:flex;flex-direction:column;align-items:center;min-width:84px;font-size:12.5px;opacity:.85}.si-asis-n b{font-size:24px;line-height:1.1}.si-asis-n.v b{color:#2E9E6B}.si-asis-n.a b{color:#B7791F}.si-asis-n.r b{color:#C0392B}" + ".si .inicio-op{grid-template-columns:repeat(auto-fit,minmax(170px,1fr)) !important}" + ".si-asis em{font-style:normal;font-weight:800;background:#D4A82A;color:#15161A;border-radius:999px;padding:8px 16px;white-space:nowrap}";
  document.head.appendChild(st);
 })();
 
