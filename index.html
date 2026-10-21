@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 98", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 99", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "ad874996d89c";
+ var HUELLA = "f9443bc6d9d2";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -3380,8 +3380,15 @@ function guardarAusenciaUI(g, o, fecha, boton, msg, just) {
  })).registrarAusencia(clave, g, o, fecha, !!just);
 }
 
-function guardarNovedadUI(g, o, tipo, desde, hasta, boton, editar) {
+function guardarNovedadUI(g, o, tipo, desde, hasta, boton, editar, original) {
  if (!esApps) {
+  if (original) {
+   const q = original.split("|");
+   DATA.novedades = (DATA.novedades || []).filter((r => !(nrm(r[1]) === nrm(o) && r[2] === q[0] && r[3] === q[1] && (r[4] || "") === (q[2] || ""))));
+   DATA.novedades.push([ g, o, tipo, desde, hasta || "" ]);
+   render();
+   return;
+  }
   const hoy = DATA.reloj && DATA.reloj.ahora ? DATA.reloj.ahora.slice(0, 10) : (new Date).toISOString().slice(0, 10);
   DATA.novedades = (DATA.novedades || []).map((r => {
    if (nrm(r[1]) !== nrm(o) || r[4] && r[4] < hoy) return r;
@@ -3409,7 +3416,7 @@ function guardarNovedadUI(g, o, tipo, desde, hasta, boton, editar) {
    return;
   }
   cargar(true);
- })).guardarNovedad(clave, g, o, tipo, desde, hasta || "", !!editar);
+ })).guardarNovedad(clave, g, o, tipo, desde, hasta || "", !!editar, original || "");
 }
 
 function horarioDia(o, fecha) {
@@ -5078,7 +5085,7 @@ function renderNovedades() {
   const n = Math.round((new Date(hoy + "T12:00:00") - new Date(x.d + "T12:00:00")) / 864e5);
   return n < 0 ? "Desde el " + fe(x.d).slice(0, 5) : n === 0 ? "Hoy" : n === 1 ? "Ayer" : "Hace " + n + " días";
  };
- const botones = (x, i, est) => est === "Terminada" ? borrarBtn(i) : '<button type="button" class="sr-x" data-qc="' + i + '">' + (retiro(x) ? "Cambiar fecha" : "Editar") + '</button><button type="button" class="sr-x" data-q="' + i + '">' + (x.t === "Retiro definitivo" ? "Deshacer" : est === "Programada" ? "Quitar" : "Ya volvió") + "</button>" + (x.t === "Retirado" ? '<button type="button" class="sr-x" data-qd="' + i + '">Es definitivo</button>' : "") + borrarBtn(i);
+ const botones = (x, i, est) => est === "Terminada" ? (retiro(x) ? "" : '<button type="button" class="sr-x" data-qc="' + i + '">Editar fechas</button>') + borrarBtn(i) : '<button type="button" class="sr-x" data-qc="' + i + '">' + (retiro(x) ? "Cambiar fecha" : "Editar") + '</button><button type="button" class="sr-x" data-q="' + i + '">' + (x.t === "Retiro definitivo" ? "Deshacer" : est === "Programada" ? "Quitar" : "Ya volvió") + "</button>" + (x.t === "Retirado" ? '<button type="button" class="sr-x" data-qd="' + i + '">Es definitivo</button>' : "") + borrarBtn(i);
  const borrarBtn = i => '<button type="button" class="sr-x" data-qb="' + i + '">Borrar (fue un error)</button>';
  const sep = (t, cls, n, cols) => '<tr class="nv-sep"><td colspan="' + cols + '"><span class="nv-sep-t ' + cls + '">' + t + '</span><span class="nv-sep-n">' + n + "</span></td></tr>";
  const pill = x => '<span class="rv-pill ' + NOV_PILL[x.t] + '">' + esc(x.t === "Permiso o incapacidad" ? "Permiso" : x.t) + "</span>";
@@ -5297,7 +5304,7 @@ function renderNovedades() {
     }
     NOVUI.editando = false;
     const tt = td.querySelector(".e-t");
-    guardarNovedadUI(x.g, x.o, tt ? tt.value : x.t, d.value, h ? h.value : "", e.target, true);
+    guardarNovedadUI(x.g, x.o, tt ? tt.value : x.t, d.value, h ? h.value : "", e.target, true, x.est === "Terminada" ? x.t + "|" + x.d + "|" + (x.h || "") : "");
    };
   };
  }));
