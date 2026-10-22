@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 102", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 103", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "8bbe9f049f21";
+ var HUELLA = "a4655b0145cf";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -5329,12 +5329,12 @@ function renderNovedades() {
   caja.querySelectorAll("[data-aj]").forEach((q => q.onclick = () => ajusteAsisUI(NOVUI.asisVer[Number(q.dataset.aj)], q.dataset.v, q)));
   caja.querySelectorAll("[data-me]").forEach((q => q.onclick = () => marcarEntradaUI(NOVUI.asisVer[Number(q.dataset.me)], q)));
   caja.querySelectorAll("[data-ce]").forEach((q => q.onclick = () => {
-   const h = histDeEntrada(NOVUI.asisVer[Number(q.dataset.ce)]);
-   if (h) corregirEntradaUI(h, q);
+   const z = NOVUI.asisVer[Number(q.dataset.ce)], h = z && z.h || histDeEntrada(z);
+   if (h) corregirEntradaUI(h, q); else alert("No encontré la marca de ese turno.");
   }));
   caja.querySelectorAll("[data-cs]").forEach((q => q.onclick = () => {
-   const h = histDeEntrada(NOVUI.asisVer[Number(q.dataset.cs)]);
-   if (h) corregirSalidaUI(h, q);
+   const z = NOVUI.asisVer[Number(q.dataset.cs)], h = z && z.h || histDeEntrada(z);
+   if (h) corregirSalidaUI(h, q); else alert("No encontré la marca de ese turno.");
   }));
   caja.querySelectorAll("[data-an]").forEach((q => q.onclick = () => {
    const z = NOVUI.asisVer[Number(q.dataset.an)];
