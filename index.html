@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 101", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 102", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "e274388a4de2";
+ var HUELLA = "8bbe9f049f21";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -286,6 +286,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
 <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn ghost" id="monAbrir" target="_blank" rel="noopener" hidden>Abrir la hoja</a>
 <button class="btn" id="monRefresh" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.3-4M4 4v3.5h3.5M4 13a8 8 0 0 0 14.3 4M20 20v-3.5h-3.5"/></svg>Actualizar</button></div>
 </div>
+<div id="monHall"></div>
 <div id="monCuerpo"></div>
 </div>
 <div id="vistaPtsGen" class="pt" hidden>
@@ -871,7 +872,7 @@ function render() {
 }
 
 function plantilla() {
- return `\n  <section class="hero">\n    <div class="total">\n      <div class="total-num" id="hTotal">0</div>\n      <div class="total-cap" id="hCap"></div>\n      <div id="hDelta"></div>\n      <div id="hVivo"></div>\n    </div>\n    <div>\n      <div class="ribbon" id="ribbon"></div>\n      <div class="clock"><span>6:15</span><span>14:15</span><span><span>22:15</span><span>6:15</span></span></div>\n    </div>\n  </section>\n  <section class="stats" id="stats"></section>\n\n  <div class="grid">\n    <section class="panel">\n      <div class="panel-head">\n        <div><h2>Tendencia por día</h2><div class="sub" id="subTend"></div></div>\n        <div class="seg-ctrl" data-ui="tendencia">\n          <button type="button" data-v="jornada">Por jornada</button><button type="button" data-v="total">Total</button>\n        </div>\n      </div>\n      <div class="gana-res" id="tendRes"></div>\n      <div class="chart-box tall"><canvas id="cTend"></canvas></div>\n    </section>\n\n    <section class="panel">\n      <h2>Ranking por turno</h2>\n      <div class="sub" id="subGana"></div>\n      <div class="tu" id="ganaRes"></div>\n      <div class="chart-box"><canvas id="cGana"></canvas></div>\n      <h3 class="gana-t">Día por día</h3>\n      <div class="gana" id="gana"></div>\n    </section>\n\n    <section class="panel half">\n      <h2>Acumulado del mes, mes contra mes</h2>\n      <div class="sub">Cómo va sumando cada mes día a día. Sirve para saber si vamos por encima o por debajo del ritmo anterior.</div>\n      <div class="chart-box"><canvas id="cAcum"></canvas></div>\n    </section>\n\n    <section class="panel half">\n      <div class="panel-head">\n        <div><h2>Mes a mes</h2><div class="sub" id="subMes"></div></div>\n        <div class="seg-ctrl" data-ui="mensual">\n          <button type="button" data-v="prom">Promedio diario</button><button type="button" data-v="acum">Total del mes</button>\n        </div>\n      </div>\n      <div class="chart-box"><canvas id="cMes"></canvas></div>\n    </section>\n\n    <section class="panel">\n      <div class="panel-head">\n        <div><h2>Semana a semana</h2><div class="sub" id="subSemanal"></div></div>\n        <div class="seg-ctrl" data-ui="semanal">\n          <button type="button" data-v="tot">Total de la semana</button><button type="button" data-v="prom">Promedio diario</button>\n        </div>\n      </div>\n      <div class="chart-box"><canvas id="cSemanal"></canvas></div>\n    </section>\n\n    <section class="panel wide">\n      <div class="panel-head">\n        <div><h2>Ranking</h2><div class="sub" id="subRank"></div></div>\n        <div class="seg-ctrl" data-ui="rank">\n          <button type="button" data-v="perfiles">Perfiles</button><button type="button" data-v="operadores">Operadores</button><button type="button" data-v="grupos">Grupos</button>\n        </div>\n      </div>\n      <div class="rank-tools">\n        <input type="search" id="rankQ" placeholder="Buscar por nombre" aria-label="Buscar en el ranking">\n        <button class="btn ghost" type="button" id="btnCsv">Descargar CSV</button>\n      </div>\n      <div class="table-scroll"><table id="tRank"></table></div>\n      <button class="btn ghost more" type="button" id="btnMore"></button>\n    </section>\n\n    <section class="panel side">\n      <h2>Top 5 perfiles por jornada</h2>\n      <div class="sub" id="subPodio"></div>\n      <div class="podium" id="podio"></div>\n    </section>\n\n    <section class="panel" id="panelBono">\n      <div class="panel-head">\n        <div><h2>Bono por jornada: operador que más retrae</h2><div class="sub" id="subBono"></div></div>\n        <button class="btn ghost" type="button" id="btnBonoCsv">Descargar CSV</button>\n      </div>\n      <div class="bono" id="bono"></div>\n    </section>\n\n    <section class="panel" id="panelHist">\n      <h2>Histórico de ganadores del bono</h2>\n      <div class="sub">Empieza en octubre de 2026. Se guarda solo cuando termina cada mes: queda "provisional" los primeros 5 días del mes siguiente, por si los monitores terminan de digitar, y después pasa a definitivo.</div>\n      <div class="table-scroll"><table id="tHist"></table></div>\n    </section>\n\n    <section class="panel" id="panelPerfil">\n      <div class="panel-head">\n        <div><h2>ID de perfil anotado como cliente</h2><div class="sub" id="subPerfil"></div></div>\n        <div class="ids-top">\n          <div class="seg-ctrl" data-ui="perfilVer"><button type="button" data-v="todos">Todo el histórico</button><button type="button" data-v="pend">Solo sin corregir</button></div>\n          <button class="btn ghost" type="button" id="btnPerfilCsv">Descargar CSV</button>\n        </div>\n      </div>\n      <div class="gana-res" id="perfilRes"></div>\n      <div class="table-scroll"><table id="tPerfil"></table></div>\n      <button class="btn ghost more" type="button" id="btnPerfilMore"></button>\n      <details class="codigos"><summary>Ver el ID de cada perfil</summary><div class="chips" id="perfilCodigos"></div></details>\n    </section>\n\n    <section class="panel" id="panelIds">\n      <div class="panel-head">\n        <div><h2>IDs de clientes</h2><div class="sub" id="subIds"></div></div>\n        <div class="ids-top">\n          <input type="search" id="idQ" placeholder="Buscar un ID en todos los meses" inputmode="numeric" aria-label="Buscar un ID de cliente">\n          <button class="btn" type="button" id="btnIdQ">Buscar</button>\n        </div>\n      </div>\n      <div class="ids-tools" id="idsTools">\n        <select id="idPerfil" aria-label="Filtrar IDs por perfil"></select>\n        <button class="btn ghost" type="button" id="btnIdCsv">Descargar CSV</button>\n      </div>\n      <div class="cuadre" id="idCuadre"></div>\n      <div class="difs" id="idDifs" hidden></div>\n      <div class="table-scroll"><table id="tIds"></table></div>\n      <button class="btn ghost more" type="button" id="btnIdMore"></button>\n      <div class="rep" id="idRep"></div>\n    </section>\n\n    <section class="panel">\n      <h2>Mapa de calor por grupo y día</h2>\n      <div class="sub" id="subCalor"></div>\n      <div class="table-scroll"><table class="heat" id="tCalor"></table></div>\n    </section>\n\n    <section class="panel half">\n      <h2>Promedio por día de la semana</h2>\n      <div class="sub" id="subSem"></div>\n      <div class="chart-box"><canvas id="cSem"></canvas></div>\n    </section>\n\n    <div class="sec-mon" id="segMonTop"><h2 class="vt">Seguimiento a monitores</h2><div id="segMonK"></div></div>\n    <section class="panel sec-mon">\n      <h2>Pendientes de los monitores</h2><div class="sub">Lo que digitaron y no coincide con la tabla del operador, y los turnos ya cerrados que siguen sin digitar. Se quitan solos cuando el monitor corrige.</div>\n      <div id="segMonPend"><div class="state" style="padding:18px 0">Cargando…</div></div>\n    </section>\n    <section class="panel sec-mon">\n      <h2>Verificación de IDs</h2><div class="sub">Cada ID que anota un operador lo revisa el monitor de turno en la plataforma: ✅ sí está retraído o ❌ no está. Aquí ves quién verificó, lo que falta y lo que se saltaron.</div>\n      <div id="segMonVer"><div class="state" style="padding:18px 0">Cargando…</div></div>\n    </section>\n    <section class="panel sec-mon">\n      <div class="panel-head">\n        <div><h2>Registros de los monitores</h2><div class="sub" id="subHistMon"></div></div>\n        <div class="rank-tools"><input type="search" id="histMonQ" placeholder="Buscar grupo, operador, perfil o monitor" aria-label="Buscar en los registros de los monitores"></div>\n      </div>\n      <div id="histMon"></div>\n    </section>\n\n    <section class="panel">\n      <div class="panel-head">\n        <div><h2>Perfiles sin retraer en el turno</h2><div class="sub" id="subSinRet"></div></div>\n        <div class="seg-ctrl" data-ui="sinRet"><button type="button" data-v="aten">Para atender</button><button type="button" data-v="todos">Todos los operadores</button></div>\n      </div>\n      <div id="sinRet"></div>\n    </section>\n\n    <section class="panel">\n      <div class="panel-head">\n        <div><h2>Histórico de perfiles sin retraer</h2><div class="sub" id="subHistSinRet"></div></div>\n        <div class="rank-tools"><div class="seg-ctrl" data-ui="srHist"><button type="button" data-v="todos">Todo</button><button type="button" data-v="cero">Perfiles en cero</button><button type="button" data-v="noop">No operó</button></div>\n          <input type="search" id="histSinRetQ" placeholder="Buscar grupo, operador o perfil" aria-label="Buscar en el histórico de perfiles sin retraer">\n          <button class="btn ghost" type="button" id="histSinRetCsv">Descargar CSV</button></div>\n      </div>\n      <div id="histSinRet"></div>\n    </section>\n\n    <section class="panel">\n      <h2>Para revisar</h2>\n      <div class="sub" id="subAl"></div>\n      <div class="alerts" id="alertas"></div>\n    </section>\n\n    <section class="panel">\n      <h2>Contingencias por día</h2>\n      <div class="sub" id="subCont"></div>\n      <div id="contDias"></div>\n    </section>\n  </div>`;
+ return `\n  <section class="hero">\n    <div class="total">\n      <div class="total-num" id="hTotal">0</div>\n      <div class="total-cap" id="hCap"></div>\n      <div id="hDelta"></div>\n      <div id="hVivo"></div>\n    </div>\n    <div>\n      <div class="ribbon" id="ribbon"></div>\n      <div class="clock"><span>6:15</span><span>14:15</span><span><span>22:15</span><span>6:15</span></span></div>\n    </div>\n  </section>\n  <section class="stats" id="stats"></section>\n\n  <div class="grid">\n    <section class="panel">\n      <div class="panel-head">\n        <div><h2>Tendencia por día</h2><div class="sub" id="subTend"></div></div>\n        <div class="seg-ctrl" data-ui="tendencia">\n          <button type="button" data-v="jornada">Por jornada</button><button type="button" data-v="total">Total</button>\n        </div>\n      </div>\n      <div class="gana-res" id="tendRes"></div>\n      <div class="chart-box tall"><canvas id="cTend"></canvas></div>\n    </section>\n\n    <section class="panel">\n      <h2>Ranking por turno</h2>\n      <div class="sub" id="subGana"></div>\n      <div class="tu" id="ganaRes"></div>\n      <div class="chart-box"><canvas id="cGana"></canvas></div>\n      <h3 class="gana-t">Día por día</h3>\n      <div class="gana" id="gana"></div>\n    </section>\n\n    <section class="panel half">\n      <h2>Acumulado del mes, mes contra mes</h2>\n      <div class="sub">Cómo va sumando cada mes día a día. Sirve para saber si vamos por encima o por debajo del ritmo anterior.</div>\n      <div class="chart-box"><canvas id="cAcum"></canvas></div>\n    </section>\n\n    <section class="panel half">\n      <div class="panel-head">\n        <div><h2>Mes a mes</h2><div class="sub" id="subMes"></div></div>\n        <div class="seg-ctrl" data-ui="mensual">\n          <button type="button" data-v="prom">Promedio diario</button><button type="button" data-v="acum">Total del mes</button>\n        </div>\n      </div>\n      <div class="chart-box"><canvas id="cMes"></canvas></div>\n    </section>\n\n    <section class="panel">\n      <div class="panel-head">\n        <div><h2>Semana a semana</h2><div class="sub" id="subSemanal"></div></div>\n        <div class="seg-ctrl" data-ui="semanal">\n          <button type="button" data-v="tot">Total de la semana</button><button type="button" data-v="prom">Promedio diario</button>\n        </div>\n      </div>\n      <div class="chart-box"><canvas id="cSemanal"></canvas></div>\n    </section>\n\n    <section class="panel wide">\n      <div class="panel-head">\n        <div><h2>Ranking</h2><div class="sub" id="subRank"></div></div>\n        <div class="seg-ctrl" data-ui="rank">\n          <button type="button" data-v="perfiles">Perfiles</button><button type="button" data-v="operadores">Operadores</button><button type="button" data-v="grupos">Grupos</button>\n        </div>\n      </div>\n      <div class="rank-tools">\n        <input type="search" id="rankQ" placeholder="Buscar por nombre" aria-label="Buscar en el ranking">\n        <button class="btn ghost" type="button" id="btnCsv">Descargar CSV</button>\n      </div>\n      <div class="table-scroll"><table id="tRank"></table></div>\n      <button class="btn ghost more" type="button" id="btnMore"></button>\n    </section>\n\n    <section class="panel side">\n      <h2>Top 5 perfiles por jornada</h2>\n      <div class="sub" id="subPodio"></div>\n      <div class="podium" id="podio"></div>\n    </section>\n\n    <section class="panel" id="panelBono">\n      <div class="panel-head">\n        <div><h2>Bono por jornada: operador que más retrae</h2><div class="sub" id="subBono"></div></div>\n        <button class="btn ghost" type="button" id="btnBonoCsv">Descargar CSV</button>\n      </div>\n      <div class="bono" id="bono"></div>\n    </section>\n\n    <section class="panel" id="panelHist">\n      <h2>Histórico de ganadores del bono</h2>\n      <div class="sub">Empieza en octubre de 2026. Se guarda solo cuando termina cada mes: queda "provisional" los primeros 5 días del mes siguiente, por si los monitores terminan de digitar, y después pasa a definitivo.</div>\n      <div class="table-scroll"><table id="tHist"></table></div>\n    </section>\n\n    <section class="panel" id="panelPerfil">\n      <div class="panel-head">\n        <div><h2>ID de perfil anotado como cliente</h2><div class="sub" id="subPerfil"></div></div>\n        <div class="ids-top">\n          <div class="seg-ctrl" data-ui="perfilVer"><button type="button" data-v="todos">Todo el histórico</button><button type="button" data-v="pend">Solo sin corregir</button></div>\n          <button class="btn ghost" type="button" id="btnPerfilCsv">Descargar CSV</button>\n        </div>\n      </div>\n      <div class="gana-res" id="perfilRes"></div>\n      <div class="table-scroll"><table id="tPerfil"></table></div>\n      <button class="btn ghost more" type="button" id="btnPerfilMore"></button>\n      <details class="codigos"><summary>Ver el ID de cada perfil</summary><div class="chips" id="perfilCodigos"></div></details>\n    </section>\n\n    <section class="panel" id="panelIds">\n      <div class="panel-head">\n        <div><h2>IDs de clientes</h2><div class="sub" id="subIds"></div></div>\n        <div class="ids-top">\n          <input type="search" id="idQ" placeholder="Buscar un ID en todos los meses" inputmode="numeric" aria-label="Buscar un ID de cliente">\n          <button class="btn" type="button" id="btnIdQ">Buscar</button>\n        </div>\n      </div>\n      <div class="ids-tools" id="idsTools">\n        <select id="idPerfil" aria-label="Filtrar IDs por perfil"></select>\n        <button class="btn ghost" type="button" id="btnIdCsv">Descargar CSV</button>\n      </div>\n      <div class="cuadre" id="idCuadre"></div>\n      <div class="difs" id="idDifs" hidden></div>\n      <div class="table-scroll"><table id="tIds"></table></div>\n      <button class="btn ghost more" type="button" id="btnIdMore"></button>\n      <div class="rep" id="idRep"></div>\n    </section>\n\n    <section class="panel">\n      <h2>Mapa de calor por grupo y día</h2>\n      <div class="sub" id="subCalor"></div>\n      <div class="table-scroll"><table class="heat" id="tCalor"></table></div>\n    </section>\n\n    <section class="panel half">\n      <h2>Promedio por día de la semana</h2>\n      <div class="sub" id="subSem"></div>\n      <div class="chart-box"><canvas id="cSem"></canvas></div>\n    </section>\n\n    <div class="sec-mon" id="segMonTop"><h2 class="vt">Seguimiento a monitores</h2><div id="segMonK"></div></div>\n    <section class="panel sec-mon">\n      <h2>Pendientes de los monitores</h2><div class="sub">Lo que digitaron y no coincide con la tabla del operador, y los turnos ya cerrados que siguen sin digitar. Se quitan solos cuando el monitor corrige.</div>\n      <div id="segMonPend"><div class="state" style="padding:18px 0">Cargando…</div></div>\n    </section>\n    <section class="panel sec-mon">\n      <h2>Verificación de IDs</h2><div class="sub">Cada ID que anota un operador lo revisa el monitor de turno en la plataforma: ✅ sí está retraído o ❌ no está. Aquí ves quién verificó, lo que falta y lo que se saltaron.</div>\n      <div id="segMonVer"><div class="state" style="padding:18px 0">Cargando…</div></div>\n    </section>\n    <section class="panel sec-mon">\n      <h2>Hallazgos de monitores</h2><div class="sub">Lo que encuentras en el turno de un monitor, con fotos de evidencia. El monitor lo ve en su panel y responde «Entendido» o «No estoy de acuerdo». Se cuentan las reincidencias (mismo monitor, mismo tipo).</div>\n      <div id="segHall"><div class="state" style="padding:18px 0">Cargando…</div></div>\n    </section>\n    <section class="panel sec-mon">\n      <div class="panel-head">\n        <div><h2>Registros de los monitores</h2><div class="sub" id="subHistMon"></div></div>\n        <div class="rank-tools"><input type="search" id="histMonQ" placeholder="Buscar grupo, operador, perfil o monitor" aria-label="Buscar en los registros de los monitores"></div>\n      </div>\n      <div id="histMon"></div>\n    </section>\n\n    <section class="panel">\n      <div class="panel-head">\n        <div><h2>Perfiles sin retraer en el turno</h2><div class="sub" id="subSinRet"></div></div>\n        <div class="seg-ctrl" data-ui="sinRet"><button type="button" data-v="aten">Para atender</button><button type="button" data-v="todos">Todos los operadores</button></div>\n      </div>\n      <div id="sinRet"></div>\n    </section>\n\n    <section class="panel">\n      <div class="panel-head">\n        <div><h2>Histórico de perfiles sin retraer</h2><div class="sub" id="subHistSinRet"></div></div>\n        <div class="rank-tools"><div class="seg-ctrl" data-ui="srHist"><button type="button" data-v="todos">Todo</button><button type="button" data-v="cero">Perfiles en cero</button><button type="button" data-v="noop">No operó</button></div>\n          <input type="search" id="histSinRetQ" placeholder="Buscar grupo, operador o perfil" aria-label="Buscar en el histórico de perfiles sin retraer">\n          <button class="btn ghost" type="button" id="histSinRetCsv">Descargar CSV</button></div>\n      </div>\n      <div id="histSinRet"></div>\n    </section>\n\n    <section class="panel">\n      <h2>Para revisar</h2>\n      <div class="sub" id="subAl"></div>\n      <div class="alerts" id="alertas"></div>\n    </section>\n\n    <section class="panel">\n      <h2>Contingencias por día</h2>\n      <div class="sub" id="subCont"></div>\n      <div id="contDias"></div>\n    </section>\n  </div>`;
 }
 
 function enlazarControles() {
@@ -2695,6 +2696,7 @@ function segMonCargar() {
   },
   ver: [ [ 12, "GRUPO RIO", "MAÑANA", "NILSON ROJAS", "MIGUEL", "193401122", "", "", "", 0, "", 0 ], [ 12, "GRUPO RIO", "MAÑANA", "NILSON ROJAS", "MIGUEL", "193401178", "si", "Laura Pérez", "12/10 10:40", 0, "", 0, "Rápido: 3 s después del anterior" ], [ 11, "GRUPO RIO", "NOCHE", "MARWIN OLLARVES", "MIGUEL", "193380045", "no", "Laura Pérez", "12/10 07:40", 0, "", 0, "Uno por uno" ], [ 11, "GRUPO TOKYO", "TARDE", "ELIEZER ORANCE", "MARTIN", "193375561", "", "", "", 1, "Pedro Gil", 1 ], [ 11, "GRUPO TOKYO", "MAÑANA", "YONAIKER VIVAS", "SELMO", "193370001", "si", "Pedro Gil", "11/10 09:12", 0, "", 0 ] ]
  }))), 100);
+ hallCargar();
  const okE = t => {
   try {
    SEGMON.err = JSON.parse(t);
@@ -2713,6 +2715,324 @@ function segMonCargar() {
   errores: [ [ "19/10 13:20", "2026-10", 18, "GRUPO LONDRES", "CELIO OLLARVES", "REGINALDO 48", "194305147", "Camilo Buitrago", "si", "Luizzana Muñoz", "18/10 20:20", "debi" ], [ "17/10 09:10", "2026-10", 16, "GRUPO RIO", "NILSON ROJAS", "MIGUEL", "193401178", "Camilo Buitrago", "no", "Luizzana Muñoz", "16/10 22:40", "" ] ]
  }))), 200);
 }
+
+/***************** HALLAZGOS DE LOS MONITORES *****************/
+const HALLS = {
+ d: null,
+ fotos: [],
+ nuevo: false,
+ mon: "",
+ cargando: false
+};
+
+const HALL_TURNOS = [ "Mañana (6 a 14)", "Tarde (14 a 22)", "Noche (22 a 6)", "Día 12 h (6 a 18)", "Noche 12 h (18 a 6)" ];
+
+function hallVez(lista, h) {
+ const lim = ymdMas(h.fecha, -60);
+ return lista.filter((x => nrm(x.mon) === nrm(h.mon) && x.tipo === h.tipo && x.fecha >= lim && (x.fecha < h.fecha || x.fecha === h.fecha && x.id <= h.id))).length;
+}
+
+function hallComprimir(file) {
+ return new Promise(((ok, mal) => {
+  const fr = new FileReader;
+  fr.onerror = () => mal(new Error("No se pudo leer la imagen."));
+  fr.onload = () => {
+   const img = new Image;
+   img.onerror = () => mal(new Error("Ese archivo no es una imagen."));
+   img.onload = () => {
+    const k = Math.min(1, 1600 / Math.max(img.width, img.height)), cv = document.createElement("canvas");
+    cv.width = Math.round(img.width * k);
+    cv.height = Math.round(img.height * k);
+    const cx = cv.getContext("2d");
+    cx.fillStyle = "#fff";
+    cx.fillRect(0, 0, cv.width, cv.height);
+    cx.drawImage(img, 0, 0, cv.width, cv.height);
+    const url = cv.toDataURL("image/jpeg", .82);
+    ok({
+     m: "image/jpeg",
+     b: url.split(",")[1],
+     url: url
+    });
+   };
+   img.src = fr.result;
+  };
+  fr.readAsDataURL(file);
+ }));
+}
+
+const HALL_IMG = {};
+
+function hallFotos(h, quien, esSup) {
+ return h.fotos.length ? '<div class="hl-fotos">' + h.fotos.map((f => '<button type="button" class="hl-foto" data-hf="' + esc(h.id) + "|" + esc(f) + '" data-hq="' + esc(quien || "") + '" data-hs="' + (esSup ? 1 : 0) + '" title="Ver la evidencia">' + (HALL_IMG[f] ? '<img src="' + HALL_IMG[f] + '" alt="Evidencia">' : "<span>📷</span>") + "</button>")).join("") + "</div>" : "";
+}
+
+function hallFotosEnlazar(caja, clv) {
+ caja.querySelectorAll("[data-hf]").forEach((b => {
+  const [id, f] = b.dataset.hf.split("|"), pon = () => {
+   b.innerHTML = '<img src="' + HALL_IMG[f] + '" alt="Evidencia">';
+  };
+  b.onclick = () => {
+   if (!HALL_IMG[f]) return;
+   const ov = document.createElement("div");
+   ov.className = "hl-ver";
+   ov.innerHTML = '<img src="' + HALL_IMG[f] + '" alt="Evidencia"><button type="button">Cerrar ✕</button>';
+   ov.onclick = () => ov.remove();
+   document.body.appendChild(ov);
+  };
+  if (HALL_IMG[f]) return pon();
+  if (!esApps) {
+   HALL_IMG[f] = "data:image/svg+xml;utf8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="160" height="100"><rect width="160" height="100" fill="#ddd"/><text x="80" y="55" font-size="14" text-anchor="middle">evidencia</text></svg>');
+   return pon();
+  }
+  google.script.run.withSuccessHandler((t => {
+   let d;
+   try {
+    d = JSON.parse(t);
+   } catch (e) {
+    d = {};
+   }
+   if (d.ok) {
+    HALL_IMG[f] = "data:" + d.m + ";base64," + d.b;
+    pon();
+   } else b.innerHTML = '<span title="' + esc(d.error || "") + '">⚠</span>';
+  })).verEvidencia(clv, b.dataset.hq, id, f);
+ }));
+}
+
+function hallCargar(forzar) {
+ if (HALLS.cargando || !forzar && HALLS.d && Date.now() - (HALLS.t || 0) < 6e4) {
+  hallRender();
+  return;
+ }
+ HALLS.cargando = true;
+ const ok = t => {
+  HALLS.cargando = false;
+  let d;
+  try {
+   d = JSON.parse(t);
+  } catch (e) {
+   d = {
+    ok: false
+   };
+  }
+  if (d.ok) {
+   HALLS.d = d;
+   HALLS.t = Date.now();
+  }
+  hallRender();
+ };
+ if (esApps) google.script.run.withSuccessHandler(ok).withFailureHandler((() => ok("{}"))).hallazgosSup(clave); else setTimeout((() => ok(JSON.stringify({
+  ok: true,
+  monitores: [ "Camilo Buitrago", "Jenny Villamizar", "Zhuhey Staper" ],
+  tipos: [ "Marcó como retraído un ID que no lo estaba", "Marcó como NO retraído un ID que sí lo estaba", "No digitó a tiempo", "Otro" ],
+  lista: [ {
+   id: "H1",
+   reg: "20/10/2026 08:00",
+   fecha: "2026-10-19",
+   turno: "Noche (22 a 6)",
+   mon: "Camilo Buitrago",
+   tipo: "Marcó como NO retraído un ID que sí lo estaba",
+   txt: "El ID 194305147 sí estaba retraído.",
+   cli: "194305147",
+   fotos: [ "f1" ],
+   quien: "Luizzana",
+   est: "Entendido",
+   resp: "",
+   respT: "20/10/2026 22:10"
+  }, {
+   id: "H2",
+   reg: "21/10/2026 08:00",
+   fecha: "2026-10-21",
+   turno: "Noche (22 a 6)",
+   mon: "Camilo Buitrago",
+   tipo: "Marcó como NO retraído un ID que sí lo estaba",
+   txt: "Otra vez: 194550323.",
+   cli: "194550323",
+   fotos: [],
+   quien: "Luizzana",
+   est: "Pendiente",
+   resp: "",
+   respT: ""
+  } ]
+ }))), 150);
+}
+
+function hallRender(forzar) {
+ const c = document.getElementById("segHall");
+ if (!c) return;
+ const d = HALLS.d;
+ if (!d) {
+  c.innerHTML = '<div class="state" style="padding:18px 0">' + (HALLS.cargando ? "Cargando…" : 'No se pudieron cargar los hallazgos. Toca "Actualizar".') + "</div>";
+  return;
+ }
+ if (!forzar && c.contains(document.activeElement) && /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
+ const L = d.lista || [], hoy = DATA && DATA.reloj && DATA.reloj.ahora ? DATA.reloj.ahora.slice(0, 10) : (new Date).toISOString().slice(0, 10), mesAct = hoy.slice(0, 7), lim60 = ymdMas(hoy, -60);
+ const mons = Array.from(new Set((d.monitores || []).concat(L.map((h => h.mon))))).sort(((a, b) => a.localeCompare(b)));
+ const por = {};
+ L.forEach((h => {
+  const a = por[h.mon] || (por[h.mon] = {
+   mes: 0,
+   d60: 0,
+   pend: 0,
+   noAc: 0,
+   tipos: {}
+  });
+  if (h.fecha.slice(0, 7) === mesAct) a.mes++;
+  if (h.fecha >= lim60) {
+   a.d60++;
+   a.tipos[h.tipo] = (a.tipos[h.tipo] || 0) + 1;
+  }
+  if (h.est === "Pendiente") a.pend++;
+  if (h.est === "No de acuerdo") a.noAc++;
+ }));
+ const filasR = Object.keys(por).sort(((a, b) => por[b].d60 - por[a].d60)).map((m => {
+  const a = por[m], rep = Object.keys(a.tipos).filter((t => a.tipos[t] >= 2)).sort(((x, y) => a.tipos[y] - a.tipos[x]));
+  return '<tr><td class="name"><b>' + esc(m) + '</b></td><td class="num">' + a.mes + '</td><td class="num">' + a.d60 + '</td><td class="num">' + (a.pend ? '<span class="rv-pill aviso">' + a.pend + "</span>" : "0") + '</td><td class="num">' + (a.noAc ? '<span class="rv-pill info">' + a.noAc + "</span>" : "0") + "</td>" + '<td style="white-space:normal;min-width:240px">' + (rep.length ? rep.map((t => '<span class="rv-pill accion" style="margin:2px 4px 2px 0;display:inline-block">' + a.tipos[t] + "× " + esc(t) + "</span>")).join("") : '<small style="color:var(--faint)">Sin reincidencias</small>') + "</td></tr>";
+ })).join("");
+ const ver = L.filter((h => !HALLS.mon || h.mon === HALLS.mon)).slice().sort(((a, b) => a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : a.id < b.id ? 1 : -1));
+ const pillEst = h => h.est === "Entendido" ? '<span class="rv-pill ok">✓ Entendido</span>' : h.est === "No de acuerdo" ? '<span class="rv-pill info">No está de acuerdo</span>' : '<span class="rv-pill aviso">Sin responder</span>';
+ const fe2 = f => f.slice(8) + "/" + f.slice(5, 7);
+ let h = '<div class="hl-bar"><button type="button" class="btn" id="hlNuevo">' + (HALLS.nuevo ? "Cerrar" : "＋ Nuevo hallazgo") + "</button>" + '<label class="hl-fm">Monitor <select id="hlFiltro"><option value="">Todos</option>' + mons.map((m => "<option" + (m === HALLS.mon ? " selected" : "") + ">" + esc(m) + "</option>")).join("") + '</select></label><button type="button" class="sr-x" id="hlAct">Actualizar</button></div>';
+ if (HALLS.nuevo) h += '<div class="hl-form">' + '<div class="hl-g"><label>Monitor<select id="hlMon"><option value="">Elige…</option>' + mons.map((m => "<option>" + esc(m) + "</option>")).join("") + "</select></label>" + '<label>Fecha del turno<input type="date" id="hlFecha" value="' + hoy + '" max="' + hoy + '"></label>' + '<label>Turno<select id="hlTurno">' + HALL_TURNOS.map((t => "<option>" + esc(t) + "</option>")).join("") + "</select></label>" + '<label class="hl-w">Tipo de hallazgo<select id="hlTipo"><option value="">Elige…</option>' + (d.tipos || []).map((t => "<option>" + esc(t) + "</option>")).join("") + "</select></label>" + '<label>ID del cliente <small>(si aplica)</small><input type="text" id="hlCli" inputmode="numeric" placeholder="194305147"></label></div>' + '<label class="hl-txt">Qué pasó<textarea id="hlTxt" rows="3" placeholder="Describe lo que encontraste"></textarea></label>' + '<div class="hl-ev"><b>Evidencia</b> <small>(hasta 4 fotos; también puedes pegar una captura con Ctrl+V)</small><div class="hl-prev">' + HALLS.fotos.map(((f, i) => '<span class="hl-pf"><img src="' + f.url + '" alt=""><button type="button" data-hx="' + i + '" title="Quitar">✕</button></span>')).join("") + (HALLS.fotos.length < 4 ? '<label class="hl-add">＋ Foto<input type="file" id="hlFile" accept="image/*" multiple hidden></label>' : "") + "</div></div>" + '<div class="hl-acc"><button type="button" class="btn" id="hlGuardar">Guardar hallazgo</button><small id="hlMsg" role="alert"></small></div></div>';
+ if (filasR) h += '<details class="rv" open style="margin:12px 0"><summary><span class="rv-t"><b>Reincidencias por monitor</b><small>Mes en curso y últimos 60 días. En rojo, los tipos que se repiten.</small></span></summary><div class="rv-c"><div class="table-scroll"><table><thead><tr><th>Monitor</th><th class="num">Este mes</th><th class="num">60 días</th><th class="num">Sin responder</th><th class="num">No de acuerdo</th><th>Se repite</th></tr></thead><tbody>' + filasR + "</tbody></table></div></div></details>";
+ h += ver.length ? '<div class="hl-lista">' + ver.map((x => {
+  const vez = hallVez(L, x);
+  return '<div class="hl-c ' + (x.est === "Pendiente" ? "pend" : x.est === "No de acuerdo" ? "noac" : "") + '"><div class="hl-h"><div><b>' + esc(x.mon) + "</b> <small>" + DSEMLARGO(x.fecha).slice(0, 3) + " " + fe2(x.fecha) + " · " + esc(x.turno) + "</small></div><div>" + (vez > 1 ? '<span class="rv-pill accion">' + vez + ".ª vez</span> " : "") + pillEst(x) + "</div></div>" + '<div class="hl-tipo">' + esc(x.tipo) + (x.cli ? " · ID <b>" + esc(x.cli) + "</b>" : "") + '</div><div class="hl-t">' + esc(x.txt) + "</div>" + hallFotos(x, "", true) + (x.resp ? '<div class="hl-r"><b>Respuesta:</b> ' + esc(x.resp) + "</div>" : "") + '<div class="hl-pie"><small>Anotó ' + esc(x.quien) + " el " + esc(x.reg) + (x.respT ? " · respondió el " + esc(x.respT) : "") + '</small><button type="button" class="sr-x" data-hb="' + esc(x.id) + '">Borrar</button></div></div>';
+ })).join("") + "</div>" : '<div class="state" style="padding:14px 0">' + (HALLS.mon ? "Ese monitor no tiene hallazgos." : "Todavía no hay hallazgos.") + "</div>";
+ c.innerHTML = h;
+ hallFotosEnlazar(c, clave);
+ c.querySelector("#hlNuevo").onclick = () => {
+  HALLS.nuevo = !HALLS.nuevo;
+  if (!HALLS.nuevo) HALLS.fotos = [];
+  hallRender(true);
+ };
+ c.querySelector("#hlAct").onclick = () => hallCargar(true);
+ c.querySelector("#hlFiltro").onchange = e => {
+  HALLS.mon = e.target.value;
+  e.target.blur();
+  hallRender(true);
+ };
+ c.querySelectorAll("[data-hb]").forEach((b => b.onclick = () => {
+  if (!confirm("¿Borrar este hallazgo? También se borran sus fotos.")) return;
+  const fin = () => {
+   HALLS.d.lista = HALLS.d.lista.filter((x => x.id !== b.dataset.hb));
+   hallRender(true);
+  };
+  if (!esApps) return fin();
+  b.disabled = true;
+  google.script.run.withSuccessHandler((t => {
+   let d;
+   try {
+    d = JSON.parse(t);
+   } catch (e) {
+    d = {};
+   }
+   if (d.ok) fin(); else {
+    b.disabled = false;
+    alert(d.error || "No se pudo borrar.");
+   }
+  })).borrarHallazgo(clave, b.dataset.hb);
+ }));
+ if (!HALLS.nuevo) return;
+ const F = HALLS.form || (HALLS.form = {}), ids = [ "hlMon", "hlFecha", "hlTurno", "hlTipo", "hlCli", "hlTxt" ];
+ ids.forEach((k => {
+  const el = c.querySelector("#" + k);
+  if (F[k] !== undefined) el.value = F[k];
+  el.oninput = el.onchange = () => {
+   F[k] = el.value;
+  };
+ }));
+ const msg = c.querySelector("#hlMsg");
+ const agregar = files => {
+  const xs = Array.from(files || []).filter((f => /^image\//.test(f.type))).slice(0, 4 - HALLS.fotos.length);
+  if (!xs.length) return;
+  msg.textContent = "Preparando la foto…";
+  Promise.all(xs.map(hallComprimir)).then((r => {
+   HALLS.fotos = HALLS.fotos.concat(r).slice(0, 4);
+   hallRender(true);
+  })).catch((e => {
+   msg.textContent = e.message;
+  }));
+ };
+ const fi = c.querySelector("#hlFile");
+ if (fi) fi.onchange = () => agregar(fi.files);
+ c.querySelector(".hl-form").onpaste = e => {
+  const its = Array.from((e.clipboardData || {}).items || []).filter((i => /^image\//.test(i.type))).map((i => i.getAsFile()));
+  if (its.length) {
+   e.preventDefault();
+   agregar(its);
+  }
+ };
+ c.querySelectorAll("[data-hx]").forEach((b => b.onclick = () => {
+  HALLS.fotos.splice(Number(b.dataset.hx), 1);
+  hallRender(true);
+ }));
+ c.querySelector("#hlGuardar").onclick = e => {
+  const v = k => (c.querySelector("#" + k).value || "").trim();
+  const datos = {
+   mon: v("hlMon"),
+   fecha: v("hlFecha"),
+   turno: v("hlTurno"),
+   tipo: v("hlTipo"),
+   cli: v("hlCli"),
+   txt: v("hlTxt"),
+   fotos: HALLS.fotos.map((f => ({
+    m: f.m,
+    b: f.b
+   })))
+  };
+  if (!datos.mon) return msg.textContent = "Elige el monitor.";
+  if (!datos.tipo) return msg.textContent = "Elige el tipo de hallazgo.";
+  if (!datos.txt) return msg.textContent = "Escribe qué pasó.";
+  const b = e.target;
+  b.disabled = true;
+  msg.textContent = HALLS.fotos.length ? "Subiendo las fotos…" : "Guardando…";
+  const fin = d => {
+   if (!d || !d.ok) {
+    b.disabled = false;
+    msg.textContent = d && d.error || "No se pudo guardar.";
+    return;
+   }
+   HALLS.nuevo = false;
+   HALLS.fotos = [];
+   HALLS.form = {};
+   if (window.toast) toast("Hallazgo guardado. " + datos.mon + " lo verá en su panel.");
+   hallCargar(true);
+  };
+  if (!esApps) {
+   HALLS.d.lista.push(Object.assign({
+    id: "H" + Date.now(),
+    reg: "ahora",
+    quien: "Supervisión",
+    est: "Pendiente",
+    resp: "",
+    respT: "",
+    fotos: []
+   }, datos));
+   return fin({
+    ok: true
+   });
+  }
+  google.script.run.withFailureHandler((er => fin({
+   ok: false,
+   error: er && er.message
+  }))).withSuccessHandler((t => {
+   let d;
+   try {
+    d = JSON.parse(t);
+   } catch (er) {
+    d = null;
+   }
+   fin(d);
+  })).registrarHallazgo(clave, JSON.stringify(datos), window.supNombre && window.supNombre() || "Supervisión");
+ };
+}
+
+(() => {
+ const st = document.createElement("style");
+ st.textContent = ".hl-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:6px 0 10px}.hl-fm{display:flex;align-items:center;gap:6px;font-size:13px}.hl-fm select{font:inherit;padding:6px 8px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}" + ".hl-form{border:1px solid var(--line);border-radius:14px;padding:14px;background:var(--surface);margin-bottom:12px}.hl-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.hl-g label,.hl-txt{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:var(--muted)}" + ".hl-g .hl-w{grid-column:span 2}.hl-form select,.hl-form input[type=text],.hl-form input[type=date],.hl-form textarea{font:inherit;font-size:14px;font-weight:500;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px}.hl-txt{margin-top:10px}" + ".hl-ev{margin-top:10px;font-size:13px}.hl-prev{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}.hl-pf{position:relative}.hl-pf img{width:110px;height:80px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}.hl-pf button{position:absolute;top:4px;right:4px;border:0;border-radius:99px;background:#15161A;color:#fff;width:22px;height:22px;cursor:pointer}" + ".hl-add{display:grid;place-items:center;width:110px;height:80px;border:2px dashed var(--line);border-radius:10px;cursor:pointer;font-weight:700;color:var(--oro-tinta,#7A5D00)}.hl-acc{display:flex;align-items:center;gap:10px;margin-top:12px}.hl-acc small{color:var(--down,#B3312A)}" + ".hl-lista{display:flex;flex-direction:column;gap:10px}.hl-c{border:1px solid var(--line);border-left:5px solid #3DBB85;border-radius:12px;padding:12px 14px;background:var(--surface)}.hl-c.pend{border-left-color:#E2A63B}.hl-c.noac{border-left-color:#8C7BD6}" + ".hl-h{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}.hl-h small{color:var(--faint)}.hl-tipo{margin-top:6px;font-weight:700;font-size:13.5px}.hl-t{margin-top:4px;font-size:14px;white-space:pre-wrap}.hl-r{margin-top:8px;font-size:13px;background:rgba(140,123,214,.1);border-radius:8px;padding:6px 10px}" + ".hl-pie{display:flex;justify-content:space-between;align-items:center;margin-top:8px;color:var(--faint)}.hl-fotos{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}.hl-foto{border:1px solid var(--line);border-radius:10px;padding:0;width:120px;height:86px;overflow:hidden;background:var(--empty-cell,#EFEFEA);cursor:zoom-in;display:grid;place-items:center}.hl-foto img{width:100%;height:100%;object-fit:cover}" + ".hl-ver{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;cursor:zoom-out}.hl-ver img{max-width:100%;max-height:85vh;border-radius:8px}.hl-ver button{font:inherit;border:0;border-radius:99px;padding:8px 16px;background:#C9A227;font-weight:700}" + "@media (max-width:640px){.hl-g .hl-w{grid-column:auto}}";
+ document.head.appendChild(st);
+})();
 
 function segMonVerRender() {
  const c = document.getElementById("segMonVer");
@@ -7930,6 +8250,11 @@ function monSalir() {
  MON.clave = "";
  MON.nombre = "";
  MON.datos = null;
+ MON.hall = null;
+ MON.hallT = 0;
+ try {
+  monHallRender();
+ } catch (e) {}
  try {
   sessionStorage.removeItem("mon_clave");
   sessionStorage.removeItem("mon_nombre");
@@ -8029,6 +8354,7 @@ function monCargar() {
   monRender();
   MON.verCargando = 0;
   monCargarVer();
+  monHallCargar();
  };
  if (esApps) google.script.run.withSuccessHandler(ok).withFailureHandler((e => ok(JSON.stringify({
   ok: false,
@@ -8370,6 +8696,140 @@ function monVerificar(idx, res, boton) {
   fin(d);
  })).verificarIds(MON.clave, JSON.stringify(xs.map((x => [ MON.datos.mes, x[1], x[5], nomV(x), metV(x) ]))), res, window.claveSup && window.supNombre && MON.clave === window.claveSup() ? window.supNombre() : MON.nombre || "");
 }
+
+/***** Hallazgos que supervisión le anotó a este monitor: los ve arriba y responde «Entendido» o «No estoy de acuerdo» *****/
+function monHallCargar() {
+ if (monEsSup() || !MON.nombre) {
+  MON.hall = null;
+  monHallRender();
+  return;
+ }
+ if (MON.hallCargando || MON.hallT && Date.now() - MON.hallT < 6e4) return;
+ MON.hallCargando = true;
+ const ok = t => {
+  MON.hallCargando = false;
+  let d;
+  try {
+   d = JSON.parse(t);
+  } catch (e) {
+   d = {};
+  }
+  if (d.ok) {
+   MON.hall = d.lista || [];
+   MON.hallT = Date.now();
+   monHallRender();
+  }
+ };
+ if (esApps) google.script.run.withSuccessHandler(ok).withFailureHandler((() => {
+  MON.hallCargando = false;
+ })).hallazgosMonitor(MON.clave, MON.nombre); else setTimeout((() => ok(JSON.stringify({
+  ok: true,
+  lista: [ {
+   id: "H2",
+   reg: "21/10/2026 08:00",
+   fecha: "2026-10-21",
+   turno: "Noche (22 a 6)",
+   mon: MON.nombre,
+   tipo: "Marcó como NO retraído un ID que sí lo estaba",
+   txt: "El ID 194550323 sí estaba retraído.",
+   cli: "194550323",
+   fotos: [ "f1" ],
+   quien: "Luizzana",
+   est: "Pendiente",
+   resp: "",
+   respT: ""
+  }, {
+   id: "H1",
+   reg: "20/10/2026 08:00",
+   fecha: "2026-10-19",
+   turno: "Noche (22 a 6)",
+   mon: MON.nombre,
+   tipo: "Marcó como NO retraído un ID que sí lo estaba",
+   txt: "El ID 194305147 sí estaba retraído.",
+   cli: "194305147",
+   fotos: [],
+   quien: "Luizzana",
+   est: "Entendido",
+   resp: "",
+   respT: "20/10/2026 22:10"
+  } ]
+ }))), 120);
+}
+
+function monHallRender() {
+ const c = document.getElementById("monHall");
+ if (!c) return;
+ const L = MON.hall || [];
+ if (!L.length) {
+  c.innerHTML = "";
+  return;
+ }
+ if (c.contains(document.activeElement) && /TEXTAREA|INPUT/.test(document.activeElement.tagName)) return;
+ const pend = L.filter((h => h.est === "Pendiente")).sort(((a, b) => a.fecha < b.fecha ? -1 : 1)), resto = L.filter((h => h.est !== "Pendiente")).sort(((a, b) => a.fecha < b.fecha ? 1 : -1));
+ const fe2 = f => f.slice(8) + "/" + f.slice(5, 7);
+ const tarjeta = (h, conBotones) => {
+  const vez = hallVez(L, h);
+  return '<div class="hl-c ' + (h.est === "Pendiente" ? "pend" : h.est === "No de acuerdo" ? "noac" : "") + '"><div class="hl-h"><div><b>' + esc(h.tipo) + "</b> <small>" + DSEMLARGO(h.fecha).slice(0, 3) + " " + fe2(h.fecha) + " · " + esc(h.turno) + "</small></div><div>" + (vez > 1 ? '<span class="rv-pill accion">' + vez + ".ª vez</span>" : "") + "</div></div>" + (h.cli ? '<div class="hl-tipo">ID ' + esc(h.cli) + "</div>" : "") + '<div class="hl-t">' + esc(h.txt) + "</div>" + hallFotos(h, MON.nombre, false) + (conBotones ? '<div class="hl-resp"><button type="button" class="btn" data-hok="' + esc(h.id) + '">✓ Entendido</button><button type="button" class="sr-x" data-hno="' + esc(h.id) + '">No estoy de acuerdo</button>' + '<div class="hl-no" data-hnof="' + esc(h.id) + '" hidden><textarea rows="2" placeholder="Explica por qué no estás de acuerdo"></textarea><button type="button" class="btn" data-hnoe="' + esc(h.id) + '">Enviar</button></div><small class="hl-m"></small></div>' : '<div class="hl-pie"><small>' + (h.est === "Entendido" ? "✓ Respondiste «Entendido»" : "Respondiste que no estás de acuerdo" + (h.resp ? ": " + esc(h.resp) : "")) + (h.respT ? " · " + esc(h.respT) : "") + "</small></div>") + "</div>";
+ };
+ c.innerHTML = (pend.length ? '<section class="mn-hall"><h3>⚠ Supervisión te dejó ' + (pend.length === 1 ? "un hallazgo" : pend.length + " hallazgos") + " de tus turnos</h3><p>Léelo, mira la evidencia y responde.</p>" + pend.map((h => tarjeta(h, true))).join("") + "</section>" : "") + (resto.length ? '<details class="rv" style="margin:0 0 12px"><summary><span class="rv-n">' + resto.length + '</span><span class="rv-t"><b>Mis hallazgos de los últimos 60 días</b><small>Los que ya respondiste. Si un tipo se repite, sale cuántas veces.</small></span></summary><div class="rv-c"><div class="hl-lista">' + resto.map((h => tarjeta(h, false))).join("") + "</div></div></details>" : "");
+ hallFotosEnlazar(c, MON.clave);
+ const responder = (id, resp, com, b) => {
+  const caja = b.closest(".hl-resp"), m = caja.querySelector(".hl-m");
+  b.disabled = true;
+  m.textContent = "Guardando…";
+  const fin = d => {
+   if (!d || !d.ok) {
+    b.disabled = false;
+    m.textContent = d && d.error || "No se pudo guardar.";
+    return;
+   }
+   const h = L.find((x => x.id === id));
+   if (h) {
+    h.est = resp === "no" ? "No de acuerdo" : "Entendido";
+    h.resp = com;
+    h.respT = "ahora";
+   }
+   if (window.toast) toast("Respuesta enviada a supervisión.");
+   document.activeElement && document.activeElement.blur && document.activeElement.blur();
+   monHallRender();
+  };
+  if (!esApps) return fin({
+   ok: true
+  });
+  google.script.run.withFailureHandler((e => fin({
+   ok: false,
+   error: e && e.message
+  }))).withSuccessHandler((t => {
+   let d;
+   try {
+    d = JSON.parse(t);
+   } catch (e) {
+    d = null;
+   }
+   fin(d);
+  })).responderHallazgo(MON.clave, MON.nombre, id, resp, com);
+ };
+ c.querySelectorAll("[data-hok]").forEach((b => b.onclick = () => responder(b.dataset.hok, "ok", "", b)));
+ c.querySelectorAll("[data-hno]").forEach((b => b.onclick = () => {
+  const f = c.querySelector('[data-hnof="' + b.dataset.hno + '"]');
+  f.hidden = !f.hidden;
+  if (!f.hidden) f.querySelector("textarea").focus();
+ }));
+ c.querySelectorAll("[data-hnoe]").forEach((b => b.onclick = () => {
+  const t = b.parentNode.querySelector("textarea").value.trim();
+  if (!t) {
+   b.closest(".hl-resp").querySelector(".hl-m").textContent = "Escribe por qué no estás de acuerdo.";
+   return;
+  }
+  responder(b.dataset.hnoe, "no", t, b);
+ }));
+}
+
+(() => {
+ const st = document.createElement("style");
+ st.textContent = ".mn-hall{border:2px solid #E2A63B;border-radius:16px;padding:14px 16px;margin:0 0 14px;background:rgba(226,166,59,.08)}.mn-hall h3{margin:0 0 4px;font-size:17px}.mn-hall>p{margin:0 0 10px;font-size:13px;opacity:.8}.mn-hall .hl-c{margin-bottom:10px}" + ".hl-resp{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}.hl-no{display:flex;flex-wrap:wrap;gap:8px;width:100%}.hl-no[hidden]{display:none}.hl-no textarea{flex:1;min-width:220px;font:inherit;font-size:14px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--surface);color:var(--ink)}.hl-m{color:var(--down,#B3312A)}";
+ document.head.appendChild(st);
+})();
 
 function monRender() {
  const d = MON.datos, c = document.getElementById("monCuerpo");
