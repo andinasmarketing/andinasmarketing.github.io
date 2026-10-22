@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 108", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 109", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "927aa1dda440";
+ var HUELLA = "04bf2218b097";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -2867,7 +2867,7 @@ function hallRender(forzar) {
  }
  if (!forzar && c.contains(document.activeElement) && /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
  const L = d.lista || [], hoy = DATA && DATA.reloj && DATA.reloj.ahora ? DATA.reloj.ahora.slice(0, 10) : (new Date).toISOString().slice(0, 10), mesAct = hoy.slice(0, 7), lim60 = ymdMas(hoy, -60);
- const mons = Array.from(new Set((d.monitores || []).concat(L.map((h => h.mon))))).sort(((a, b) => a.localeCompare(b)));
+ const fuera = (d.quitar || []).map(nrm), mons = Array.from(new Set((d.monitores || []).concat(L.map((h => h.mon))))).filter((m => fuera.indexOf(nrm(m)) < 0)).sort(((a, b) => a.localeCompare(b)));
  const por = {};
  L.forEach((h => {
   const a = por[h.mon] || (por[h.mon] = {
@@ -2893,7 +2893,7 @@ function hallRender(forzar) {
  const pillEst = h => h.est === "Entendido" ? '<span class="rv-pill ok">✓ Entendido</span>' : h.est === "No de acuerdo" ? '<span class="rv-pill info">No está de acuerdo</span>' : '<span class="rv-pill aviso">Sin responder</span>';
  const fe2 = f => f.slice(8) + "/" + f.slice(5, 7);
  let h = '<div class="hl-bar"><button type="button" class="btn" id="hlNuevo">' + (HALLS.nuevo ? "Cerrar" : "＋ Nuevo hallazgo") + "</button>" + '<label class="hl-fm">Monitor <select id="hlFiltro"><option value="">Todos</option>' + mons.map((m => "<option" + (m === HALLS.mon ? " selected" : "") + ">" + esc(m) + "</option>")).join("") + '</select></label><button type="button" class="sr-x" id="hlAct">Actualizar</button></div>';
- if (HALLS.nuevo) h += '<div class="hl-form">' + '<div class="hl-g"><label>Monitor<select id="hlMon"><option value="">Elige…</option>' + mons.map((m => "<option>" + esc(m) + "</option>")).join("") + "</select></label>" + '<label>Fecha del turno<input type="date" id="hlFecha" value="' + hoy + '" max="' + hoy + '"></label>' + '<label>Turno<select id="hlTurno">' + HALL_TURNOS.map((t => "<option>" + esc(t) + "</option>")).join("") + "</select></label>" + '<label class="hl-w">Tipo de hallazgo<select id="hlTipo"><option value="">Elige…</option>' + (d.tipos || []).map((t => "<option>" + esc(t) + "</option>")).join("") + "</select></label>" + '<label>ID del cliente <small>(si aplica)</small><input type="text" id="hlCli" inputmode="numeric" placeholder="194305147"></label></div>' + '<label class="hl-txt">Qué pasó<textarea id="hlTxt" rows="3" placeholder="Describe lo que encontraste"></textarea></label>' + '<div class="hl-ev"><b>Evidencia</b> <small>(hasta 4 fotos; también puedes pegar una captura con Ctrl+V)</small><div class="hl-prev">' + HALLS.fotos.map(((f, i) => '<span class="hl-pf"><img src="' + f.url + '" alt=""><button type="button" data-hx="' + i + '" title="Quitar">✕</button></span>')).join("") + (HALLS.fotos.length < 4 ? '<label class="hl-add">＋ Foto<input type="file" id="hlFile" accept="image/*" multiple hidden></label>' : "") + "</div></div>" + '<div class="hl-acc"><button type="button" class="btn" id="hlGuardar">Guardar hallazgo</button><small id="hlMsg" role="alert"></small></div></div>';
+ if (HALLS.nuevo) h += '<div class="hl-form">' + '<div class="hl-mons"><span>Monitor(es) <small>(puedes elegir varios)</small></span><div>' + mons.map((m => '<label class="hl-chk"><input type="checkbox" value="' + esc(m) + '"' + ((HALLS.form && HALLS.form.mons || []).indexOf(m) >= 0 ? " checked" : "") + ">" + esc(m) + "</label>")).join("") + "</div></div>" + '<div class="hl-g">' + '<label>Fecha del turno<input type="date" id="hlFecha" value="' + hoy + '" max="' + hoy + '"></label>' + '<label>Turno<select id="hlTurno">' + HALL_TURNOS.map((t => "<option>" + esc(t) + "</option>")).join("") + "</select></label>" + '<label class="hl-w">Tipo de hallazgo<select id="hlTipo"><option value="">Elige…</option>' + (d.tipos || []).map((t => "<option>" + esc(t) + "</option>")).join("") + "</select></label>" + '<label>ID del cliente <small>(si aplica)</small><input type="text" id="hlCli" inputmode="numeric" placeholder="194305147"></label></div>' + '<label class="hl-txt">Qué pasó<textarea id="hlTxt" rows="3" placeholder="Describe lo que encontraste"></textarea></label>' + '<div class="hl-ev"><b>Evidencia</b> <small>(hasta 4 fotos; también puedes pegar una captura con Ctrl+V)</small><div class="hl-prev">' + HALLS.fotos.map(((f, i) => '<span class="hl-pf"><img src="' + f.url + '" alt=""><button type="button" data-hx="' + i + '" title="Quitar">✕</button></span>')).join("") + (HALLS.fotos.length < 4 ? '<label class="hl-add">＋ Foto<input type="file" id="hlFile" accept="image/*" multiple hidden></label>' : "") + "</div></div>" + '<div class="hl-acc"><button type="button" class="btn" id="hlGuardar">Guardar hallazgo</button><small id="hlMsg" role="alert"></small></div></div>';
  if (filasR) h += '<details class="rv" open style="margin:12px 0"><summary><span class="rv-t"><b>Reincidencias por monitor</b><small>Mes en curso y últimos 60 días. En rojo, los tipos que se repiten.</small></span></summary><div class="rv-c"><div class="table-scroll"><table><thead><tr><th>Monitor</th><th class="num">Este mes</th><th class="num">60 días</th><th class="num">Sin responder</th><th class="num">No de acuerdo</th><th>Se repite</th></tr></thead><tbody>' + filasR + "</tbody></table></div></div></details>";
  h += ver.length ? '<div class="hl-lista">' + ver.map((x => {
   const vez = hallVez(L, x);
@@ -2934,7 +2934,10 @@ function hallRender(forzar) {
   })).borrarHallazgo(clave, b.dataset.hb);
  }));
  if (!HALLS.nuevo) return;
- const F = HALLS.form || (HALLS.form = {}), ids = [ "hlMon", "hlFecha", "hlTurno", "hlTipo", "hlCli", "hlTxt" ];
+ const F = HALLS.form || (HALLS.form = {}), ids = [ "hlFecha", "hlTurno", "hlTipo", "hlCli", "hlTxt" ];
+ c.querySelectorAll(".hl-chk input").forEach((x => x.onchange = () => {
+  F.mons = Array.from(c.querySelectorAll(".hl-chk input:checked")).map((y => y.value));
+ }));
  ids.forEach((k => {
   const el = c.querySelector("#" + k);
   if (F[k] !== undefined) el.value = F[k];
@@ -2969,8 +2972,10 @@ function hallRender(forzar) {
  }));
  c.querySelector("#hlGuardar").onclick = e => {
   const v = k => (c.querySelector("#" + k).value || "").trim();
+  const mSel = Array.from(c.querySelectorAll(".hl-chk input:checked")).map((y => y.value));
   const datos = {
-   mon: v("hlMon"),
+   mons: mSel,
+   mon: mSel.join(" y "),
    fecha: v("hlFecha"),
    turno: v("hlTurno"),
    tipo: v("hlTipo"),
@@ -2981,7 +2986,7 @@ function hallRender(forzar) {
     b: f.b
    })))
   };
-  if (!datos.mon) return msg.textContent = "Elige el monitor.";
+  if (!mSel.length) return msg.textContent = "Elige al menos un monitor.";
   if (!datos.tipo) return msg.textContent = "Elige el tipo de hallazgo.";
   if (!datos.txt) return msg.textContent = "Escribe qué pasó.";
   const b = e.target;
@@ -2996,19 +3001,21 @@ function hallRender(forzar) {
    HALLS.nuevo = false;
    HALLS.fotos = [];
    HALLS.form = {};
-   if (window.toast) toast("Hallazgo guardado. " + datos.mon + " lo verá en su panel.");
+   if (window.toast) toast("Hallazgo guardado. " + datos.mon + (mSel.length > 1 ? " lo verán" : " lo verá") + " en su panel.");
    hallCargar(true);
   };
   if (!esApps) {
-   HALLS.d.lista.push(Object.assign({
-    id: "H" + Date.now(),
+   mSel.forEach(((m, i) => HALLS.d.lista.push(Object.assign({
+    id: "H" + Date.now() + "-" + i,
     reg: "ahora",
     quien: "Supervisión",
     est: "Pendiente",
     resp: "",
     respT: "",
     fotos: []
-   }, datos));
+   }, datos, {
+    mon: m
+   }))));
    return fin({
     ok: true
    });
@@ -3030,7 +3037,7 @@ function hallRender(forzar) {
 
 (() => {
  const st = document.createElement("style");
- st.textContent = ".hl-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:6px 0 10px}.hl-fm{display:flex;align-items:center;gap:6px;font-size:13px}.hl-fm select{font:inherit;padding:6px 8px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}" + ".hl-form{border:1px solid var(--line);border-radius:14px;padding:14px;background:var(--surface);margin-bottom:12px}.hl-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.hl-g label,.hl-txt{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:var(--muted)}" + ".hl-g .hl-w{grid-column:span 2}.hl-form select,.hl-form input[type=text],.hl-form input[type=date],.hl-form textarea{font:inherit;font-size:14px;font-weight:500;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px}.hl-txt{margin-top:10px}" + ".hl-ev{margin-top:10px;font-size:13px}.hl-prev{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}.hl-pf{position:relative}.hl-pf img{width:110px;height:80px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}.hl-pf button{position:absolute;top:4px;right:4px;border:0;border-radius:99px;background:#15161A;color:#fff;width:22px;height:22px;cursor:pointer}" + ".hl-add{display:grid;place-items:center;width:110px;height:80px;border:2px dashed var(--line);border-radius:10px;cursor:pointer;font-weight:700;color:var(--oro-tinta,#7A5D00)}.hl-acc{display:flex;align-items:center;gap:10px;margin-top:12px}.hl-acc small{color:var(--down,#B3312A)}" + ".hl-lista{display:flex;flex-direction:column;gap:10px}.hl-c{border:1px solid var(--line);border-left:5px solid #3DBB85;border-radius:12px;padding:12px 14px;background:var(--surface)}.hl-c.pend{border-left-color:#E2A63B}.hl-c.noac{border-left-color:#8C7BD6}" + ".hl-h{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}.hl-h small{color:var(--faint)}.hl-tipo{margin-top:6px;font-weight:700;font-size:13.5px}.hl-t{margin-top:4px;font-size:14px;white-space:pre-wrap}.hl-r{margin-top:8px;font-size:13px;background:rgba(140,123,214,.1);border-radius:8px;padding:6px 10px}" + ".hl-pie{display:flex;justify-content:space-between;align-items:center;margin-top:8px;color:var(--faint)}.hl-fotos{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}.hl-foto{border:1px solid var(--line);border-radius:10px;padding:0;width:120px;height:86px;overflow:hidden;background:var(--empty-cell,#EFEFEA);cursor:zoom-in;display:grid;place-items:center}.hl-foto img{width:100%;height:100%;object-fit:cover}" + ".hl-ver{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;cursor:zoom-out}.hl-ver img{max-width:100%;max-height:85vh;border-radius:8px}.hl-ver button{font:inherit;border:0;border-radius:99px;padding:8px 16px;background:#C9A227;font-weight:700}" + "@media (max-width:640px){.hl-g .hl-w{grid-column:auto}}";
+ st.textContent = ".hl-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:6px 0 10px}.hl-fm{display:flex;align-items:center;gap:6px;font-size:13px}.hl-fm select{font:inherit;padding:6px 8px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}" + ".hl-form{border:1px solid var(--line);border-radius:14px;padding:14px;background:var(--surface);margin-bottom:12px}.hl-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.hl-g label,.hl-txt{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:var(--muted)}" + ".hl-mons{margin-bottom:10px;font-size:12.5px;font-weight:600;color:var(--muted)}.hl-mons>div{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}.hl-chk{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:99px;padding:6px 12px;font-size:13.5px;font-weight:600;color:var(--ink);cursor:pointer}.hl-chk input{width:16px;height:16px}.hl-chk:has(input:checked){border-color:var(--oro,#C9A227);background:var(--oro-suave,#F6EDD3)}" + ".hl-g .hl-w{grid-column:span 2}.hl-form select,.hl-form input[type=text],.hl-form input[type=date],.hl-form textarea{font:inherit;font-size:14px;font-weight:500;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px}.hl-txt{margin-top:10px}" + ".hl-ev{margin-top:10px;font-size:13px}.hl-prev{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}.hl-pf{position:relative}.hl-pf img{width:110px;height:80px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}.hl-pf button{position:absolute;top:4px;right:4px;border:0;border-radius:99px;background:#15161A;color:#fff;width:22px;height:22px;cursor:pointer}" + ".hl-add{display:grid;place-items:center;width:110px;height:80px;border:2px dashed var(--line);border-radius:10px;cursor:pointer;font-weight:700;color:var(--oro-tinta,#7A5D00)}.hl-acc{display:flex;align-items:center;gap:10px;margin-top:12px}.hl-acc small{color:var(--down,#B3312A)}" + ".hl-lista{display:flex;flex-direction:column;gap:10px}.hl-c{border:1px solid var(--line);border-left:5px solid #3DBB85;border-radius:12px;padding:12px 14px;background:var(--surface)}.hl-c.pend{border-left-color:#E2A63B}.hl-c.noac{border-left-color:#8C7BD6}" + ".hl-h{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}.hl-h small{color:var(--faint)}.hl-tipo{margin-top:6px;font-weight:700;font-size:13.5px}.hl-t{margin-top:4px;font-size:14px;white-space:pre-wrap}.hl-r{margin-top:8px;font-size:13px;background:rgba(140,123,214,.1);border-radius:8px;padding:6px 10px}" + ".hl-pie{display:flex;justify-content:space-between;align-items:center;margin-top:8px;color:var(--faint)}.hl-fotos{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}.hl-foto{border:1px solid var(--line);border-radius:10px;padding:0;width:120px;height:86px;overflow:hidden;background:var(--empty-cell,#EFEFEA);cursor:zoom-in;display:grid;place-items:center}.hl-foto img{width:100%;height:100%;object-fit:cover}" + ".hl-ver{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;cursor:zoom-out}.hl-ver img{max-width:100%;max-height:85vh;border-radius:8px}.hl-ver button{font:inherit;border:0;border-radius:99px;padding:8px 16px;background:#C9A227;font-weight:700}" + "@media (max-width:640px){.hl-g .hl-w{grid-column:auto}}";
  document.head.appendChild(st);
 })();
 
