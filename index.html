@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 103", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 104", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "a4655b0145cf";
+ var HUELLA = "16c3b8c5189a";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -4729,7 +4729,11 @@ function asistenciaHtml(soloFilas, diasF) {
    if (now < T.S && T.ent === null) return;
    const col = adel && Number(x.e.slice(0, 2)) >= 18 ? ymdMas(f, 1) : f, r = R(col.slice(0, 7)), a = r ? r.op[nrm(o.o)] : null, n = a ? a.act[Number(col.slice(8)) - 1] || 0 : 0;
    let est, nota = "";
-   const ausA = (DATA.ausencias || []).filter((a => nrm(a[1]) === nrm(o.o) && (a[0] === f || Number(x.e.slice(0, 2)) >= 18 && a[0] === ymdMas(f, 1))))[0];
+   const sigTurno = (() => {
+    const y = horarioDia(o.o, ymdMas(f, 1));
+    return !!(y && !y.desc && y.e);
+   })();
+   const ausA = (DATA.ausencias || []).filter((a => nrm(a[1]) === nrm(o.o) && (a[0] === f || Number(x.e.slice(0, 2)) >= 18 && a[0] === ymdMas(f, 1) && !sigTurno)))[0];
    const cub = !nov && !ausA ? cubria(o, f, x) : null;
    if (nov) est = "nov"; else if (cub && (T.ent === null || T.ent > T.S + TOLER_LLEGADA)) {
     est = "libre";
