@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 113", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 114", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "cf792a8b73e6";
+ var HUELLA = "878b92676eff";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -2780,6 +2780,24 @@ function segMonRender() {
  })).join("") + "</tbody></table></div>";
 }
 
+function sgEstadoMon(m, deTurno, acomp, jor) {
+ const ahora = Date.now(), H = (SEGMON.horMon || []).filter((x => sgEs(x[0], m))).sort(((a, b) => a[1] - b[1]));
+ const hm = ms => {
+  const d = new Date(ms);
+  return d.getHours() + ":" + ("0" + d.getMinutes()).slice(-2);
+ };
+ const tramo = x => hm(x[1]) + " a " + hm(x[2]);
+ const ya = H.filter((x => x[1] <= ahora + 15 * 6e4 && ahora < x[2]))[0];
+ if (deTurno) return [ "De turno · " + jor, "ok", ya ? "Su turno: " + tramo(ya) : "Es quien está registrado como monitor de turno" ];
+ if (acomp) return [ "Acompaña", "ac", "Entró a la página mientras otro monitor está de turno" ];
+ if (ya) return [ "Le toca ahora · no ha entrado", "av", "Su turno según el horario: " + tramo(ya) + ". No ha entrado a la página ni elegido su nombre en MONITOR DE TURNO." ];
+ const hay = (SEGMON.horMon || []).length, sig = H.filter((x => x[1] > ahora))[0];
+ if (!sig) return [ hay ? "Descansa" : "Libre", "", hay ? "No tiene turno hoy ni mañana en el horario" : "Ahora no está de turno" ];
+ const hoy = new Date, dia = new Date(sig[1]), mismo = dia.toDateString() === hoy.toDateString(), man = new Date(hoy.getTime() + 864e5).toDateString() === dia.toDateString();
+ const ymdD = dia.getFullYear() + "-" + ("0" + (dia.getMonth() + 1)).slice(-2) + "-" + ("0" + dia.getDate()).slice(-2);
+ return [ "Libre · entra " + (mismo ? "" : man ? "mañana " : DSEMLARGO(ymdD).toLowerCase() + " ") + hm(sig[1]), "", "Su próximo turno: " + tramo(sig) ];
+}
+
 function sgResumen() {
  const k = document.getElementById("segMonK"), tb = document.getElementById("sgTabs");
  if (!k || !tb || !DATA) return;
@@ -2796,11 +2814,11 @@ function sgResumen() {
  if (sp) sp.value = SEGMON.per;
  const n = (v, cls) => '<b class="' + (v ? cls : "") + '">' + (v === null ? "…" : fmt.format(v)) + "</b>";
  k.innerHTML = mons.length ? '<div class="sg-mons">' + mons.map((m => {
-  const deTurno = T.nombre && sgEs(T.nombre, m), acomp = T.acomp && nrm(T.acomp).indexOf(nrm(m)) >= 0;
+  const deTurno = T.nombre && sgEs(T.nombre, m), acomp = T.acomp && nrm(T.acomp).indexOf(nrm(m)) >= 0, est = sgEstadoMon(m, deTurno, acomp, jor);
   const verHoy = D.X.filter((x => x.est && String(x.vt).indexOf(D.hoyTxt) === 0 && sgEs(x.vq, m))).length;
   const pv = SEGMON.ver ? D.pend.filter((x => sgEs(x.tq, m))).length : null, nc = SEGMON.pend ? D.P.filter((x => sgEs(x.mon, m))).length : null;
   const hs = HALLS.d ? HL.filter((h => sgEs(h.mon, m) && h.est === "Pendiente")).length : null, er = SEGMON.err ? E.filter((e => sgEs(e[7], m))).length : null;
-  return '<button type="button" class="sg-m' + (sgEs(SEGMON.mon, m) ? " on" : "") + '" data-sgm="' + esc(m) + '"><span class="sg-mh"><b>' + esc(m) + '</b><span class="sg-st' + (deTurno ? " ok" : acomp ? " ac" : "") + '">' + (deTurno ? "De turno · " + jor : acomp ? "Acompaña" : "Libre") + "</span></span>" + "<small>Hoy: " + fmt.format(verHoy) + ' verificados</small><span class="sg-g"><span>' + n(pv, "a") + "<i>Por verificar</i></span><span>" + n(nc, "r") + "<i>No cuadran</i></span><span>" + n(hs, "p") + "<i>Hallazgos sin responder</i></span><span>" + n(er, "r") + "<i>Errores del mes</i></span></span></button>";
+  return '<button type="button" class="sg-m' + (sgEs(SEGMON.mon, m) ? " on" : "") + '" data-sgm="' + esc(m) + '"><span class="sg-mh"><b>' + esc(m) + '</b><span class="sg-st ' + est[1] + '" title="' + esc(est[2] || "") + '">' + esc(est[0]) + "</span></span>" + "<small>Hoy: " + fmt.format(verHoy) + ' verificados</small><span class="sg-g"><span>' + n(pv, "a") + "<i>Por verificar</i></span><span>" + n(nc, "r") + "<i>No cuadran</i></span><span>" + n(hs, "p") + "<i>Hallazgos sin responder</i></span><span>" + n(er, "r") + "<i>Errores del mes</i></span></span></button>";
  })).join("") + "</div>" : '<div class="state" style="padding:10px 0">Cargando monitores…</div>';
  k.querySelectorAll("[data-sgm]").forEach((b => b.onclick = () => sgPonerMon(sgEs(SEGMON.mon, b.dataset.sgm) ? "" : b.dataset.sgm)));
  const M = SEGMON.mon, okM = q => !M || sgEs(q, M);
@@ -2895,7 +2913,7 @@ document.addEventListener("change", (e => {
 
 (() => {
  const st = document.createElement("style");
- st.textContent = "body.seg-mon #vistaDash .sec-mon.sg-off{display:none !important}" + "body.seg-mon #vistaDash .sec-mon.sg-top{display:flex !important}body.seg-mon #vistaDash .sec-mon.sg-tabs{display:flex !important}" + ".sg-top>div:first-child{flex:1 1 380px;min-width:0}.sg-top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px;margin:4px 0 12px}.sg-top .sub{margin-top:2px}" + ".sg-sel{display:flex;gap:10px;flex-wrap:wrap}.sg-sel label{display:flex;flex-direction:column;gap:3px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:700}" + ".sg-sel select{font:inherit;font-size:14px;font-weight:600;letter-spacing:0;text-transform:none;padding:8px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);min-width:190px}" + ".sg-mons{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;margin:0 0 14px}" + ".sg-m{all:unset;box-sizing:border-box;cursor:pointer;display:block;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px;transition:border-color .15s,box-shadow .15s}" + ".sg-m:hover{border-color:var(--oro,#C9A227)}.sg-m.on{border-color:var(--oro,#C9A227);box-shadow:0 0 0 2px rgba(201,162,39,.35)}.sg-m:focus-visible{outline:2px solid var(--oro,#C9A227);outline-offset:2px}" + ".sg-mh{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:16px;color:var(--ink)}.sg-st{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--empty-cell,#EEE);color:var(--muted);white-space:nowrap}" + ".sg-st.ok{background:#E3F3EA;color:#2E9E6B}.sg-st.ac{background:#ECE8FA;color:#5B4BB0}.sg-m small{display:block;color:var(--faint);font-size:12px;margin-top:2px}" + ".sg-g{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}.sg-g>span{background:var(--paper,#FAFAF7);border-radius:10px;padding:8px}.sg-g b{display:block;font-size:20px;color:var(--ink)}.sg-g i{font-style:normal;font-size:11px;line-height:1.25;color:var(--muted);display:block}" + ".sg-g b.r{color:#B3312A}.sg-g b.a{color:#B7791F}.sg-g b.p{color:#5B4BB0}" + ".sg-tabs{display:flex;gap:6px;flex-wrap:wrap;background:#15161A;padding:8px;border-radius:14px;margin:0 0 12px}" + ".sg-tabs button{font:inherit;font-size:13.5px;border:0;border-radius:10px;padding:8px 14px;background:transparent;color:#F6F1E4;cursor:pointer;display:flex;gap:7px;align-items:center}" + ".sg-tabs button:hover{background:#2a2b30}.sg-tabs button b{font-size:11.5px;padding:1px 7px;border-radius:99px;background:#2a2b30}" + ".sg-tabs button.c-r b{background:rgba(192,57,43,.55);color:#fff}.sg-tabs button.c-a b{background:rgba(183,121,31,.6);color:#fff}.sg-tabs button.c-p b{background:rgba(91,75,176,.6);color:#fff}" + ".sg-tabs button[aria-selected=true]{background:#C9A227;color:#15161A;font-weight:700}.sg-tabs button[aria-selected=true] b{background:rgba(0,0,0,.15);color:#15161A}" + ".sg-pq{min-width:280px;white-space:normal;font-size:13px;color:var(--muted)}.sg-pq .rv-pill{margin-right:4px}.sg-h3{font-size:15px;margin:18px 0 4px;display:flex;gap:8px;align-items:center}" + ".sg-mesbar{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}.sg-mesbar button{font:inherit;font-size:13px;padding:6px 12px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}.sg-mesbar button[aria-selected=true]{background:var(--oro,#C9A227);border-color:var(--oro,#C9A227);color:#15161A;font-weight:700}" + "@media (max-width:640px){.sg-sel select{min-width:0;width:100%}.sg-sel,.sg-sel label{flex:1}.sg-g i{font-size:10.5px}.sg-tabs{flex-wrap:nowrap;overflow-x:auto}.sg-tabs button{white-space:nowrap}}";
+ st.textContent = "body.seg-mon #vistaDash .sec-mon.sg-off{display:none !important}" + "body.seg-mon #vistaDash .sec-mon.sg-top{display:flex !important}body.seg-mon #vistaDash .sec-mon.sg-tabs{display:flex !important}" + ".sg-top>div:first-child{flex:1 1 380px;min-width:0}.sg-top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px;margin:4px 0 12px}.sg-top .sub{margin-top:2px}" + ".sg-sel{display:flex;gap:10px;flex-wrap:wrap}.sg-sel label{display:flex;flex-direction:column;gap:3px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:700}" + ".sg-sel select{font:inherit;font-size:14px;font-weight:600;letter-spacing:0;text-transform:none;padding:8px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);min-width:190px}" + ".sg-mons{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;margin:0 0 14px}" + ".sg-m{all:unset;box-sizing:border-box;cursor:pointer;display:block;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px;transition:border-color .15s,box-shadow .15s}" + ".sg-m:hover{border-color:var(--oro,#C9A227)}.sg-m.on{border-color:var(--oro,#C9A227);box-shadow:0 0 0 2px rgba(201,162,39,.35)}.sg-m:focus-visible{outline:2px solid var(--oro,#C9A227);outline-offset:2px}" + ".sg-mh{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:16px;color:var(--ink)}.sg-st{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--empty-cell,#EEE);color:var(--muted);white-space:nowrap}" + ".sg-st.ok{background:#E3F3EA;color:#2E9E6B}.sg-st.av{background:#FBEFD9;color:#9A5B00}.sg-st.ac{background:#ECE8FA;color:#5B4BB0}.sg-m small{display:block;color:var(--faint);font-size:12px;margin-top:2px}" + ".sg-g{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}.sg-g>span{background:var(--paper,#FAFAF7);border-radius:10px;padding:8px}.sg-g b{display:block;font-size:20px;color:var(--ink)}.sg-g i{font-style:normal;font-size:11px;line-height:1.25;color:var(--muted);display:block}" + ".sg-g b.r{color:#B3312A}.sg-g b.a{color:#B7791F}.sg-g b.p{color:#5B4BB0}" + ".sg-tabs{display:flex;gap:6px;flex-wrap:wrap;background:#15161A;padding:8px;border-radius:14px;margin:0 0 12px}" + ".sg-tabs button{font:inherit;font-size:13.5px;border:0;border-radius:10px;padding:8px 14px;background:transparent;color:#F6F1E4;cursor:pointer;display:flex;gap:7px;align-items:center}" + ".sg-tabs button:hover{background:#2a2b30}.sg-tabs button b{font-size:11.5px;padding:1px 7px;border-radius:99px;background:#2a2b30}" + ".sg-tabs button.c-r b{background:rgba(192,57,43,.55);color:#fff}.sg-tabs button.c-a b{background:rgba(183,121,31,.6);color:#fff}.sg-tabs button.c-p b{background:rgba(91,75,176,.6);color:#fff}" + ".sg-tabs button[aria-selected=true]{background:#C9A227;color:#15161A;font-weight:700}.sg-tabs button[aria-selected=true] b{background:rgba(0,0,0,.15);color:#15161A}" + ".sg-pq{min-width:280px;white-space:normal;font-size:13px;color:var(--muted)}.sg-pq .rv-pill{margin-right:4px}.sg-h3{font-size:15px;margin:18px 0 4px;display:flex;gap:8px;align-items:center}" + ".sg-mesbar{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}.sg-mesbar button{font:inherit;font-size:13px;padding:6px 12px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}.sg-mesbar button[aria-selected=true]{background:var(--oro,#C9A227);border-color:var(--oro,#C9A227);color:#15161A;font-weight:700}" + "@media (max-width:640px){.sg-sel select{min-width:0;width:100%}.sg-sel,.sg-sel label{flex:1}.sg-g i{font-size:10.5px}.sg-tabs{flex-wrap:nowrap;overflow-x:auto}.sg-tabs button{white-space:nowrap}}";
  document.head.appendChild(st);
 })();
 
@@ -2907,6 +2925,7 @@ function sgGuardar() {
    pend: SEGMON.pend,
    ver: SEGMON.ver,
    turno: SEGMON.turno,
+   horMon: SEGMON.horMon,
    hoyDia: SEGMON.hoyDia,
    err: SEGMON.err,
    hall: HALLS.d
@@ -2924,6 +2943,7 @@ function sgRecuperar() {
  SEGMON.pend = g.pend;
  SEGMON.ver = g.ver;
  SEGMON.turno = g.turno;
+ SEGMON.horMon = g.horMon || [];
  SEGMON.hoyDia = g.hoyDia;
  if (!SEGMON.err) SEGMON.err = g.err;
  if (!HALLS.d && g.hall) HALLS.d = g.hall;
@@ -2957,6 +2977,7 @@ function segMonCargar() {
    SEGMON.pend = d.pendientes || [];
    SEGMON.ver = d.ver || [];
    SEGMON.turno = d.turno || null;
+   SEGMON.horMon = d.horMon || [];
    SEGMON.hoyDia = d.reloj && d.reloj.ahora ? Number(d.reloj.ahora.slice(8, 10)) : (new Date).getDate();
    SEGMON.cuando = Date.now();
    segMonRender();
