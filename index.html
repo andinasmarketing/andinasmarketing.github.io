@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 104", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 106", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "16c3b8c5189a";
+ var HUELLA = "50e1d8e8ff77";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -3831,7 +3831,7 @@ function deudasOp(o) {
   if (h[4]) {
    E = minAbs(h[0], h[4]);
    if (E <= S) E += 1440;
-  } else if (/En turno/i.test(h[6] || "")) {
+  } else if (/En turno/i.test(h[6] || "") && ahoraMin - S < 16 * 60) {
    E = ahoraMin;
    enCurso = true;
   } else {
@@ -3868,7 +3868,7 @@ function deudasOp(o) {
   let lleva = 0;
   const piezas = [];
   extras.forEach((x => {
-   if (x.d <= f || x.min <= 0 || lleva >= debeMin) return;
+   if (x.d === f || x.min <= 0 || lleva >= debeMin) return;
    const usa = Math.min(x.min, debeMin - lleva);
    x.min -= usa;
    lleva += usa;
