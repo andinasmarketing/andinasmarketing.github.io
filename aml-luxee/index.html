@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbxEfIMhGEeiSb4DOyu0sJTTwEQTFX0q4goSg8VrOGDfJ_XlVH8wCCRe-wDug0Aua3q6jg/exec";
 
 (function() {
- var n = 0, VER = "web 125", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 126", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "9a8d22eca552";
+ var HUELLA = "a0749c501bcc";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -8717,11 +8717,31 @@ function ptT10() {
   })))).analisisTurnos(clave); else setTimeout((() => ok(JSON.stringify(ptT10Demo()))), 150);
   return;
  }
- ptT10Render(c);
+ try {
+  ptT10Render(c);
+ } catch (e) {
+  console.error("Turnos 10 vs 8:", e);
+  c.innerHTML = '<section class="panel"><h2>Turnos de 10 horas vs. turnos de 8 horas</h2><div class="state" style="padding:14px 0">No se pudo mostrar el análisis (' + esc(e && e.message || String(e)) + ').<div style="margin-top:10px"><button type="button" class="btn ghost" id="t10Otra">Intentar de nuevo</button></div></div></section>';
+  const b = document.getElementById("t10Otra");
+  if (b) b.onclick = () => {
+   T10S.d = null;
+   T10S.err = "";
+   T10S.intentos = 0;
+   ptT10();
+  };
+ }
 }
 
 function ptT10Render(c) {
- const D = T10S.d, meses = D.meses || [];
+ const D = T10S.d;
+ const meses = (D.meses || []).filter((M => M && M.m && Array.isArray(M.ops))).map((M => Object.assign({
+  nom: "",
+  hasta: 0,
+  dows: []
+ }, M, {
+  nom: M.nom || [ "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE" ][Number(String(M.m).slice(5, 7)) - 1] || String(M.m),
+  ops: M.ops.filter((r => Array.isArray(r) && r.length >= 6)).map((r => [ String(r[0] || ""), String(r[1] || ""), Number(r[2]) || 0, Number(r[3]) || 0, Number(r[4]) || 0, Number(r[5]) || 0 ]))
+ }))).filter(((M, i, a) => a.findIndex((x => x.m === M.m)) === i));
  if (!meses.length) {
   c.innerHTML = '<section class="panel"><h2>Turnos de 10 horas vs. turnos de 8 horas</h2><div class="sub">Todavía no hay días para comparar: hacen falta días ya terminados con horario y puntos anotados.</div></section>';
   return;
@@ -11309,4 +11329,4 @@ if (typeof google !== "undefined" && google.script && google.script.url) {
 } else if (/[?&]vista=panel/.test(location.search)) verVista("dash"); else if (/[?&]vista=puntos/.test(location.search)) verVista("pts"); else if (/[?&]vista=monitores/.test(location.search)) verVista("mon");</script>
 </body>
 </html>
-<!-- var HUELLA = '9a8d22eca552' -->
+<!-- var HUELLA = 'a0749c501bcc' -->
