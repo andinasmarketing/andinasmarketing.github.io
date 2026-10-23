@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 122", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 123", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "3a49facdecde";
+ var HUELLA = "49e892deef17";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -5160,6 +5160,19 @@ function asistenciaHtml(soloFilas, diasF) {
   if (vE <= vS) vE += 1440;
   return vS < E && S < vE || vS + 1440 < E && S < vE + 1440 ? v : null;
  };
+ let cubAsis = null;
+ const cubiertoAsis = (o, f, S, E) => (DATA.histTurnos || []).filter((h => h[3] && nrm(h[2]) !== nrm(o.o) && kg(grupoDe[nrm(h[2])] || h[1]) === kg(o.g))).find((h => {
+  const ent = minAbs(h[0], h[3]);
+  if (ent < S - 60 || ent >= E) return false;
+  return ![ ymdMas(h[0], -1), h[0] ].some((f2 => {
+   const y = horarioDia(h[2], f2);
+   if (!y || y.desc || !y.e || !y.s) return false;
+   const S2 = minAbs(f2, y.e);
+   let E2 = minAbs(f2, y.s);
+   if (E2 <= S2) E2 += 1440;
+   return ent >= S2 - 60 && ent < E2;
+  }));
+ })) || null;
  for (let k = (diasF || NOVUI.adias) - 1; k >= 0; k--) {
   const f = ymdMas(hoy, -k);
   ops.forEach((o => {
@@ -5218,6 +5231,9 @@ function asistenciaHtml(soloFilas, diasF) {
    } else if (T.ent !== null) {
     est = T.ent > T.S + TOLER_LLEGADA ? "tarde" : "ok";
     nota = T.ajuste === "sup" ? "Ajustado por supervisión" : T.ajuste === "antes" ? "Antes del control de asistencia" : T.lejos ? "Vino " + (Math.round((T.S - T.ent) / 6) / 10).toString().replace(".", ",") + " h antes de su turno" : T.ent < T.S - 15 ? "Llegó antes" : est === "tarde" ? T.ent - T.S + " min tarde" : "";
+   } else if (n === 0 && (cubAsis = cubiertoAsis(o, f, T.S, T.E)) && now < Math.max(T.E, minAbs(ymdMas(f, 1), "00:00"))) {
+    est = "pend";
+    nota = "Lo cubre " + titulo(cubAsis[2]) + " (entró a las " + cubAsis[3] + "). Si no marca en todo el día, cuenta como ausencia.";
    } else if (now < T.E) est = n > 0 ? "sinmarca" : "pend"; else est = n > 0 ? "sinmarca" : "aus";
    filas.push({
     f: f,
@@ -5355,7 +5371,7 @@ function asistenciaHtml(soloFilas, diasF) {
  const BL = [ 0, 1, 2, "diez" ], nomBl = b => b === "diez" ? "Turnos de 10 horas" : JL[b], horBl = b => b === "diez" ? "cubren el descanso de un compañero" : [ "06:15 – 14:15", "14:15 – 22:15", "22:15 – 06:15" ][b];
  const colBl = b => b === "diez" ? "var(--oro, #D4A82A)" : JC[b];
  const arreglable = z => z.T.ajuste !== "sup" && (z.est === "tarde" || z.est === "sinmarca" || z.est === "aus" && z.nota !== "Ausencia anotada");
- const CHIP = z => z.sigue ? "Sigue marcado" : z.sinSal ? "Sin hora de salida" : z.est === "ok" ? "Asistió" : z.est === "tarde" ? "Llegó tarde" : z.est === "just" ? "Ausencia justificada" : z.est === "vino" ? "Vino en su descanso" : z.est === "fuera" ? "Vino fuera de horario" : z.est === "otro" ? z.otroOk ? "Cumplió en otro horario" : "Incompleto" : z.est === "libre" ? "No tuvo que cubrir" : z.est === "aus" ? z.nota === "Ausencia anotada" ? "Ausencia anotada" : "Ausencia" : z.est === "sinmarca" ? "Sin marcar entrada" : z.est === "pend" ? "En curso · sin entrada" : z.nov;
+ const CHIP = z => z.sigue ? "Sigue marcado" : z.sinSal ? "Sin hora de salida" : z.est === "ok" ? "Asistió" : z.est === "tarde" ? "Llegó tarde" : z.est === "just" ? "Ausencia justificada" : z.est === "vino" ? "Vino en su descanso" : z.est === "fuera" ? "Vino fuera de horario" : z.est === "otro" ? z.otroOk ? "Cumplió en otro horario" : "Incompleto" : z.est === "libre" ? "No tuvo que cubrir" : z.est === "aus" ? z.nota === "Ausencia anotada" ? "Ausencia anotada" : "Ausencia" : z.est === "sinmarca" ? "Sin marcar entrada" : z.est === "pend" ? /^Lo cubre/.test(z.nota || "") ? "Lo está cubriendo un compañero" : "En curso · sin entrada" : z.nov;
  const enTol = z => z.T.ent !== null && !z.T.lejos && [ "ok", "tarde" ].indexOf(z.est) >= 0 && z.T.ent >= z.T.S && z.T.ent <= z.T.S + TOLER_LLEGADA;
  const fila = (z, i) => {
   const t = tipo(z), hh = z.h, ent = z.T.ajuste === "sup" ? hmDe(z.T.S) : z.T.ent !== null ? hmDe(enTol(z) ? z.T.S : z.T.ent) : "";
@@ -11236,4 +11252,4 @@ if (typeof google !== "undefined" && google.script && google.script.url) {
 } else if (/[?&]vista=panel/.test(location.search)) verVista("dash"); else if (/[?&]vista=puntos/.test(location.search)) verVista("pts"); else if (/[?&]vista=monitores/.test(location.search)) verVista("mon");</script>
 </body>
 </html>
-<!-- var HUELLA = '3a49facdecde' -->
+<!-- var HUELLA = '49e892deef17' -->
