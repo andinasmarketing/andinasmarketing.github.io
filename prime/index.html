@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 118", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 119", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "983338a55f34";
+ var HUELLA = "a5bb9cf25180";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -610,6 +610,7 @@ function recibir(texto) {
  DATA.novedades = d.novedades || [];
  DATA.ausencias = d.ausencias || [];
  DATA.reloj = d.reloj || null;
+ DATA.puntosAml = d.puntosAml || null;
  if (!DATA.meses.length) return mostrarError("No hay pestañas de mes en la hoja (por ejemplo SEPTIEMBRE, OCTUBRE).");
  if (!F.mes || !DATA.mesPorClave[F.mes]) F.mes = DATA.claveActual;
  llenarFiltros();
@@ -730,7 +731,7 @@ document.getElementById("keyBtn").onclick = () => {
   sessionStorage.removeItem("retr_hasta");
  } catch (e) {}
  window.SUP_NUEVO = true;
- if (window.PROYECTO && window.PROYECTO.id !== "prime") {
+ if (window.PROYECTO && window.PROYECTO.id !== "prime" && window.claveDestino === "pts") {
   document.getElementById("keyModal").style.display = "none";
   if (typeof ptCargarGen === "function") ptCargarGen(false);
   return;
@@ -863,6 +864,10 @@ function render() {
   app.innerHTML = plantilla();
   app.dataset.listo = "1";
   enlazarControles();
+ }
+ if (window.ES_PRIME === false) {
+  renderNovedades();
+  return;
  }
  renderSupInicio();
  renderAvisoAusencias();
@@ -5678,6 +5683,167 @@ function histTurnosEnlazar(caja) {
 
 const NOV_EST = [ "Vigente", "Programada", "Terminada" ], NOV_TIP = [ "Vacaciones", "Permiso", "Incapacidad", "Permiso o incapacidad", "Retirado", "Retiro definitivo" ];
 
+function asistenciaAmlHtml() {
+ const P = DATA.puntosAml || {
+  ops: {},
+  ultimo: 0,
+  mes: ""
+ }, ahora = DATA.reloj && DATA.reloj.ahora ? DATA.reloj.ahora : (new Date).toISOString().slice(0, 16), hoy = ahora.slice(0, 10);
+ const fe = x => x.slice(8) + "/" + x.slice(5, 7), dsem = x => DSEM[new Date(x + "T12:00:00").getDay()];
+ const ultF = P.mes && P.ultimo ? P.mes + "-" + ("0" + P.ultimo).slice(-2) : "";
+ const ini = ymdMas(hoy, -40) > (P.mes ? P.mes + "-01" : "") ? ymdMas(hoy, -40) : P.mes ? P.mes + "-01" : ymdMas(hoy, -40);
+ let dia = NOVUI.amlDia || (ultF && ultF <= hoy ? ultF : hoy);
+ if (dia > hoy || dia < ini) dia = hoy;
+ NOVUI.amlDia = dia;
+ const fechas = [];
+ for (let f = hoy; f >= ini; f = ymdMas(f, -1)) fechas.push(f);
+ const ops = [], vistos = {};
+ DATA.filas.forEach((f => {
+  const k = nrm(f.o);
+  if (!vistos[k]) {
+   vistos[k] = 1;
+   ops.push({
+    g: f.g,
+    o: f.o
+   });
+  }
+ }));
+ ((DATA.horarios || {}).semanas || []).forEach((s => s.f.forEach((r => {
+  const k = nrm(r[1]);
+  if (!vistos[k]) {
+   vistos[k] = 1;
+   ops.push({
+    g: r[0],
+    o: r[1]
+   });
+  }
+ }))));
+ const enMes = dia.slice(0, 7) === P.mes, i = Number(dia.slice(8)) - 1, cargado = enMes && P.ultimo >= i + 1;
+ const filas = [];
+ ops.forEach((o => {
+  const a = P.ops[nrm(o.o)], x = horarioDia(o.o, dia), nov = novedadDe(o.g, o.o, dia);
+  const pv = a && enMes ? a.p[i] : null, lv = a && enMes ? a.l[i] : null, hay = pv !== null && pv !== undefined || lv !== null && lv !== undefined, pts = Math.round(((pv || 0) + (lv || 0)) * 100) / 100;
+  const aus = (DATA.ausencias || []).filter((z => z[0] === dia && nrm(z[1]) === nrm(o.o)))[0];
+  const aj = (DATA.ajustesAsis || []).filter((z => z[0] === dia && nrm(z[1]) === nrm(o.o)))[0];
+  const tur = x ? x.desc ? "Descanso" : x.e ? x.n + " · " + x.e + "–" + x.s : x.n : "";
+  let est, nota = "";
+  if (nov && !(pts > 0)) {
+   est = "nov";
+   nota = nov;
+  } else if (aus && !(pts > 0)) {
+   est = aus[2] ? "just" : "aus";
+   nota = aus[2] ? "Faltó (justificada)" : "Faltó (sin justificar)";
+  } else if (pts > 0) {
+   est = "vino";
+   nota = (x && x.desc ? "Vino en su descanso · " : "") + pts + " pts";
+  } else if (aj) {
+   est = "vino";
+   nota = "Sí vino (lo confirmó supervisión)";
+  } else if (!x) {
+   if (!hay) return;
+   est = "vino";
+   nota = "0 pts";
+  } else if (x.desc) est = "desc"; else if (!x.e) {
+   est = "nov";
+   nota = x.n;
+  } else if (!cargado) est = "pend"; else {
+   est = "sin";
+   nota = hay ? "Anotaron 0 puntos" : "Sin puntos ese día";
+  }
+  filas.push({
+   g: o.g,
+   o: o.o,
+   tur: tur,
+   est: est,
+   nota: nota,
+   aj: !!aj && !(pts > 0)
+  });
+ }));
+ const ORD = {
+  sin: 0,
+  aus: 1,
+  just: 2,
+  pend: 3,
+  vino: 4,
+  nov: 5,
+  desc: 6
+ };
+ filas.sort(((a, b) => ORD[a.est] - ORD[b.est] || a.g.localeCompare(b.g) || a.o.localeCompare(b.o)));
+ NOVUI.amlVer = filas;
+ const n = e => filas.filter((z => e.indexOf(z.est) >= 0)).length;
+ const PILL = {
+  vino: [ "ok", "Vino" ],
+  sin: [ "aviso", "Sin puntos" ],
+  aus: [ "accion", "Faltó" ],
+  just: [ "info", "Faltó · justificada" ],
+  desc: [ "", "Descanso" ],
+  nov: [ "info", "Novedad" ],
+  pend: [ "", "Puntos sin cargar" ]
+ };
+ let h = '<section class="panel"><div class="as2-top"><div><h2>Asistencia</h2><div class="sub">Se arma sola con el horario publicado y los puntos que anotan los supervisores: si tiene puntos ese día, vino. ' + "Si tenía turno y no tiene puntos, dinos qué pasó con los botones; queda registrado y, si faltó, el horario de su grupo se acomoda solo.</div></div>" + '<div class="as2-sel"><label>Día<select class="aml-dia">' + fechas.map((f => '<option value="' + f + '"' + (f === dia ? " selected" : "") + ">" + dsem(f) + " " + fe(f) + (f === hoy ? " (hoy)" : "") + "</option>")).join("") + "</select></label></div></div>";
+ h += '<div class="as2-k"><div class="ok"><b>' + n([ "vino" ]) + '</b><span>Vinieron</span></div><div class="av"><b>' + n([ "sin" ]) + "</b><span>Sin puntos (por revisar)</span></div>" + '<div class="mal"><b>' + n([ "aus", "just" ]) + "</b><span>Faltaron</span></div><div><b>" + n([ "nov" ]) + "</b><span>Con novedad</span></div><div><b>" + n([ "desc" ]) + "</b><span>De descanso</span></div></div>";
+ if (!cargado) h += '<div class="as2-ayuda">' + (enMes ? "Los puntos de este día todavía no están cargados en el archivo de puntos (el último día con puntos es el " + (ultF ? fe(ultF) : "—") + "). Cuando los anoten, aquí se ve quién vino." : "Este día no es del mes que tiene el archivo de puntos, así que no se puede saber quién vino por los puntos.") + "</div>";
+ if (!((DATA.horarios || {}).semanas || []).length) h += '<div class="as2-ayuda">Todavía no hay horarios publicados en «HORARIOS Y DESCANSOS - AML/LUXEE». Sin horario solo se ve quién tiene puntos.</div>';
+ if (!filas.length) h += '<div class="state" style="padding:18px 0">No hay nadie con turno ni con puntos ese día.</div>'; else h += '<div class="table-scroll"><table class="sr-t"><thead><tr><th>Operador</th><th>Grupo</th><th>Su horario</th><th>Estado</th><th>Detalle</th><th></th></tr></thead><tbody>' + filas.map(((z, k) => '<tr><td class="name"><b>' + esc(titulo(z.o)) + "</b></td><td>" + esc(titulo(z.g).replace(/^Grupo\s+/i, "Grupo ")) + "</td><td>" + esc(z.tur || "—") + "</td>" + '<td><span class="rv-pill ' + PILL[z.est][0] + '">' + PILL[z.est][1] + "</span></td><td><small>" + esc(z.nota || "") + '</small></td><td style="white-space:nowrap">' + (z.est === "sin" ? '<button type="button" class="sr-x" data-am="' + k + '" data-ac="falto">Faltó</button> <button type="button" class="sr-x" data-am="' + k + '" data-ac="faltoj">Faltó (justificada)</button> <button type="button" class="sr-x" data-am="' + k + '" data-ac="vino">Sí vino</button>' : z.aj ? '<button type="button" class="sr-x" data-am="' + k + '" data-ac="novino">Quitar «sí vino»</button>' : z.est === "aus" || z.est === "just" ? '<small style="color:var(--faint)">Para quitarla o justificarla: Novedades → Ausencias</small>' : "") + "</td></tr>")).join("") + "</tbody></table></div>";
+ return h + "</section>";
+}
+
+function asistenciaAmlEnlazar(caja) {
+ const sd = caja.querySelector(".aml-dia");
+ if (sd) sd.onchange = () => {
+  NOVUI.amlDia = sd.value;
+  sd.blur();
+  renderNovedades.forzar = true;
+  try {
+   renderNovedades();
+  } finally {
+   renderNovedades.forzar = false;
+  }
+ };
+ caja.querySelectorAll("[data-am]").forEach((q => q.onclick = () => {
+  const z = NOVUI.amlVer[Number(q.dataset.am)], ac = q.dataset.ac, dia = NOVUI.amlDia;
+  if (!z) return;
+  if ((ac === "falto" || ac === "faltoj") && !confirm("¿Anotar que " + titulo(z.o) + " faltó el " + dia.split("-").reverse().join("/") + (ac === "faltoj" ? " (justificada: no pierde su descanso)" : " (sin justificar: pierde su descanso)") + "?")) return;
+  const listo = d => {
+   if (!d || !d.ok) {
+    q.disabled = false;
+    alert(d && d.error || "No se pudo guardar.");
+    return;
+   }
+   if (window.toast) toast("Listo, quedó registrado.");
+   if (esApps) cargar(true); else {
+    renderNovedades.forzar = true;
+    try {
+     renderNovedades();
+    } finally {
+     renderNovedades.forzar = false;
+    }
+   }
+  };
+  q.disabled = true;
+  q.textContent = "Guardando…";
+  if (!esApps) {
+   if (ac === "vino") DATA.ajustesAsis.push([ dia, z.o, "Sí vino" ]); else if (ac === "novino") DATA.ajustesAsis = DATA.ajustesAsis.filter((a => !(a[0] === dia && nrm(a[1]) === nrm(z.o)))); else DATA.ausencias.push([ dia, z.o, ac === "faltoj", "" ]);
+   return listo({
+    ok: true
+   });
+  }
+  const run = google.script.run.withFailureHandler((e => listo({
+   ok: false,
+   error: e && e.message
+  }))).withSuccessHandler((t => {
+   let d;
+   try {
+    d = JSON.parse(t);
+   } catch (e) {
+    d = null;
+   }
+   listo(d);
+  }));
+  if (ac === "vino" || ac === "novino") run.guardarAjusteAsistencia(clave, dia, z.g, z.o, ac === "vino" ? "Sí vino" : ""); else run.registrarAusencia(clave, z.g, z.o, dia, ac === "faltoj");
+ }));
+}
+
 const NOV_PILL = {
  Vacaciones: "ok",
  "Permiso o incapacidad": "info",
@@ -5704,7 +5870,7 @@ function renderNovedades() {
  const caja = document.getElementById("novCuerpo");
  if (!caja || !DATA) return;
  if ((NOVUI.editando || caja.contains(document.activeElement) && /INPUT|SELECT/.test(document.activeElement.tagName)) && !renderNovedades.forzar) return;
- const barra = '<div class="sub-barra" style="margin-bottom:14px">' + [ [ "nov", "Novedades" ], [ "hor", "Horarios y descansos" ], [ "asis", "Asistencia" ], [ "tur", "Histórico de turnos" ] ].map((v => '<button type="button" data-nv="' + v[0] + '" aria-selected="' + (NOVUI.vista === v[0]) + '">' + v[1] + "</button>")).join("") + "</div>";
+ const barra = '<div class="sub-barra" style="margin-bottom:14px">' + [ [ "nov", "Novedades" ], [ "hor", "Horarios y descansos" ], [ "asis", "Asistencia" ], [ "tur", "Histórico de turnos" ] ].filter((v => window.ES_PRIME !== false || v[0] !== "tur")).map((v => '<button type="button" data-nv="' + v[0] + '" aria-selected="' + (NOVUI.vista === v[0]) + '">' + v[1] + "</button>")).join("") + "</div>";
  const cambiar = () => caja.querySelectorAll("[data-nv]").forEach((q => q.onclick = () => {
   NOVUI.vista = q.dataset.nv;
   renderNovedades();
@@ -5713,6 +5879,13 @@ function renderNovedades() {
   caja.innerHTML = barra + horariosHtml(DATA.horarios, DATA.reloj && DATA.reloj.ahora ? DATA.reloj.ahora.slice(0, 10) : "", false);
   cambiar();
   horariosEnlazar(caja);
+  return;
+ }
+ if (window.ES_PRIME === false && NOVUI.vista === "tur") NOVUI.vista = "nov";
+ if (NOVUI.vista === "asis" && window.ES_PRIME === false) {
+  caja.innerHTML = barra + asistenciaAmlHtml();
+  cambiar();
+  asistenciaAmlEnlazar(caja);
   return;
  }
  if (NOVUI.vista === "asis") {
@@ -5850,6 +6023,7 @@ function renderNovedades() {
   t: r[2],
   d: r[3],
   h: r[4],
+  pr: r[5] === "PRIME",
   est: r[3] > hoy ? "Programada" : r[4] && r[4] < hoy ? "Terminada" : "Vigente"
  }))).sort(((a, b) => NOV_EST.indexOf(a.est) - NOV_EST.indexOf(b.est) || NOV_TIP.indexOf(a.t) - NOV_TIP.indexOf(b.t) || (a.est === "Programada" ? a.d < b.d ? -1 : 1 : a.d < b.d ? 1 : -1) || a.o.localeCompare(b.o)));
  const cta = t => todas.filter((x => !t || x.t === t)).length, vig = todas.filter((x => x.est === "Vigente"));
@@ -5879,6 +6053,7 @@ function renderNovedades() {
   return n < 0 ? "Desde el " + fe(x.d).slice(0, 5) : n === 0 ? "Hoy" : n === 1 ? "Ayer" : "Hace " + n + " días";
  };
  const botones = (x, i, est) => est === "Terminada" ? (retiro(x) ? "" : '<button type="button" class="sr-x" data-qc="' + i + '">Editar fechas</button>') + borrarBtn(i) : '<button type="button" class="sr-x" data-qc="' + i + '">' + (retiro(x) ? "Cambiar fecha" : "Editar") + '</button><button type="button" class="sr-x" data-q="' + i + '">' + (x.t === "Retiro definitivo" ? "Deshacer" : est === "Programada" ? "Quitar" : "Ya volvió") + "</button>" + (x.t === "Retirado" ? '<button type="button" class="sr-x" data-qd="' + i + '">Es definitivo</button>' : "") + borrarBtn(i);
+ const prTag = '<span class="rv-pill info" title="Se registró en PRIME. Para cambiarla, hazlo en PRIME y aquí se actualiza sola.">Viene de PRIME</span>';
  const borrarBtn = i => '<button type="button" class="sr-x" data-qb="' + i + '">Borrar (fue un error)</button>';
  const sep = (t, cls, n, cols) => '<tr class="nv-sep"><td colspan="' + cols + '"><span class="nv-sep-t ' + cls + '">' + t + '</span><span class="nv-sep-n">' + n + "</span></td></tr>";
  const pill = x => '<span class="rv-pill ' + NOV_PILL[x.t] + '">' + esc(x.t === "Permiso o incapacidad" ? "Permiso" : x.t) + "</span>";
@@ -5901,6 +6076,7 @@ function renderNovedades() {
  [ [ "Vacaciones", "Vacaciones", "Mientras están vigentes, el operador no sale en el histórico de perfiles sin retraer ni en las alertas, y al monitor no se le pide el 0.", "No hay vacaciones registradas." ], [ "Permiso", "Permisos", "Mientras están vigentes, el operador no sale en el histórico de perfiles sin retraer ni en las alertas, y al monitor no se le pide el 0. Las horas del permiso las debe reponer.", "No hay permisos registrados." ], [ "Incapacidad", "Incapacidades", "Mientras están vigentes, el operador no sale en el histórico de perfiles sin retraer ni en las alertas, y al monitor no se le pide el 0. La incapacidad no repone horas.", "No hay incapacidades registradas." ] ].forEach((([tipo, tit, sub, vacio]) => {
   const xs0 = ver.map(((x, i) => [ x, i ])).filter((z => tipo === "Vacaciones" ? z[0].t === tipo : tipo === "Incapacidad" ? z[0].t === "Incapacidad" : /permiso/i.test(z[0].t)));
   const nv0 = xs0.filter((z => z[0].est === "Vigente")).length, np0 = xs0.filter((z => z[0].est === "Programada")).length;
+  if (window.ES_PRIME === false) sub = "Mientras están vigentes, en Asistencia sale con su novedad y no como falta." + (tipo === "Vacaciones" ? "" : " Las de PRIME (de quienes trabajan en los dos) salen aquí solas.");
   h += cab(tipo === "Vacaciones" ? "nv-vac" : tipo === "Incapacidad" ? "nv-inca" : "nv-per", tit, xs0.length ? [ nv0 ? cuenta(nv0, "vigente", "vigentes") : "Nadie ahora", np0 ? cuenta(np0, "programada", "programadas") : "" ].filter(Boolean).join(" · ") : "", sub);
   if (!xs0.length) {
    h += '<div class="state" style="padding:18px 0">' + vacio + "</div></section>";
@@ -5911,7 +6087,7 @@ function renderNovedades() {
    const xs = xs0.filter((z => z[0].est === est));
    if (!xs.length) return;
    h += sep(titEst[est], est.toLowerCase(), xs.length, 6);
-   h += xs.map((([x, i]) => "<tr" + (est === "Terminada" ? ' class="nv-fin"' : "") + ">" + opG(x) + "<td>" + fd(x.d) + "</td><td>" + (x.h ? fd(x.h) : '<span class="nv-nada">Sin fecha</span>') + '</td><td class="num">' + (dias(x) || '<span class="nv-nada">—</span>') + "</td>" + '<td class="nv-acc">' + botones(x, i, est) + (tipo !== "Vacaciones" ? horasPermiso(x) : "") + "</td></tr>")).join("");
+   h += xs.map((([x, i]) => "<tr" + (est === "Terminada" ? ' class="nv-fin"' : "") + ">" + opG(x) + "<td>" + fd(x.d) + "</td><td>" + (x.h ? fd(x.h) : '<span class="nv-nada">Sin fecha</span>') + '</td><td class="num">' + (dias(x) || '<span class="nv-nada">—</span>') + "</td>" + '<td class="nv-acc">' + (x.pr ? prTag : botones(x, i, est)) + (tipo !== "Vacaciones" && window.ES_PRIME !== false ? horasPermiso(x) : "") + "</td></tr>")).join("");
   }));
   h += "</tbody></table></div></section>";
  }));
@@ -5923,7 +6099,7 @@ function renderNovedades() {
    const xs = rets.filter((z => z[0].t === t));
    if (!xs.length) return;
    h += sep(tit, cls, xs.length, 6);
-   h += xs.map((([x, i]) => "<tr>" + opG(x) + "<td>" + pill(x) + "</td><td>" + fd(x.d) + '</td><td><span class="nv-nada">' + hace(x) + '</span></td><td class="nv-acc">' + botones(x, i, x.est) + "</td></tr>")).join("");
+   h += xs.map((([x, i]) => "<tr>" + opG(x) + "<td>" + pill(x) + "</td><td>" + fd(x.d) + '</td><td><span class="nv-nada">' + hace(x) + '</span></td><td class="nv-acc">' + (x.pr ? prTag : botones(x, i, x.est)) + "</td></tr>")).join("");
   }));
   h += "</tbody></table></div>";
  }
@@ -5936,9 +6112,9 @@ function renderNovedades() {
   const sj = AUS.filter((a => !a[2])).length;
   h += cab("nv-aus", "Ausencias", AUS.length ? cuenta(AUS.length, "ausencia", "ausencias") + (sj ? ' · <span class="mal">' + sj + " sin justificar</span>" : "") : "", "Días en que un operador faltó (de los últimos 60 días). Si no está justificada, pierde su descanso; si la justificas, lo recupera. En los dos casos el horario de su grupo se acomoda solo. Se guardan en la pestaña AUSENCIAS del archivo de horarios.");
  }
- if (!AUS.length) h += '<div class="state" style="padding:18px 0">No hay ausencias anotadas. Para anotar una, elige "Ausencia" arriba.</div>'; else h += '<div class="table-scroll"><table class="sr-t"><thead><tr><th>Fecha</th><th>Operador</th><th>Grupo</th><th>Estado</th><th>Horas por reponer</th><th>Cómo quedó el horario</th><th></th></tr></thead><tbody>' + AUS.map(((a, i) => "<tr><td>" + DSEM[new Date(a[0] + "T12:00:00").getDay()] + " " + fe(a[0]) + '</td><td class="name"><b>' + esc(titulo(a[1])) + "</b></td><td>" + esc(titulo(grupoDe(a[1]))) + "</td>" + "<td>" + (a[2] ? '<span class="rv-pill info">Justificada</span>' : '<span class="rv-pill accion">Sin justificar</span>') + "</td>" + '<td style="white-space:normal;min-width:170px">' + horasCelda(a) + "</td>" + '<td style="white-space:normal;min-width:200px;max-width:340px"><small>' + esc(a[3] || "—") + "</small></td>" + '<td style="white-space:nowrap"><button type="button" class="sr-x" data-au="' + i + '" data-ac="' + (a[2] ? "injustificar" : "justificar") + '">' + (a[2] ? "Quitar justificación" : "Justificar") + '</button> <button type="button" class="sr-x" data-au="' + i + '" data-ac="quitar">Quitar</button></td></tr>')).join("") + "</tbody></table></div>";
+ if (!AUS.length) h += '<div class="state" style="padding:18px 0">No hay ausencias anotadas. Para anotar una, elige "Ausencia" arriba.</div>'; else h += '<div class="table-scroll"><table class="sr-t"><thead><tr><th>Fecha</th><th>Operador</th><th>Grupo</th><th>Estado</th>' + (window.ES_PRIME !== false ? "<th>Horas por reponer</th>" : "") + "<th>Cómo quedó el horario</th><th></th></tr></thead><tbody>" + AUS.map(((a, i) => "<tr><td>" + DSEM[new Date(a[0] + "T12:00:00").getDay()] + " " + fe(a[0]) + '</td><td class="name"><b>' + esc(titulo(a[1])) + "</b></td><td>" + esc(titulo(grupoDe(a[1]))) + "</td>" + "<td>" + (a[2] ? '<span class="rv-pill info">Justificada</span>' : '<span class="rv-pill accion">Sin justificar</span>') + "</td>" + (window.ES_PRIME !== false ? '<td style="white-space:normal;min-width:170px">' + horasCelda(a) + "</td>" : "") + '<td style="white-space:normal;min-width:200px;max-width:340px"><small>' + esc(a[3] || "—") + "</small></td>" + '<td style="white-space:nowrap"><button type="button" class="sr-x" data-au="' + i + '" data-ac="' + (a[2] ? "injustificar" : "justificar") + '">' + (a[2] ? "Quitar justificación" : "Justificar") + '</button> <button type="button" class="sr-x" data-au="' + i + '" data-ac="quitar">Quitar</button></td></tr>')).join("") + "</tbody></table></div>";
  h += "</section>";
- {
+ if (window.ES_PRIME !== false) {
   const INC = turnosIncompletos();
   const pend = INC.filter((x => !(deudasOp(x.o)["inc:" + x.f] || {}).listo)).length;
   h += cab("nv-inc", "Turnos incompletos", INC.length ? cuenta(INC.length, "turno", "turnos") + (pend ? ' · <span class="mal">' + pend + " sin reponer</span>" : " · todos repuestos") : "", "No vino a su hora (por ejemplo vino de día en vez de noche) y se fue sin completar las horas de su turno. Lo que le faltó lo debe reponer: se va descontando con lo que trabaje de más después (en su descanso, fuera de su horario o quedándose más tiempo). De los últimos 35 días.");
@@ -6120,6 +6296,11 @@ function ausenciasSinRegistrar(rachas) {
 function renderAvisoAusencias() {
  const cont = document.querySelector(".cont");
  if (!cont) return;
+ if (window.ES_PRIME === false) {
+  const c0 = document.getElementById("avisoAusSup");
+  if (c0) c0.innerHTML = "";
+  return;
+ }
  let caja = document.getElementById("avisoAusSup");
  if (!caja) {
   caja = document.createElement("div");
@@ -7076,10 +7257,10 @@ if (!ES_PRIME) {
   const e = document.querySelector(sel);
   if (e) e.textContent = txt;
  };
- pon("#iniOp span:not(.inicio-i)", "Mis puntos y los de mi grupo: cómo voy frente a la meta.");
+ pon("#iniOp span:not(.inicio-i)", "Mis puntos y los de mi grupo: cómo voy frente a la meta. Y mi horario de la semana.");
  pon("#iniSup span:not(.inicio-i)", "Panel de puntos: todos los grupos, metas, jornadas y ranking. Para supervisores, encargados y gerencia.");
  const st = document.createElement("style");
- st.textContent = "body.proy-" + PROY.id + " #op_tabClientes, body.proy-" + PROY.id + " #op_tabRanking, body.proy-" + PROY.id + " #op_tabTurnos, body.proy-" + PROY.id + " #navSupIni, body.proy-" + PROY.id + " #navPanel, body.proy-" + PROY.id + " #navSegMon, " + "body.proy-" + PROY.id + " #navAsis, body.proy-" + PROY.id + " #navNov, body.proy-" + PROY.id + " #navHor, body.proy-" + PROY.id + " #iniMon, body.proy-" + PROY.id + ' .lado-sec[data-sec="Monitores"], body.proy-' + PROY.id + " #avisoTurno{display:none !important}";
+ st.textContent = "body.proy-" + PROY.id + " #op_tabClientes, body.proy-" + PROY.id + " #op_tabRanking, body.proy-" + PROY.id + " #op_tabTurnos, body.proy-" + PROY.id + " #navSupIni, body.proy-" + PROY.id + " #navPanel, body.proy-" + PROY.id + " #navSegMon, " + "body.proy-" + PROY.id + " #iniMon, body.proy-" + PROY.id + ' .lado-sec[data-sec="Monitores"], body.proy-' + PROY.id + " #avisoTurno{display:none !important}";
  document.head.appendChild(st);
 }
 
@@ -10756,4 +10937,4 @@ if (typeof google !== "undefined" && google.script && google.script.url) {
 } else if (/[?&]vista=panel/.test(location.search)) verVista("dash"); else if (/[?&]vista=puntos/.test(location.search)) verVista("pts"); else if (/[?&]vista=monitores/.test(location.search)) verVista("mon");</script>
 </body>
 </html>
-<!-- var HUELLA = '983338a55f34' -->
+<!-- var HUELLA = 'a5bb9cf25180' -->
