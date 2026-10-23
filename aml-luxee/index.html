@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbxEfIMhGEeiSb4DOyu0sJTTwEQTFX0q4goSg8VrOGDfJ_XlVH8wCCRe-wDug0Aua3q6jg/exec";
 
 (function() {
- var n = 0, VER = "web 123", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 124", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "a859f4c98e9f";
+ var HUELLA = "11b762979ef4";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -5312,7 +5312,16 @@ function asistenciaHtml(soloFilas, diasF) {
  if (soloFilas) return filas;
  // ---------- Vista: un día o el mes completo (se elige en el menú) ----------
   filas.splice(0, filas.length, ...filas.filter((z => z.f >= R0.desde && z.f <= R0.hasta)));
- const g0 = NOVUI.g, grupos = Array.from(new Set(filas.map((z => z.g)))).sort(), base = filas.filter((z => !g0 || z.g === g0));
+ const g0 = NOVUI.g, grupos = Array.from(new Set(filas.map((z => z.g)))).sort();
+ const opsAsis = (() => {
+  const m = {};
+  filas.forEach((z => {
+   if (!g0 || z.g === g0) m[nrm(z.o)] = z.o;
+  }));
+  return Object.keys(m).map((k => [ k, m[k] ])).sort(((a, b) => titulo(a[1]).localeCompare(titulo(b[1]))));
+ })();
+ if (NOVUI.ao && !opsAsis.some((x => x[0] === NOVUI.ao))) NOVUI.ao = "";
+ const base = filas.filter((z => (!g0 || z.g === g0) && (!NOVUI.ao || nrm(z.o) === NOVUI.ao)));
  base.forEach((z => {
   let hh = histDeEntrada(z);
   if (!hh && z.T.ajuste === "sup") hh = (DATA.histTurnos || []).find((h => nrm(h[2]) === nrm(z.o) && h[3] && minAbs(h[0], h[3]) >= z.T.S - ASIS_ANTES && minAbs(h[0], h[3]) < z.T.E)) || null;
@@ -5344,7 +5353,7 @@ function asistenciaHtml(soloFilas, diasF) {
   }
   return o + (mesAct ? "</optgroup>" : "");
  })();
- let h = '<section class="panel as-v2"><div class="as2-top"><h2>Asistencia</h2><div class="as2-sel">' + '<label><span>Ver</span><select class="asis-dia" aria-label="Día o mes">' + opciones + "</select></label>" + '<label><span>Grupo</span><select class="asis-g" aria-label="Grupo"><option value="">Todos los grupos</option>' + grupos.map((g => '<option value="' + esc(g) + '"' + (g === g0 ? " selected" : "") + ">" + esc(titulo(g)) + "</option>")).join("") + "</select></label></div></div>" + '<div class="as2-k"><div class="ok"><b>' + c((z => z.est === "ok" || z.est === "otro" && z.otroOk)) + '</b><span>Asistieron</span></div><div class="av"><b>' + c((z => z.est === "tarde")) + "</b><span>Llegaron tarde</span></div>" + '<div class="mal"><b>' + c((z => z.est === "aus")) + '</b><span>Ausencias</span></div><div class="mal"><b>' + c((z => z.sigue || z.sinSal)) + '</b><span>Sin hora de salida</span></div><div class="av"><b>' + c((z => z.est === "sinmarca")) + "</b><span>Sin marcar entrada</span></div></div>" + '<div class="as2-fil">' + FIL.map((x => {
+ let h = '<section class="panel as-v2"><div class="as2-top"><h2>Asistencia</h2><div class="as2-sel">' + '<label><span>Ver</span><select class="asis-dia" aria-label="Día o mes">' + opciones + "</select></label>" + '<label><span>Grupo</span><select class="asis-g" aria-label="Grupo"><option value="">Todos los grupos</option>' + grupos.map((g => '<option value="' + esc(g) + '"' + (g === g0 ? " selected" : "") + ">" + esc(titulo(g)) + "</option>")).join("") + "</select></label>" + '<label><span>Operador</span><select class="asis-o" aria-label="Operador"><option value="">Todos los operadores</option>' + opsAsis.map((x => '<option value="' + esc(x[0]) + '"' + (x[0] === NOVUI.ao ? " selected" : "") + ">" + esc(titulo(x[1])) + "</option>")).join("") + "</select></label></div></div>" + '<div class="as2-k"><div class="ok"><b>' + c((z => z.est === "ok" || z.est === "otro" && z.otroOk)) + '</b><span>Asistieron</span></div><div class="av"><b>' + c((z => z.est === "tarde")) + "</b><span>Llegaron tarde</span></div>" + '<div class="mal"><b>' + c((z => z.est === "aus")) + '</b><span>Ausencias</span></div><div class="mal"><b>' + c((z => z.sigue || z.sinSal)) + '</b><span>Sin hora de salida</span></div><div class="av"><b>' + c((z => z.est === "sinmarca")) + "</b><span>Sin marcar entrada</span></div></div>" + '<div class="as2-fil">' + FIL.map((x => {
   const n = c(x[2]);
   return !x[0] || n || NOVUI.aest === x[0] ? '<button type="button" data-ae="' + x[0] + '" aria-selected="' + (NOVUI.aest === x[0]) + '">' + x[1] + " · " + n + "</button>" : "";
  })).join("") + "</div>" + '<details class="as2-ayuda"><summary>¿Cómo se calcula?</summary>Cada turno del horario publicado contra la casilla «Estoy de turno». La entrada vale si se marca desde 4 horas antes de la hora del horario. Si el turno termina sin entrada marcada y sin clientes, es ausencia. Los descansos y las novedades (vacaciones, permisos) no cuentan como ausencia. Si un operador sí llegó a su hora, toca «Llegó a tiempo». La asistencia cuenta desde ' + (DATA.asisDesde ? DATA.asisDesde.slice(8, 10) + "/" + DATA.asisDesde.slice(5, 7) + " a las " + DATA.asisDesde.slice(11) : "que se publicó el horario") + ". Las horas van en formato de 24 horas.</details>";
@@ -5856,12 +5865,23 @@ function asistenciaAmlHtml() {
    x: x
   };
  };
+ const gruposA = Array.from(new Set(ops.map((o => o.g)))).sort(((a, b) => Number((a.match(/\d+$/) || [ 0 ])[0]) - Number((b.match(/\d+$/) || [ 0 ])[0]) || a.localeCompare(b)));
+ if (NOVUI.amlG && gruposA.indexOf(NOVUI.amlG) < 0) NOVUI.amlG = "";
+ const opsF = ops.filter((o => !NOVUI.amlG || o.g === NOVUI.amlG)), opsSel = opsF.slice().sort(((a, b) => titulo(a.o).localeCompare(titulo(b.o))));
+ if (NOVUI.amlO && !opsF.some((o => nrm(o.o) === NOVUI.amlO))) NOVUI.amlO = "";
+ const unOp = NOVUI.amlO ? opsF.filter((o => nrm(o.o) === NOVUI.amlO))[0] : null;
  const filas = [];
- ops.forEach((o => {
+ if (unOp) fechas.forEach(((f, i) => {
+  const z = fila(unOp, f, dsem(f) + " " + fe(f) + (f === hoy ? " (hoy)" : ""));
+  if (z) {
+   z.ordF = i;
+   filas.push(z);
+  }
+ })); else opsF.forEach((o => {
   const z = fila(o, dia, "");
   if (z) filas.push(z);
  }));
- if (dia === hoy) ops.forEach((o => {
+ if (!unOp && dia === hoy) opsF.forEach((o => {
   const y = horarioDia(o.o, ymdMas(hoy, -1));
   if (y && y.e && Number(y.e.slice(0, 2)) >= 18) {
    const z = fila(o, ymdMas(hoy, -1), "Noche de ayer");
@@ -5884,9 +5904,9 @@ function asistenciaAmlHtml() {
   z.s = secDe(z);
  }));
  const ordSec = z => z.sec ? -1 : z.est === "desc" ? 1e13 : z.x && z.x.e ? z.S : 1e12 + 1;
- filas.sort(((a, b) => ordSec(a) - ordSec(b) || (a.s < b.s ? -1 : a.s > b.s ? 1 : 0) || ORD[a.est] - ORD[b.est] || a.g.localeCompare(b.g) || a.o.localeCompare(b.o)));
+ if (unOp) filas.sort(((a, b) => a.ordF - b.ordF)); else filas.sort(((a, b) => ordSec(a) - ordSec(b) || (a.s < b.s ? -1 : a.s > b.s ? 1 : 0) || ORD[a.est] - ORD[b.est] || a.g.localeCompare(b.g) || a.o.localeCompare(b.o)));
  NOVUI.amlVer = filas;
- const n = e => filas.filter((z => !z.sec && e.indexOf(z.est) >= 0)).length;
+ const n = e => filas.filter((z => (unOp || !z.sec) && e.indexOf(z.est) >= 0)).length;
  const PILL = {
   turno: [ "ok", "De turno" ],
   vino: [ "ok", "Vino" ],
@@ -5898,7 +5918,7 @@ function asistenciaAmlHtml() {
   nov: [ "info", "Novedad" ],
   pend: [ "", "Todavía no entra" ]
  };
- let h = '<section class="panel"><div class="as2-top"><div><h2>Asistencia' + (dia === hoy ? " · ahora" : "") + '</h2><div class="sub">' + (dia === hoy ? "Son las " + ahora.slice(11, 16) + ". Se actualiza sola cada minuto. " : "") + "Los operadores marcan «Empiezo mi turno» en su vista de la página; los que también están en PRIME salen con la marca «Estoy de turno» de PRIME. Llegar hasta " + TOL + " minutos después de la hora cuenta a tiempo.</div></div>" + '<div class="as2-sel"><label>Día<select class="aml-dia">' + fechas.map((f => '<option value="' + f + '"' + (f === dia ? " selected" : "") + ">" + dsem(f) + " " + fe(f) + (f === hoy ? " (hoy)" : "") + "</option>")).join("") + "</select></label></div></div>";
+ let h = '<section class="panel"><div class="as2-top"><div><h2>Asistencia' + (unOp ? " · " + esc(titulo(unOp.o)) : dia === hoy ? " · ahora" : "") + '</h2><div class="sub">' + (dia === hoy ? "Son las " + ahora.slice(11, 16) + ". Se actualiza sola cada minuto. " : "") + "Los operadores marcan «Empiezo mi turno» en su vista de la página; los que también están en PRIME salen con la marca «Estoy de turno» de PRIME. Llegar hasta " + TOL + " minutos después de la hora cuenta a tiempo.</div></div>" + '<div class="as2-sel">' + (unOp ? "" : '<label>Día<select class="aml-dia">' + fechas.map((f => '<option value="' + f + '"' + (f === dia ? " selected" : "") + ">" + dsem(f) + " " + fe(f) + (f === hoy ? " (hoy)" : "") + "</option>")).join("") + "</select></label>") + '<label>Grupo<select class="aml-g"><option value="">Todos los grupos</option>' + gruposA.map((g => '<option value="' + esc(g) + '"' + (g === NOVUI.amlG ? " selected" : "") + ">" + esc(titulo(g)) + "</option>")).join("") + "</select></label>" + '<label>Operador<select class="aml-o"><option value="">Todos los operadores</option>' + opsSel.map((o => '<option value="' + esc(nrm(o.o)) + '"' + (nrm(o.o) === NOVUI.amlO ? " selected" : "") + ">" + esc(titulo(o.o)) + "</option>")).join("") + "</select></label></div></div>" + (unOp ? '<div class="as2-ayuda">Todos los días de ' + esc(titulo(unOp.o)) + " (del " + fe(fechas[fechas.length - 1]) + " a hoy). Para ver un día de todos, elige «Todos los operadores».</div>" : "");
  h += '<div class="as2-k"><div class="ok"><b>' + n([ "turno", "vino", "tarde" ]) + "</b><span>" + (dia === hoy ? "Vinieron o están de turno" : "Vinieron") + '</span></div><div class="av"><b>' + n([ "tarde" ]) + "</b><span>Llegaron tarde</span></div>" + '<div class="mal"><b>' + n([ "sin" ]) + "</b><span>Sin marcar (por revisar)</span></div><div><b>" + n([ "nov", "aus", "just" ]) + "</b><span>Con novedad o falta</span></div><div><b>" + n([ "desc" ]) + "</b><span>De descanso</span></div></div>";
  if (!((DATA.horarios || {}).semanas || []).length) h += '<div class="as2-ayuda">Todavía no hay horarios publicados en «HORARIOS Y DESCANSOS - AML/LUXEE» (casilla «Publicar en la página» de cada semana). Sin horario no se sabe a quién le toca.</div>';
  if (!filas.length) h += '<div class="state" style="padding:18px 0">No hay nadie con turno, marca ni puntos ese día.</div>'; else {
@@ -5924,16 +5944,31 @@ function asistenciaAmlEnlazar(caja) {
   st.textContent = ".aml-src{font-size:11px;color:var(--faint)}.aml-as td{vertical-align:middle}";
   document.head.appendChild(st);
  }
- const sd = caja.querySelector(".aml-dia");
- if (sd) sd.onchange = () => {
-  NOVUI.amlDia = sd.value;
-  sd.blur();
+ const re = () => {
   renderNovedades.forzar = true;
   try {
    renderNovedades();
   } finally {
    renderNovedades.forzar = false;
   }
+ };
+ const sd = caja.querySelector(".aml-dia");
+ if (sd) sd.onchange = () => {
+  NOVUI.amlDia = sd.value;
+  sd.blur();
+  re();
+ };
+ const sg = caja.querySelector(".aml-g");
+ if (sg) sg.onchange = () => {
+  NOVUI.amlG = sg.value;
+  sg.blur();
+  re();
+ };
+ const so = caja.querySelector(".aml-o");
+ if (so) so.onchange = () => {
+  NOVUI.amlO = so.value;
+  so.blur();
+  re();
  };
  caja.querySelectorAll("[data-am]").forEach((q => q.onclick = () => {
   const z = NOVUI.amlVer[Number(q.dataset.am)], ac = q.dataset.ac;
@@ -6133,6 +6168,17 @@ function renderNovedades() {
   if (ag) ag.onchange = () => {
    NOVUI.g = ag.value;
    ag.blur();
+   renderNovedades.forzar = true;
+   try {
+    renderNovedades();
+   } finally {
+    renderNovedades.forzar = false;
+   }
+  };
+  const ao = caja.querySelector(".asis-o");
+  if (ao) ao.onchange = () => {
+   NOVUI.ao = ao.value;
+   ao.blur();
    renderNovedades.forzar = true;
    try {
     renderNovedades();
@@ -11252,4 +11298,4 @@ if (typeof google !== "undefined" && google.script && google.script.url) {
 } else if (/[?&]vista=panel/.test(location.search)) verVista("dash"); else if (/[?&]vista=puntos/.test(location.search)) verVista("pts"); else if (/[?&]vista=monitores/.test(location.search)) verVista("mon");</script>
 </body>
 </html>
-<!-- var HUELLA = 'a859f4c98e9f' -->
+<!-- var HUELLA = '11b762979ef4' -->
