@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 119", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 120", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "a5bb9cf25180";
+ var HUELLA = "2e242897b3a1";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -437,6 +437,44 @@ if (clave && !supNombre) {
  } catch (e) {}
 }
 
+function liderGuardado() {
+ try {
+  const x = JSON.parse(localStorage.getItem("retr_lider") || "null");
+  if (x && x.k && x.n && Date.now() - x.t < 30 * 864e5) return x;
+  localStorage.removeItem("retr_lider");
+ } catch (e) {}
+ return null;
+}
+
+window.liderRecordar = d => {
+ try {
+  if (d && d.lider && clave) localStorage.setItem("retr_lider", JSON.stringify({
+   k: clave,
+   n: supNombre || (d.supNombre || ""),
+   t: Date.now()
+  }));
+ } catch (e) {}
+};
+
+window.liderOlvidar = () => {
+ try {
+  const x = liderGuardado();
+  if (x && x.k === clave) localStorage.removeItem("retr_lider");
+ } catch (e) {}
+};
+
+{
+ const x = liderGuardado();
+ if (x && (!clave || clave === x.k)) {
+  clave = x.k;
+  supNombre = supNombre || x.n;
+  try {
+   sessionStorage.setItem("retr_clave", clave);
+   sessionStorage.setItem("retr_nombre", supNombre);
+  } catch (e) {}
+ }
+}
+
 window.supNombre = () => supNombre || "";
 
 window.ponerSupNombre = n => {
@@ -457,6 +495,7 @@ function marcarSesionSup() {
 function salirSupervision(porTurno) {
  try {
   localStorage.removeItem("sg_cache1");
+  localStorage.removeItem("retr_lider");
  } catch (e) {}
  clave = "";
  supNombre = "";
@@ -527,6 +566,7 @@ function recibir(texto) {
  marca(d);
  if (!d.ok) {
   if (d.requiereClave) {
+   window.liderOlvidar();
    clave = "";
    supNombre = "";
    try {
@@ -551,6 +591,7 @@ function recibir(texto) {
    sessionStorage.removeItem("retr_hasta");
   } catch (e) {}
  }
+ window.liderRecordar(d);
  if (d.supHasta) {
   try {
    if (window.SUP_NUEVO || !sessionStorage.getItem("retr_hasta")) sessionStorage.setItem("retr_hasta", String(d.supHasta));
@@ -8476,6 +8517,7 @@ function ptCargarGen(forzar) {
   }
   if (!d.ok) {
    if (d.requiereClave) {
+    if (window.liderOlvidar) window.liderOlvidar();
     window.claveDestino = "pts";
     if (window.PROYECTO && window.PROYECTO.id !== "prime") {
      try {
@@ -8489,6 +8531,7 @@ function ptCargarGen(forzar) {
   }
   document.getElementById("keyModal").style.display = "none";
   if (d.supNombre && window.ponerSupNombre) window.ponerSupNombre(d.supNombre);
+  if (window.liderRecordar) window.liderRecordar(d);
   PG.datos = d;
   ptFiltrosGen();
   ptRenderGen();
@@ -10937,4 +10980,4 @@ if (typeof google !== "undefined" && google.script && google.script.url) {
 } else if (/[?&]vista=panel/.test(location.search)) verVista("dash"); else if (/[?&]vista=puntos/.test(location.search)) verVista("pts"); else if (/[?&]vista=monitores/.test(location.search)) verVista("mon");</script>
 </body>
 </html>
-<!-- var HUELLA = 'a5bb9cf25180' -->
+<!-- var HUELLA = '2e242897b3a1' -->
