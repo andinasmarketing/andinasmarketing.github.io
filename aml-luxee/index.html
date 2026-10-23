@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbxEfIMhGEeiSb4DOyu0sJTTwEQTFX0q4goSg8VrOGDfJ_XlVH8wCCRe-wDug0Aua3q6jg/exec";
 
 (function() {
- var n = 0, VER = "web 124", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 125", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "11b762979ef4";
+ var HUELLA = "9a8d22eca552";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -8683,7 +8683,15 @@ function ptT10() {
  const c = document.getElementById("pgT10");
  if (!c) return;
  if (!T10S.d) {
-  c.innerHTML = '<section class="panel"><h2>Turnos de 10 horas vs. turnos de 8 horas</h2><div class="state" style="padding:14px 0">' + (T10S.err ? esc(T10S.err) : "Cargando…") + "</div></section>";
+  c.innerHTML = '<section class="panel"><h2>Turnos de 10 horas vs. turnos de 8 horas</h2><div class="state" style="padding:14px 0">' + (T10S.err ? esc(T10S.err) + '<div style="margin-top:10px"><button type="button" class="btn ghost" id="t10Otra">Intentar de nuevo</button></div>' : "Cargando… (la primera vez puede tardar hasta un minuto)") + "</div></section>";
+  if (T10S.err) {
+   const b = document.getElementById("t10Otra");
+   if (b) b.onclick = () => {
+    T10S.err = "";
+    T10S.intentos = 0;
+    ptT10();
+   };
+  }
   if (T10S.cargando || T10S.err) return;
   T10S.cargando = true;
   const ok = t => {
@@ -8697,7 +8705,10 @@ function ptT10() {
      error: "La respuesta no se pudo leer."
     };
    }
-   if (d.ok) T10S.d = d; else T10S.err = d.error || "No se pudo hacer el análisis.";
+   if (d.ok) T10S.d = d; else if (/conectar|tard|timeout|ocupad/i.test(d.error || "") && (T10S.intentos = (T10S.intentos || 0) + 1) <= 2) {
+    setTimeout(ptT10, 4e3);
+    return;
+   } else T10S.err = d.error || "No se pudo hacer el análisis.";
    ptT10();
   };
   if (esApps) google.script.run.withSuccessHandler(ok).withFailureHandler((e => ok(JSON.stringify({
@@ -11298,4 +11309,4 @@ if (typeof google !== "undefined" && google.script && google.script.url) {
 } else if (/[?&]vista=panel/.test(location.search)) verVista("dash"); else if (/[?&]vista=puntos/.test(location.search)) verVista("pts"); else if (/[?&]vista=monitores/.test(location.search)) verVista("mon");</script>
 </body>
 </html>
-<!-- var HUELLA = '11b762979ef4' -->
+<!-- var HUELLA = '9a8d22eca552' -->
