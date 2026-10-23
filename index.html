@@ -16,14 +16,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 114", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 115", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "878b92676eff";
+ var HUELLA = "90b38c857dab";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -438,6 +438,15 @@ if (clave && !supNombre) {
 
 window.supNombre = () => supNombre || "";
 
+window.ponerSupNombre = n => {
+ supNombre = n || supNombre;
+ try {
+  sessionStorage.setItem("retr_nombre", supNombre);
+  localStorage.setItem("retr_nombre_ult", supNombre);
+ } catch (e) {}
+ marcarSesionSup();
+};
+
 window.claveSup = () => clave || "";
 
 function marcarSesionSup() {
@@ -720,6 +729,11 @@ document.getElementById("keyBtn").onclick = () => {
   sessionStorage.removeItem("retr_hasta");
  } catch (e) {}
  window.SUP_NUEVO = true;
+ if (window.PROYECTO && window.PROYECTO.id !== "prime") {
+  document.getElementById("keyModal").style.display = "none";
+  if (typeof ptCargarGen === "function") ptCargarGen(false);
+  return;
+ }
  cargar(false);
 };
 
@@ -3190,7 +3204,7 @@ function hallRender(forzar) {
   const a = por[m], rep = Object.keys(a.tipos).filter((t => a.tipos[t] >= 2)).sort(((x, y) => a.tipos[y] - a.tipos[x]));
   return '<tr><td class="name"><b>' + esc(m) + '</b></td><td class="num">' + a.mes + '</td><td class="num">' + a.d60 + '</td><td class="num">' + (a.pend ? '<span class="rv-pill aviso">' + a.pend + "</span>" : "0") + '</td><td class="num">' + (a.noAc ? '<span class="rv-pill info">' + a.noAc + "</span>" : "0") + "</td>" + '<td style="white-space:normal;min-width:240px">' + (rep.length ? rep.map((t => '<span class="rv-pill accion" style="margin:2px 4px 2px 0;display:inline-block">' + a.tipos[t] + "× " + esc(t) + "</span>")).join("") : '<small style="color:var(--faint)">Sin reincidencias</small>') + "</td></tr>";
  })).join("");
- const ver = L.filter((h => (!HALLS.mon || h.mon === HALLS.mon) && (typeof sgEnPer !== "function" || sgEnPer(Number(h.fecha.slice(8)), h.fecha.slice(0, 7))))).slice().sort(((a, b) => a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : a.id < b.id ? 1 : -1));
+ const ver = L.filter((h => (!HALLS.mon || h.mon === HALLS.mon) && (h.est !== "Entendido" || typeof sgEnPer !== "function" || sgEnPer(Number(h.fecha.slice(8)), h.fecha.slice(0, 7))))).slice().sort(((a, b) => a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : a.id < b.id ? 1 : -1));
  const pillEst = h => h.est === "Entendido" ? '<span class="rv-pill ok">✓ Entendido</span>' : h.est === "No de acuerdo" ? '<span class="rv-pill info">No está de acuerdo</span>' : '<span class="rv-pill aviso">Sin responder</span>';
  const fe2 = f => f.slice(8) + "/" + f.slice(5, 7);
  let h = '<div class="hl-bar"><button type="button" class="btn" id="hlNuevo">' + (HALLS.nuevo ? "Cerrar" : "＋ Nuevo hallazgo") + "</button>" + '<label class="hl-fm">Monitor <select id="hlFiltro"><option value="">Todos</option>' + mons.map((m => "<option" + (m === HALLS.mon ? " selected" : "") + ">" + esc(m) + "</option>")).join("") + '</select></label><button type="button" class="sr-x" id="hlAct">Actualizar</button></div>';
@@ -3200,7 +3214,7 @@ function hallRender(forzar) {
  h += ver.length ? '<div class="hl-lista">' + ver.map((x => {
   const vez = hallVez(L, x);
   return '<div class="hl-c ' + (x.est === "Pendiente" ? "pend" : x.est === "No de acuerdo" ? "noac" : "") + '"><div class="hl-h"><div><b>' + esc(x.mon) + "</b> <small>" + DSEMLARGO(x.fecha).slice(0, 3) + " " + fe2(x.fecha) + " · " + esc(x.turno) + "</small></div><div>" + (vez > 1 ? '<span class="rv-pill accion">' + vez + ".ª vez</span> " : "") + pillEst(x) + "</div></div>" + '<div class="hl-tipo">' + esc(x.tipo) + (x.cli ? " · ID <b>" + esc(x.cli) + "</b>" : "") + '</div><div class="hl-t">' + esc(x.txt) + "</div>" + hallFotos(x, "", true) + (x.resp ? '<div class="hl-r"><b>Respuesta:</b> ' + esc(x.resp) + "</div>" : "") + '<div class="hl-pie"><small>Anotó ' + esc(x.quien) + " el " + esc(x.reg) + (x.respT ? " · respondió el " + esc(x.respT) : "") + '</small><button type="button" class="sr-x" data-hb="' + esc(x.id) + '">Borrar</button></div></div>';
- })).join("") + "</div>" : '<div class="state" style="padding:14px 0">' + (HALLS.mon ? "Ese monitor no tiene hallazgos" : "No hay hallazgos") + (typeof sgPerTxt === "function" ? " " + sgPerTxt() : "") + ". Cambia el periodo arriba para ver otros.</div>";
+ })).join("") + "</div>" : '<div class="state" style="padding:14px 0">' + (HALLS.mon ? "Ese monitor no tiene hallazgos" : "No hay hallazgos") + (typeof sgPerTxt === "function" ? " " + sgPerTxt() : "") + " (por la fecha del turno en que pasó). " + (L.length ? "Hay " + L.length + " en total: cambia «Periodo» arriba a «Todo el mes» para verlos con su respuesta." : "") + "</div>";
  c.innerHTML = h;
  hallFotosEnlazar(c, clave);
  c.querySelector("#hlNuevo").onclick = () => {
@@ -6956,14 +6970,51 @@ const subPronto = () => {
  subtree: true
 })));
 
+const PROY = window.PROYECTO || {
+ id: "prime"
+}, ES_PRIME = PROY.id === "prime";
+
+window.ES_PRIME = ES_PRIME;
+
+if (!ES_PRIME) {
+ document.body.classList.add("proy-" + PROY.id);
+ const pon = (sel, txt) => {
+  const e = document.querySelector(sel);
+  if (e) e.textContent = txt;
+ };
+ pon("#iniOp span:not(.inicio-i)", "Mis puntos y los de mi grupo: cómo voy frente a la meta.");
+ pon("#iniSup span:not(.inicio-i)", "Panel de puntos: todos los grupos, metas, jornadas y ranking. Para supervisores, encargados y gerencia.");
+ const st = document.createElement("style");
+ st.textContent = "body.proy-" + PROY.id + " #op_tabClientes, body.proy-" + PROY.id + " #op_tabRanking, body.proy-" + PROY.id + " #op_tabTurnos, body.proy-" + PROY.id + " #navSupIni, body.proy-" + PROY.id + " #navPanel, body.proy-" + PROY.id + " #navSegMon, " + "body.proy-" + PROY.id + " #navAsis, body.proy-" + PROY.id + " #navNov, body.proy-" + PROY.id + " #navHor, body.proy-" + PROY.id + " #iniMon, body.proy-" + PROY.id + ' .lado-sec[data-sec="Monitores"], body.proy-' + PROY.id + " #avisoTurno{display:none !important}";
+ document.head.appendChild(st);
+}
+
+if (window.PROYECTO) {
+ const b = document.createElement("button");
+ b.type = "button";
+ b.className = "lado-cambiar";
+ b.style.marginTop = "0";
+ b.id = "navProyecto";
+ b.innerHTML = '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Cambiar de proyecto';
+ b.onclick = () => {
+  location.href = "../";
+ };
+ const ini = document.getElementById("navInicio");
+ ini.parentNode.insertBefore(b, ini.nextSibling);
+}
+
 document.getElementById("iniOp").onclick = () => {
  ROL = "op";
+ if (!ES_PRIME) {
+  verVista("pts");
+  return;
+ }
  document.getElementById("op_tabClientes").click();
 };
 
 document.getElementById("iniSup").onclick = () => {
  ROL = "sup";
- verVista("supinicio");
+ verVista(ES_PRIME ? "supinicio" : "ptsgen");
 };
 
 document.getElementById("iniMon").onclick = () => {
@@ -7029,6 +7080,7 @@ document.getElementById("navInicio").onclick = () => {
 
 /* ---------- Aviso al operador: le toca turno y no ha marcado "Estoy de turno" (sale en todas las vistas de operador) ---------- */
 (function() {
+ if (window.PROYECTO && window.PROYECTO.id !== "prime") return;
  const A = {
   op: null,
   d: null,
@@ -8150,12 +8202,18 @@ function ptCargarGen(forzar) {
   if (!d.ok) {
    if (d.requiereClave) {
     window.claveDestino = "pts";
+    if (window.PROYECTO && window.PROYECTO.id !== "prime") {
+     try {
+      sessionStorage.removeItem("retr_clave");
+     } catch (e) {}
+    }
     return pedirClave(d.error);
    }
    document.getElementById("pgEst").textContent = d.error || "No se pudieron cargar los puntos.";
    return;
   }
   document.getElementById("keyModal").style.display = "none";
+  if (d.supNombre && window.ponerSupNombre) window.ponerSupNombre(d.supNombre);
   PG.datos = d;
   ptFiltrosGen();
   ptRenderGen();
@@ -8163,7 +8221,7 @@ function ptCargarGen(forzar) {
  if (esApps) google.script.run.withSuccessHandler(ok).withFailureHandler((e => ok(JSON.stringify({
   ok: false,
   error: e && e.message ? e.message : String(e)
- })))).obtenerPuntosGeneral(clave, !!forzar); else setTimeout((() => ok(JSON.stringify(ptDemo()))), 120);
+ })))).obtenerPuntosGeneral(clave, !!forzar, window.supNombre && window.supNombre() || ""); else setTimeout((() => ok(JSON.stringify(ptDemo()))), 120);
 }
 
 function ptFiltrosGen() {
