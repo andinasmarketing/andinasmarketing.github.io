@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr03m5tH4HrrssdWXzoGtKFAqbvOnPPA7tRjsFSRsE16hLkv-w/exec";
 
 (function() {
- var n = 0, VER = "web 130", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 131", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "7c5593f54516";
+ var HUELLA = "17a42d2a0d4a";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -2847,6 +2847,11 @@ function sgMonitores() {
  return Array.from(new Set(todos.map((x => String(x).trim())).filter((x => x && !/^Sin /.test(x) && fuera.indexOf(nrm(x)) < 0)))).sort(((a, b) => a.localeCompare(b)));
 }
 
+function sgNomVerif(q) {
+ const t = String(q || "").trim(), sin = t.replace(/\s*\(supervisi[oó]n\)\s*$/i, ""), L = "Luizzana Muñoz";
+ return nrm(sin) === nrm(L) || /^supervisi[oó]n$/i.test(t) ? L : t;
+}
+
 function sgDatos() {
  const V = SEGMON.ver || [];
  const X = V.map(((r, i) => ({
@@ -2858,7 +2863,7 @@ function sgDatos() {
   p: r[4],
   id: r[5],
   est: r[6],
-  vq: r[7],
+  vq: sgNomVerif(r[7]),
   vt: r[8],
   dig: r[9] === 1,
   dq: r[10],
@@ -3631,17 +3636,11 @@ function segMonVerRender() {
   if (/^Todos/.test(x.c)) a.todos++; else if (/^R[aá]pido/.test(x.c)) a.rap++; else a.uno++;
  }));
  const dejo = {};
- pend.filter((x => x.act === 2)).forEach((x => {
-  const k = x.tq || "Sin monitor identificado";
-  dejo[k] = (dejo[k] || 0) + 1;
-  if (!porMon[k]) porMon[k] = {
-   si: 0,
-   no: 0,
-   uno: 0,
-   todos: 0,
-   rap: 0
-  };
- }));
+ (typeof sgDejados === "function" ? sgDejados() : []).forEach((x => String(x.q).split(" y ").forEach((q => {
+  q = q.trim();
+  if (!q || !okM(q)) return;
+  dejo[q] = (dejo[q] || 0) + x.dej.length;
+ }))));
  const tabla = (xs, cols) => '<div class="table-scroll vt-cel" style="max-height:560px;overflow-y:auto"><table><thead><tr><th>Día</th><th>Grupo</th><th>Operador</th><th>Perfil</th><th>ID</th>' + cols[0] + "</tr></thead><tbody>" + xs.map((x => '<tr><td data-l="Día"><b>' + x.d + '</b></td><td data-l="Grupo">' + esc(titulo(x.g)) + '</td><td data-l="Operador" class="name">' + esc(titulo(x.o)) + ' <small style="color:var(--faint)">' + (JL[J.indexOf(x.t)] || "").toLowerCase() + '</small></td><td data-l="Perfil">' + esc(titulo(x.p)) + '</td><td data-l="ID"><b>' + esc(x.id) + "</b></td>" + cols[1](x) + "</tr>")).join("") + "</tbody></table></div>";
  const nada = t => '<div class="mon-ok"><b>Nada por ahora</b>' + t + "</div>";
  const poner = (id, html) => {
@@ -3657,10 +3656,10 @@ function segMonVerRender() {
  const ver = X.filter((x => x.est && okM(x.vq) && enPer(x))).sort(((a, b) => b.d - a.d));
  const estado = x => x.est === "si" ? '<span class="rv-pill ok">✓ Retraído</span>' : x.est === "no" ? '<span class="rv-pill accion">✕ No retraído</span>' : x.sd ? '<span class="rv-pill aviso">Digitado sin verificar</span>' : x.dig ? '<span class="rv-pill">Digitado</span>' : '<span class="rv-pill aviso">Por verificar</span>';
  const R = q ? X.filter((x => String(x.id).indexOf(q) >= 0)).sort(((a, b) => b.d - a.d)) : [];
- c.innerHTML = (mons.length ? '<div class="table-scroll" style="margin:0 0 6px"><table><thead><tr><th>Verificados ' + sgPerTxt() + '</th><th class="num">✓ Retraídos</th><th class="num">✕ No retraídos</th><th class="num">Uno por uno</th><th class="num">Todos de una vez</th><th class="num">Muy rápidos</th><th class="num">Dejó sin verificar</th></tr></thead><tbody>' + mons.map((m => {
+ c.innerHTML = (mons.length ? '<div class="table-scroll" style="margin:0 0 6px"><table><thead><tr><th>Verificados ' + sgPerTxt() + '</th><th class="num">✓ Retraídos</th><th class="num">✕ No retraídos</th><th class="num">Uno por uno</th><th class="num">Todos de una vez</th><th class="num">Muy rápidos</th><th class="num">Dejó al siguiente turno</th></tr></thead><tbody>' + mons.map((m => {
   const a = porMon[m];
   return '<tr><td class="name"><b>' + esc(m) + '</b></td><td class="num">' + a.si + '</td><td class="num">' + a.no + '</td><td class="num">' + a.uno + '</td><td class="num">' + (a.todos ? '<span class="rv-pill aviso">' + a.todos + "</span>" : "0") + '</td><td class="num">' + (a.rap ? '<span class="rv-pill accion">' + a.rap + "</span>" : "0") + '</td><td class="num">' + (dejo[m] ? '<span class="rv-pill accion">' + dejo[m] + "</span>" : "0") + "</td></tr>";
- })).join("") + '</tbody></table></div><div class="sub" style="margin:0 0 12px">"Muy rápidos": verificó ese ID menos de 10 segundos después del anterior; difícilmente alcanzó a buscarlo en la plataforma. "Dejó sin verificar": IDs anotados durante su turno que siguen sin revisar cuando su turno ya terminó. Los monitores no ven esta tabla.</div>' : '<div class="sub" style="margin:0 0 12px">Nadie ha verificado IDs ' + sgPerTxt() + (M ? " (" + esc(M) + ")" : "") + ".</div>") + '<div style="margin:0 0 10px"><input type="search" id="segVerQ" placeholder="Buscar un ID (busca en todo el mes)" value="' + esc(q) + '" style="width:100%;max-width:420px;padding:10px 14px;border:1px solid var(--line);border-radius:999px;font:inherit;background:var(--surface);color:var(--ink)" inputmode="numeric" autocomplete="off"></div>' + (q ? '<div class="sub" style="margin:0 0 8px"><b>' + (R.length ? (R.length === 1 ? "1 resultado" : R.length + " resultados") + " para «" + esc(q) + "»" : "No hay ningún ID de este mes con «" + esc(q) + "»") + "</b> · Borra el buscador para volver a la lista</div>" : "") + ((q ? R : ver).length ? '<div class="table-scroll vt-cel" style="max-height:560px;overflow-y:auto"><table><thead><tr><th>Día</th><th>Grupo</th><th>Operador</th><th>Perfil</th><th>ID</th><th>Resultado</th><th>Cliente / cómo lo retrajo</th><th>Verificó</th><th></th></tr></thead><tbody>' + (q ? R : ver).slice(0, 600).map((x => '<tr><td data-l="Día"><b>' + x.d + '</b></td><td data-l="Grupo">' + esc(titulo(x.g)) + '</td><td data-l="Operador" class="name">' + esc(titulo(x.o)) + '</td><td data-l="Perfil">' + esc(titulo(x.p)) + '</td><td data-l="ID"><b>' + esc(x.id) + '</b></td><td data-l="Resultado">' + estado(x) + "</td>" + '<td data-l="Cliente">' + (x.cli || x.met ? esc(x.cli || "—") + (x.met ? ' <small style="color:var(--faint)">· ' + esc(x.met) + "</small>" : "") : '<small style="color:var(--faint)">—</small>') + "</td>" + '<td data-l="Verificó">' + (x.vq ? "<b>" + esc(x.vq) + '</b> <small style="color:var(--faint)">' + esc(x.vt) + "</small>" : "—") + "</td>" + '<td data-l="">' + (x.est === "si" ? '<button type="button" class="sr-x" data-corrno="' + x.i + '">❌ No está retraído</button>' : x.est === "no" ? '<button type="button" class="sr-x" data-corr="' + x.i + '">✅ Sí está retraído</button>' : "") + "</td></tr>")).join("") + "</tbody></table></div>" + ((q ? R : ver).length > 600 ? '<p class="sub" style="margin:8px 0 0">Se muestran los 600 más recientes.</p>' : "") : q ? "" : nada("No hay verificados " + sgPerTxt() + quienM + "."));
+ })).join("") + '</tbody></table></div><div class="sub" style="margin:0 0 12px">"Muy rápidos": verificó ese ID menos de 10 segundos después del anterior; difícilmente alcanzó a buscarlo en la plataforma. "Dejó al siguiente turno": IDs que le tocaban en su turno, no verificó antes de terminar y tuvo que verificar el compañero que entró (el detalle está en la pestaña «IDs dejados al siguiente turno»). Los monitores no ven esta tabla.</div>' : '<div class="sub" style="margin:0 0 12px">Nadie ha verificado IDs ' + sgPerTxt() + (M ? " (" + esc(M) + ")" : "") + ".</div>") + '<div style="margin:0 0 10px"><input type="search" id="segVerQ" placeholder="Buscar un ID (busca en todo el mes)" value="' + esc(q) + '" style="width:100%;max-width:420px;padding:10px 14px;border:1px solid var(--line);border-radius:999px;font:inherit;background:var(--surface);color:var(--ink)" inputmode="numeric" autocomplete="off"></div>' + (q ? '<div class="sub" style="margin:0 0 8px"><b>' + (R.length ? (R.length === 1 ? "1 resultado" : R.length + " resultados") + " para «" + esc(q) + "»" : "No hay ningún ID de este mes con «" + esc(q) + "»") + "</b> · Borra el buscador para volver a la lista</div>" : "") + ((q ? R : ver).length ? '<div class="table-scroll vt-cel" style="max-height:560px;overflow-y:auto"><table><thead><tr><th>Día</th><th>Grupo</th><th>Operador</th><th>Perfil</th><th>ID</th><th>Resultado</th><th>Cliente / cómo lo retrajo</th><th>Verificó</th><th></th></tr></thead><tbody>' + (q ? R : ver).slice(0, 600).map((x => '<tr><td data-l="Día"><b>' + x.d + '</b></td><td data-l="Grupo">' + esc(titulo(x.g)) + '</td><td data-l="Operador" class="name">' + esc(titulo(x.o)) + '</td><td data-l="Perfil">' + esc(titulo(x.p)) + '</td><td data-l="ID"><b>' + esc(x.id) + '</b></td><td data-l="Resultado">' + estado(x) + "</td>" + '<td data-l="Cliente">' + (x.cli || x.met ? esc(x.cli || "—") + (x.met ? ' <small style="color:var(--faint)">· ' + esc(x.met) + "</small>" : "") : '<small style="color:var(--faint)">—</small>') + "</td>" + '<td data-l="Verificó">' + (x.vq ? "<b>" + esc(x.vq) + '</b> <small style="color:var(--faint)">' + esc(x.vt) + "</small>" : "—") + "</td>" + '<td data-l="">' + (x.est === "si" ? '<button type="button" class="sr-x" data-corrno="' + x.i + '">❌ No está retraído</button>' : x.est === "no" ? '<button type="button" class="sr-x" data-corr="' + x.i + '">✅ Sí está retraído</button>' : "") + "</td></tr>")).join("") + "</tbody></table></div>" + ((q ? R : ver).length > 600 ? '<p class="sub" style="margin:8px 0 0">Se muestran los 600 más recientes.</p>' : "") : q ? "" : nada("No hay verificados " + sgPerTxt() + quienM + "."));
  const ce = document.getElementById("segErr");
  if (ce && SEGMON.err && SEGMON.err.ok) {
   const E = SEGMON.err, meses = Array.from(new Set(E.errores.map((e => e[1])).concat(Object.keys(E.verifs || {})))).sort().reverse();
@@ -11498,4 +11497,4 @@ if (typeof google !== "undefined" && google.script && google.script.url) {
 } else if (/[?&]vista=panel/.test(location.search)) verVista("dash"); else if (/[?&]vista=puntos/.test(location.search)) verVista("pts"); else if (/[?&]vista=monitores/.test(location.search)) verVista("mon");</script>
 </body>
 </html>
-<!-- var HUELLA = '7c5593f54516' -->
+<!-- var HUELLA = '17a42d2a0d4a' -->
