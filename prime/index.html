@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 135", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 136", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "e8a4e4899154";
+ var HUELLA = "a2d4e0822fcc";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -3630,9 +3630,11 @@ function segMonVerRender() {
    no: 0,
    uno: 0,
    todos: 0,
-   rap: 0
+   rap: 0,
+   mismo: 0
   });
   a[x.est]++;
+  if (/mismo segundo/.test(x.c)) a.mismo = (a.mismo || 0) + 1;
   if (/^Todos/.test(x.c)) a.todos++; else if (/^R[aá]pido/.test(x.c)) a.rap++; else a.uno++;
  }));
  ((SEGMON.err || {}).errores || []).filter((e => e[1] === DATA.claveActual && sgEnPer(e[2], e[1]))).forEach((e => {
@@ -3684,10 +3686,10 @@ function segMonVerRender() {
  const ver = X.filter((x => x.est && okM(x.vq) && enPer(x))).sort(((a, b) => b.d - a.d));
  const estado = x => x.est === "si" ? '<span class="rv-pill ok">✓ Retraído</span>' : x.est === "no" ? '<span class="rv-pill accion">✕ No retraído</span>' : x.sd ? '<span class="rv-pill aviso">Digitado sin verificar</span>' : x.dig ? '<span class="rv-pill">Digitado</span>' : '<span class="rv-pill aviso">Por verificar</span>';
  const R = q ? X.filter((x => String(x.id).indexOf(q) >= 0)).sort(((a, b) => b.d - a.d)) : [];
- c.innerHTML = (mons.length ? '<div class="table-scroll" style="margin:0 0 6px"><table><thead><tr><th>Verificados ' + sgPerTxt() + '</th><th class="num">✓ Retraídos</th><th class="num">✕ No retraídos</th><th class="num">Mal marcados</th><th class="num">Uno por uno</th><th class="num">Todos de una vez</th><th class="num">Muy rápidos</th><th class="num">Dejó al siguiente turno</th></tr></thead><tbody>' + mons.map((m => {
+ c.innerHTML = (mons.length ? '<div class="table-scroll" style="margin:0 0 6px"><table><thead><tr><th>Verificados ' + sgPerTxt() + '</th><th class="num">✓ Retraídos</th><th class="num">✕ No retraídos</th><th class="num">Mal marcados</th><th class="num">Uno por uno</th><th class="num">Todos de una vez</th><th class="num">Muy rápidos</th><th class="num">En el mismo segundo</th><th class="num">Dejó al siguiente turno</th></tr></thead><tbody>' + mons.map((m => {
   const a = porMon[m];
-  return '<tr><td class="name"><b>' + esc(m) + '</b></td><td class="num">' + a.si + '</td><td class="num">' + a.no + '</td><td class="num">' + (a.mal ? '<span class="rv-pill accion" title="Supervisión los corrigió (detalle en «Errores corregidos»)">' + a.mal + "</span>" : "0") + '</td><td class="num">' + a.uno + '</td><td class="num">' + (a.todos ? '<span class="rv-pill aviso">' + a.todos + "</span>" : "0") + '</td><td class="num">' + (a.rap ? '<span class="rv-pill accion">' + a.rap + "</span>" : "0") + '</td><td class="num">' + (dejo[m] ? '<span class="rv-pill accion">' + dejo[m] + "</span>" : "0") + "</td></tr>";
- })).join("") + '</tbody></table></div><div class="sub" style="margin:0 0 12px">"Mal marcados": de lo que marcó, lo que supervisión tuvo que corregir (dijo «No retraído» y sí lo estaba, o al revés); cuenta en su columna de ✓ o ✕ con lo que él marcó, no a nombre de quien corrigió. "Muy rápidos": su ritmo (el tiempo promedio por ID en sus últimas 3 verificaciones) fue más rápido que lo más rápido que lo hace la líder con cuidado. Con cliente y cómo se retrajo: menos de 15 segundos por ID en el mismo perfil, o de 23 al pasar a otro perfil. Cuando solo se marcaba (antes del 19/10) o en «No retraído»: menos de 5 segundos, o de 17 al pasar a otro perfil. Se mide el ritmo y no solo el salto entre dos clics porque un monitor puede revisar dos o tres IDs y después marcarlos seguido. "Dejó al siguiente turno": IDs que le tocaban en su turno, no verificó antes de terminar y tuvo que verificar el compañero que entró (el detalle está en la pestaña «IDs dejados al siguiente turno»). Los monitores no ven esta tabla.</div>' : '<div class="sub" style="margin:0 0 12px">Nadie ha verificado IDs ' + sgPerTxt() + (M ? " (" + esc(M) + ")" : "") + ".</div>") + '<div style="margin:0 0 10px"><input type="search" id="segVerQ" placeholder="Buscar un ID (busca en todo el mes)" value="' + esc(q) + '" style="width:100%;max-width:420px;padding:10px 14px;border:1px solid var(--line);border-radius:999px;font:inherit;background:var(--surface);color:var(--ink)" inputmode="numeric" autocomplete="off"></div>' + (q ? '<div class="sub" style="margin:0 0 8px"><b>' + (R.length ? (R.length === 1 ? "1 resultado" : R.length + " resultados") + " para «" + esc(q) + "»" : "No hay ningún ID de este mes con «" + esc(q) + "»") + "</b> · Borra el buscador para volver a la lista</div>" : "") + ((q ? R : ver).length ? '<div class="table-scroll vt-cel" style="max-height:560px;overflow-y:auto"><table><thead><tr><th>Día</th><th>Grupo</th><th>Operador</th><th>Perfil</th><th>ID</th><th>Resultado</th><th>Cliente / cómo lo retrajo</th><th>Verificó</th><th></th></tr></thead><tbody>' + (q ? R : ver).slice(0, 600).map((x => '<tr><td data-l="Día"><b>' + x.d + '</b></td><td data-l="Grupo">' + esc(titulo(x.g)) + '</td><td data-l="Operador" class="name">' + esc(titulo(x.o)) + '</td><td data-l="Perfil">' + esc(titulo(x.p)) + '</td><td data-l="ID"><b>' + esc(x.id) + '</b></td><td data-l="Resultado">' + estado(x) + "</td>" + '<td data-l="Cliente">' + (x.cli || x.met ? esc(x.cli || "—") + (x.met ? ' <small style="color:var(--faint)">· ' + esc(x.met) + "</small>" : "") : '<small style="color:var(--faint)">—</small>') + "</td>" + '<td data-l="Verificó">' + (x.vq ? "<b>" + esc(x.vq) + '</b> <small style="color:var(--faint)">' + esc(x.vt) + "</small>" : "—") + "</td>" + '<td data-l="">' + (x.est === "si" ? '<button type="button" class="sr-x" data-corrno="' + x.i + '">❌ No está retraído</button>' : x.est === "no" ? '<button type="button" class="sr-x" data-corr="' + x.i + '">✅ Sí está retraído</button>' : "") + "</td></tr>")).join("") + "</tbody></table></div>" + ((q ? R : ver).length > 600 ? '<p class="sub" style="margin:8px 0 0">Se muestran los 600 más recientes.</p>' : "") : q ? "" : nada("No hay verificados " + sgPerTxt() + quienM + "."));
+  return '<tr><td class="name"><b>' + esc(m) + '</b></td><td class="num">' + a.si + '</td><td class="num">' + a.no + '</td><td class="num">' + (a.mal ? '<span class="rv-pill accion" title="Supervisión los corrigió (detalle en «Errores corregidos»)">' + a.mal + "</span>" : "0") + '</td><td class="num">' + a.uno + '</td><td class="num">' + (a.todos ? '<span class="rv-pill aviso">' + a.todos + "</span>" : "0") + '</td><td class="num">' + (a.rap ? '<span class="rv-pill accion">' + a.rap + "</span>" : "0") + '</td><td class="num">' + (a.mismo ? '<span class="rv-pill accion">' + a.mismo + "</span>" : "0") + '</td><td class="num">' + (dejo[m] ? '<span class="rv-pill accion">' + dejo[m] + "</span>" : "0") + "</td></tr>";
+ })).join("") + '</tbody></table></div><div class="sub" style="margin:0 0 12px">"Mal marcados": de lo que marcó, lo que supervisión tuvo que corregir (dijo «No retraído» y sí lo estaba, o al revés); cuenta en su columna de ✓ o ✕ con lo que él marcó, no a nombre de quien corrigió. "Muy rápidos": lo marcó más rápido que lo más rápido que lo hace la líder verificando con cuidado, contando desde la verificación anterior. Con cliente y cómo se retrajo: menos de 15 segundos en el mismo perfil, o de 23 al pasar a otro perfil. Cuando solo se marcaba (antes del 19/10) o en «No retraído»: menos de 5 segundos, o de 17 al pasar a otro perfil. "En el mismo segundo": de esos, los que quedaron marcados en el mismo segundo que el anterior (dos clics casi a la vez). "Dejó al siguiente turno": IDs que le tocaban en su turno, no verificó antes de terminar y tuvo que verificar el compañero que entró (el detalle está en la pestaña «IDs dejados al siguiente turno»). Los monitores no ven esta tabla.</div>' : '<div class="sub" style="margin:0 0 12px">Nadie ha verificado IDs ' + sgPerTxt() + (M ? " (" + esc(M) + ")" : "") + ".</div>") + '<div style="margin:0 0 10px"><input type="search" id="segVerQ" placeholder="Buscar un ID (busca en todo el mes)" value="' + esc(q) + '" style="width:100%;max-width:420px;padding:10px 14px;border:1px solid var(--line);border-radius:999px;font:inherit;background:var(--surface);color:var(--ink)" inputmode="numeric" autocomplete="off"></div>' + (q ? '<div class="sub" style="margin:0 0 8px"><b>' + (R.length ? (R.length === 1 ? "1 resultado" : R.length + " resultados") + " para «" + esc(q) + "»" : "No hay ningún ID de este mes con «" + esc(q) + "»") + "</b> · Borra el buscador para volver a la lista</div>" : "") + ((q ? R : ver).length ? '<div class="table-scroll vt-cel" style="max-height:560px;overflow-y:auto"><table><thead><tr><th>Día</th><th>Grupo</th><th>Operador</th><th>Perfil</th><th>ID</th><th>Resultado</th><th>Cliente / cómo lo retrajo</th><th>Verificó</th><th></th></tr></thead><tbody>' + (q ? R : ver).slice(0, 600).map((x => '<tr><td data-l="Día"><b>' + x.d + '</b></td><td data-l="Grupo">' + esc(titulo(x.g)) + '</td><td data-l="Operador" class="name">' + esc(titulo(x.o)) + '</td><td data-l="Perfil">' + esc(titulo(x.p)) + '</td><td data-l="ID"><b>' + esc(x.id) + '</b></td><td data-l="Resultado">' + estado(x) + "</td>" + '<td data-l="Cliente">' + (x.cli || x.met ? esc(x.cli || "—") + (x.met ? ' <small style="color:var(--faint)">· ' + esc(x.met) + "</small>" : "") : '<small style="color:var(--faint)">—</small>') + "</td>" + '<td data-l="Verificó">' + (x.vq ? "<b>" + esc(x.vq) + '</b> <small style="color:var(--faint)">' + esc(x.vt) + "</small>" : "—") + "</td>" + '<td data-l="">' + (x.est === "si" ? '<button type="button" class="sr-x" data-corrno="' + x.i + '">❌ No está retraído</button>' : x.est === "no" ? '<button type="button" class="sr-x" data-corr="' + x.i + '">✅ Sí está retraído</button>' : "") + "</td></tr>")).join("") + "</tbody></table></div>" + ((q ? R : ver).length > 600 ? '<p class="sub" style="margin:8px 0 0">Se muestran los 600 más recientes.</p>' : "") : q ? "" : nada("No hay verificados " + sgPerTxt() + quienM + "."));
  const ce = document.getElementById("segErr");
  if (ce && SEGMON.err && SEGMON.err.ok) {
   const E = SEGMON.err, meses = Array.from(new Set(E.errores.map((e => e[1])).concat(Object.keys(E.verifs || {})))).sort().reverse();
@@ -9898,6 +9900,13 @@ function monRepEnlazar(c) {
 function monVerificar(idx, res, boton) {
  const V = MON.datos.ver || [], xs = idx.map((i => V[i])).filter(Boolean);
  if (!xs.length) return;
+ if (MON.guardandoVer && Date.now() - MON.guardandoVer < 3e4) {
+  boton.textContent = "Espera…";
+  setTimeout((() => {
+   if (boton.textContent === "Espera…") boton.textContent = boton.dataset.txt || "Sí";
+  }), 1500);
+  return;
+ }
  const txt = boton.textContent;
  const es = monEspera(xs[0]);
  if (es && es.s > 0) {
@@ -9955,8 +9964,10 @@ function monVerificar(idx, res, boton) {
    return;
   }
  }
+ boton.dataset.txt = boton.textContent;
  boton.disabled = true;
  boton.textContent = "Guardando…";
+ MON.guardandoVer = Date.now();
  MON.vfLocal = MON.vfLocal || {};
  const claves = xs.map((x => x[1] + "|" + x[5])), antes = claves.map((k => MON.vfLocal[k]));
  claves.forEach((k => {
@@ -9968,6 +9979,7 @@ function monVerificar(idx, res, boton) {
   };
  }));
  const fin = d => {
+  MON.guardandoVer = 0;
   if (!d || !d.ok) {
    claves.forEach(((k, i) => {
     if (antes[i]) MON.vfLocal[k] = antes[i]; else delete MON.vfLocal[k];
@@ -11525,4 +11537,4 @@ if (typeof google !== "undefined" && google.script && google.script.url) {
 } else if (/[?&]vista=panel/.test(location.search)) verVista("dash"); else if (/[?&]vista=puntos/.test(location.search)) verVista("pts"); else if (/[?&]vista=monitores/.test(location.search)) verVista("mon");</script>
 </body>
 </html>
-<!-- var HUELLA = 'e8a4e4899154' -->
+<!-- var HUELLA = 'a2d4e0822fcc' -->
