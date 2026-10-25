@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr03m5tH4HrrssdWXzoGtKFAqbvOnPPA7tRjsFSRsE16hLkv-w/exec";
 
 (function() {
- var n = 0, VER = "web 129", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 130", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "1c08f8c0fa63";
+ var HUELLA = "7c5593f54516";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -3601,7 +3601,7 @@ function hallRender(forzar) {
 
 (() => {
  const st = document.createElement("style");
- st.textContent = ".sg-dej-res{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 12px}.sg-dej-res span{border:1px solid var(--line);border-radius:99px;padding:6px 12px;font-size:13px}b.mal{color:var(--down)}" + ".sg-dej-ay{font-size:13px;color:var(--muted);background:rgba(201,162,39,.08);border-radius:12px;padding:10px 14px;margin:2px 0 12px;line-height:1.5}" + ".sg-dej-c{border:1px solid var(--line);border-left:5px solid var(--down);border-radius:14px;padding:14px 16px;margin-bottom:12px;background:var(--surface,#fff)}.sg-dej-h{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}" + ".sg-dej-h b{font-size:16px}.sg-dej-h span{display:block;color:var(--muted);font-size:13px;margin-top:2px}.sg-dej-n{text-align:right}.sg-dej-n b{font-size:26px;color:var(--down);line-height:1}.sg-dej-n small{display:block;font-size:11.5px;color:var(--muted)}" + ".sg-dej-t{margin:10px 0 8px;font-size:14px;line-height:1.5}.sg-dej-b{display:flex;gap:12px;flex-wrap:wrap}.sg-dej-det{margin-top:10px}" + ".hl-vis{display:inline-flex;border:1px solid var(--line);border-radius:99px;overflow:hidden}.hl-vis button{font:inherit;font-size:13px;border:0;background:var(--surface);color:var(--ink);padding:6px 12px;cursor:pointer}.hl-vis button[aria-selected=true]{background:var(--oro,#C9A227);color:#15161A;font-weight:700}" + ".hl-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:6px 0 10px}.hl-fm{display:flex;align-items:center;gap:6px;font-size:13px}.hl-fm select{font:inherit;padding:6px 8px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}" + ".hl-form{border:1px solid var(--line);border-radius:14px;padding:14px;background:var(--surface);margin-bottom:12px}.hl-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.hl-g label,.hl-txt{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:var(--muted)}" + ".hl-tms{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin:0 0 10px;padding:10px;border-radius:10px;background:rgba(201,162,39,.08)}.hl-tms>span{width:100%;font-size:12.5px;font-weight:600;color:var(--muted)}.hl-tms label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:700}" + ".hl-mons{margin-bottom:10px;font-size:12.5px;font-weight:600;color:var(--muted)}.hl-mons>div{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}.hl-chk{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:99px;padding:6px 12px;font-size:13.5px;font-weight:600;color:var(--ink);cursor:pointer}.hl-chk input{width:16px;height:16px}.hl-chk:has(input:checked){border-color:var(--oro,#C9A227);background:var(--oro-suave,#F6EDD3)}" + ".hl-g .hl-w{grid-column:span 2}.hl-form select,.hl-form input[type=text],.hl-form input[type=date],.hl-form textarea{font:inherit;font-size:14px;font-weight:500;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px}.hl-txt{margin-top:10px}" + ".hl-ev{margin-top:10px;font-size:13px}.hl-prev{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}.hl-pf{position:relative}.hl-pf img{width:110px;height:80px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}.hl-pf button{position:absolute;top:4px;right:4px;border:0;border-radius:99px;background:#15161A;color:#fff;width:22px;height:22px;cursor:pointer}" + ".hl-add{display:grid;place-items:center;width:110px;height:80px;border:2px dashed var(--line);border-radius:10px;cursor:pointer;font-weight:700;color:var(--oro-tinta,#7A5D00)}.hl-acc{display:flex;align-items:center;gap:10px;margin-top:12px}.hl-acc small{color:var(--down,#B3312A)}" + ".hl-lista{display:flex;flex-direction:column;gap:10px}.hl-c{border:1px solid var(--line);border-left:5px solid #3DBB85;border-radius:12px;padding:12px 14px;background:var(--surface)}.hl-c.pend{border-left-color:#E2A63B}.hl-c.noac{border-left-color:#8C7BD6}" + ".hl-h{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}.hl-h small{color:var(--faint)}.hl-tipo{margin-top:6px;font-weight:700;font-size:13.5px}.hl-t{margin-top:4px;font-size:14px;white-space:pre-wrap}.hl-r{margin-top:8px;font-size:13px;background:rgba(140,123,214,.1);border-radius:8px;padding:6px 10px}" + ".hl-pie{display:flex;justify-content:space-between;align-items:center;margin-top:8px;color:var(--faint)}.hl-fotos{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}.hl-foto{border:1px solid var(--line);border-radius:10px;padding:0;width:120px;height:86px;overflow:hidden;background:var(--empty-cell,#EFEFEA);cursor:zoom-in;display:grid;place-items:center}.hl-foto img{width:100%;height:100%;object-fit:cover}" + ".hl-ver{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;cursor:zoom-out}.hl-ver img{max-width:100%;max-height:85vh;border-radius:8px}.hl-ver button{font:inherit;border:0;border-radius:99px;padding:8px 16px;background:#C9A227;font-weight:700}" + "@media (max-width:640px){.hl-g .hl-w{grid-column:auto}}";
+ st.textContent = ".aus-por{margin-top:4px;line-height:1.35}.aus-por small{display:block;color:var(--muted)}.aus-mot{font-style:italic}.aus-jf{display:flex;flex-direction:column;gap:6px;min-width:240px}.aus-jf input{font:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface,#fff);color:var(--ink)}.aus-err{color:var(--down)}" + ".sg-dej-res{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 12px}.sg-dej-res span{border:1px solid var(--line);border-radius:99px;padding:6px 12px;font-size:13px}b.mal{color:var(--down)}" + ".sg-dej-ay{font-size:13px;color:var(--muted);background:rgba(201,162,39,.08);border-radius:12px;padding:10px 14px;margin:2px 0 12px;line-height:1.5}" + ".sg-dej-c{border:1px solid var(--line);border-left:5px solid var(--down);border-radius:14px;padding:14px 16px;margin-bottom:12px;background:var(--surface,#fff)}.sg-dej-h{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}" + ".sg-dej-h b{font-size:16px}.sg-dej-h span{display:block;color:var(--muted);font-size:13px;margin-top:2px}.sg-dej-n{text-align:right}.sg-dej-n b{font-size:26px;color:var(--down);line-height:1}.sg-dej-n small{display:block;font-size:11.5px;color:var(--muted)}" + ".sg-dej-t{margin:10px 0 8px;font-size:14px;line-height:1.5}.sg-dej-b{display:flex;gap:12px;flex-wrap:wrap}.sg-dej-det{margin-top:10px}" + ".hl-vis{display:inline-flex;border:1px solid var(--line);border-radius:99px;overflow:hidden}.hl-vis button{font:inherit;font-size:13px;border:0;background:var(--surface);color:var(--ink);padding:6px 12px;cursor:pointer}.hl-vis button[aria-selected=true]{background:var(--oro,#C9A227);color:#15161A;font-weight:700}" + ".hl-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:6px 0 10px}.hl-fm{display:flex;align-items:center;gap:6px;font-size:13px}.hl-fm select{font:inherit;padding:6px 8px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}" + ".hl-form{border:1px solid var(--line);border-radius:14px;padding:14px;background:var(--surface);margin-bottom:12px}.hl-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.hl-g label,.hl-txt{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:var(--muted)}" + ".hl-tms{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin:0 0 10px;padding:10px;border-radius:10px;background:rgba(201,162,39,.08)}.hl-tms>span{width:100%;font-size:12.5px;font-weight:600;color:var(--muted)}.hl-tms label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:700}" + ".hl-mons{margin-bottom:10px;font-size:12.5px;font-weight:600;color:var(--muted)}.hl-mons>div{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}.hl-chk{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:99px;padding:6px 12px;font-size:13.5px;font-weight:600;color:var(--ink);cursor:pointer}.hl-chk input{width:16px;height:16px}.hl-chk:has(input:checked){border-color:var(--oro,#C9A227);background:var(--oro-suave,#F6EDD3)}" + ".hl-g .hl-w{grid-column:span 2}.hl-form select,.hl-form input[type=text],.hl-form input[type=date],.hl-form textarea{font:inherit;font-size:14px;font-weight:500;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px}.hl-txt{margin-top:10px}" + ".hl-ev{margin-top:10px;font-size:13px}.hl-prev{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}.hl-pf{position:relative}.hl-pf img{width:110px;height:80px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}.hl-pf button{position:absolute;top:4px;right:4px;border:0;border-radius:99px;background:#15161A;color:#fff;width:22px;height:22px;cursor:pointer}" + ".hl-add{display:grid;place-items:center;width:110px;height:80px;border:2px dashed var(--line);border-radius:10px;cursor:pointer;font-weight:700;color:var(--oro-tinta,#7A5D00)}.hl-acc{display:flex;align-items:center;gap:10px;margin-top:12px}.hl-acc small{color:var(--down,#B3312A)}" + ".hl-lista{display:flex;flex-direction:column;gap:10px}.hl-c{border:1px solid var(--line);border-left:5px solid #3DBB85;border-radius:12px;padding:12px 14px;background:var(--surface)}.hl-c.pend{border-left-color:#E2A63B}.hl-c.noac{border-left-color:#8C7BD6}" + ".hl-h{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}.hl-h small{color:var(--faint)}.hl-tipo{margin-top:6px;font-weight:700;font-size:13.5px}.hl-t{margin-top:4px;font-size:14px;white-space:pre-wrap}.hl-r{margin-top:8px;font-size:13px;background:rgba(140,123,214,.1);border-radius:8px;padding:6px 10px}" + ".hl-pie{display:flex;justify-content:space-between;align-items:center;margin-top:8px;color:var(--faint)}.hl-fotos{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}.hl-foto{border:1px solid var(--line);border-radius:10px;padding:0;width:120px;height:86px;overflow:hidden;background:var(--empty-cell,#EFEFEA);cursor:zoom-in;display:grid;place-items:center}.hl-foto img{width:100%;height:100%;object-fit:cover}" + ".hl-ver{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;cursor:zoom-out}.hl-ver img{max-width:100%;max-height:85vh;border-radius:8px}.hl-ver button{font:inherit;border:0;border-radius:99px;padding:8px 16px;background:#C9A227;font-weight:700}" + "@media (max-width:640px){.hl-g .hl-w{grid-column:auto}}";
  document.head.appendChild(st);
 })();
 
@@ -4175,7 +4175,7 @@ function novsHtml(novs) {
 
 function racCampos(r) {
  const sel = v => r.tipo === v ? " selected" : "";
- return '<select aria-label="Qué pasó"><option' + sel("Vacaciones") + ">Vacaciones</option><option" + sel("Permiso") + ' value="Permiso">Permiso (debe reponer las horas)</option><option' + sel("Incapacidad") + ' value="Incapacidad">Incapacidad (no repone horas)</option><option' + sel("Retirado") + '>Retirado</option><option value="Ausencia"' + sel("Ausencia") + ">Ausencia (faltó un día)</option></select>" + '<label class="rac-d">Desde <input type="date" class="rac-desde" value="' + esc(r.desde) + '" aria-label="Desde qué fecha"></label>' + '<label class="rac-h">Hasta <input type="date" class="rac-hasta" min="' + esc(r.desde) + '" aria-label="Hasta qué fecha"></label>' + '<label class="rac-def" title="El operador no va a volver: queda aparte en la lista de novedades"><input type="checkbox" class="rac-defc"> Retiro definitivo</label>' + '<label class="rac-just" title="Si la justificó (incapacidad, calamidad…), no pierde su descanso" hidden><input type="checkbox" class="rac-justc"> Justificada</label>' + '<button class="btn" type="button">Guardar</button><small class="rac-err" role="alert"></small>';
+ return '<select aria-label="Qué pasó"><option' + sel("Vacaciones") + ">Vacaciones</option><option" + sel("Permiso") + ' value="Permiso">Permiso (debe reponer las horas)</option><option' + sel("Incapacidad") + ' value="Incapacidad">Incapacidad (no repone horas)</option><option' + sel("Retirado") + '>Retirado</option><option value="Ausencia"' + sel("Ausencia") + ">Ausencia (faltó un día)</option></select>" + '<label class="rac-d">Desde <input type="date" class="rac-desde" value="' + esc(r.desde) + '" aria-label="Desde qué fecha"></label>' + '<label class="rac-h">Hasta <input type="date" class="rac-hasta" min="' + esc(r.desde) + '" aria-label="Hasta qué fecha"></label>' + '<label class="rac-def" title="El operador no va a volver: queda aparte en la lista de novedades"><input type="checkbox" class="rac-defc"> Retiro definitivo</label>' + '<label class="rac-just" title="Si la justificó (incapacidad, calamidad…), no pierde su descanso" hidden><input type="checkbox" class="rac-justc"> Justificada</label>' + '<input type="text" class="rac-mot" maxlength="300" placeholder="Motivo de la justificación (ej.: incapacidad médica)" hidden style="flex:1 1 260px">' + '<button class="btn" type="button">Guardar</button><small class="rac-err" role="alert"></small>';
 }
 
 function racEnlazar(caja, rachas) {
@@ -4188,6 +4188,16 @@ function racEnlazar(caja, rachas) {
    f.querySelector(".rac-def").hidden = !ret;
    const lj = f.querySelector(".rac-just");
    if (lj) lj.hidden = !aus;
+   {
+    const jc0 = f.querySelector(".rac-justc"), mo = f.querySelector(".rac-mot");
+    if (mo && jc0) {
+     mo.hidden = !aus || !jc0.checked;
+     jc0.onchange = () => {
+      mo.hidden = !jc0.checked;
+      if (jc0.checked) mo.focus();
+     };
+    }
+   }
    f.querySelector(".rac-d").firstChild.textContent = ret ? "Retirado desde " : aus ? "Faltó el " : "Desde ";
    err.textContent = "";
    err.style.color = "";
@@ -4211,8 +4221,13 @@ function racEnlazar(caja, rachas) {
      err.textContent = "Elige el operador.";
      return;
     }
-    const jc = f.querySelector(".rac-justc");
-    return guardarAusenciaUI(quien.g, quien.o, de.value, b, err, !!(jc && jc.checked));
+    const jc = f.querySelector(".rac-justc"), mo = f.querySelector(".rac-mot"), motivo = mo ? mo.value.trim() : "";
+    if (jc && jc.checked && !motivo) {
+     err.textContent = "Escribe el motivo de la justificación.";
+     if (mo) mo.focus();
+     return;
+    }
+    return guardarAusenciaUI(quien.g, quien.o, de.value, b, err, !!(jc && jc.checked), motivo);
    }
    const ret = sel.value === "Retirado", desde = de.value, hasta = ret ? "" : ha.value;
    if (!desde) {
@@ -4233,7 +4248,7 @@ function racEnlazar(caja, rachas) {
  }));
 }
 
-function guardarAusenciaUI(g, o, fecha, boton, msg, just) {
+function guardarAusenciaUI(g, o, fecha, boton, msg, just, motivo) {
  const listo = d => {
   boton.disabled = false;
   msg.style.color = d.ok ? "var(--up, #2E9E6B)" : "";
@@ -4241,7 +4256,7 @@ function guardarAusenciaUI(g, o, fecha, boton, msg, just) {
   if (d.ok) setTimeout((() => cargar(true)), 1500);
  };
  if (!esApps) {
-  DATA.ausencias = (DATA.ausencias || []).concat([ [ fecha, o, !!just, just ? "✓ Justificada: no pierde su descanso. Ese día sus compañeros cubren" : "✓ Pierde su descanso del miércoles 14/10: ese día trabaja normal" ] ]);
+  DATA.ausencias = (DATA.ausencias || []).concat([ [ fecha, o, !!just, just ? "✓ Justificada: no pierde su descanso. Ese día sus compañeros cubren" : "✓ Pierde su descanso del miércoles 14/10: ese día trabaja normal", just ? motivo || "" : "", just ? supNombre || "Supervisión" : "", just ? "ahora" : "" ] ]);
   return listo({
    ok: true,
    resultado: DATA.ausencias[DATA.ausencias.length - 1][3]
@@ -4261,7 +4276,7 @@ function guardarAusenciaUI(g, o, fecha, boton, msg, just) {
    d = {};
   }
   listo(d);
- })).registrarAusencia(clave, g, o, fecha, !!just);
+ })).registrarAusencia(clave, g, o, fecha, !!just, motivo || "", supNombre || "Supervisión");
 }
 
 function guardarNovedadUI(g, o, tipo, desde, hasta, boton, editar, original) {
@@ -6064,6 +6079,11 @@ function asistenciaAmlEnlazar(caja) {
   const z = NOVUI.amlVer[Number(q.dataset.am)], ac = q.dataset.ac;
   if (!z) return;
   const dia = z.f || NOVUI.amlDia;
+  let motivoJ = "";
+  if (ac === "faltoj") {
+   motivoJ = (prompt("Motivo de la justificación de " + titulo(z.o) + " (ej.: incapacidad médica):") || "").trim();
+   if (!motivoJ) return;
+  }
   if ((ac === "falto" || ac === "faltoj") && !confirm("¿Anotar que " + titulo(z.o) + " faltó el " + dia.split("-").reverse().join("/") + (ac === "faltoj" ? " (justificada: no pierde su descanso)" : " (sin justificar: pierde su descanso)") + "?")) return;
   const listo = d => {
    if (!d || !d.ok) {
@@ -6084,7 +6104,7 @@ function asistenciaAmlEnlazar(caja) {
   q.disabled = true;
   q.textContent = "Guardando…";
   if (!esApps) {
-   if (ac === "vino" || ac === "atiempo") DATA.ajustesAsis.push([ dia, z.o, ac === "vino" ? "Sí vino" : "A tiempo" ]); else if (ac === "novino") DATA.ajustesAsis = DATA.ajustesAsis.filter((a => !(a[0] === dia && nrm(a[1]) === nrm(z.o)))); else DATA.ausencias.push([ dia, z.o, ac === "faltoj", "" ]);
+   if (ac === "vino" || ac === "atiempo") DATA.ajustesAsis.push([ dia, z.o, ac === "vino" ? "Sí vino" : "A tiempo" ]); else if (ac === "novino") DATA.ajustesAsis = DATA.ajustesAsis.filter((a => !(a[0] === dia && nrm(a[1]) === nrm(z.o)))); else DATA.ausencias.push([ dia, z.o, ac === "faltoj", "", motivoJ, supNombre || "Supervisión", "ahora" ]);
    return listo({
     ok: true
    });
@@ -6101,7 +6121,7 @@ function asistenciaAmlEnlazar(caja) {
    }
    listo(d);
   }));
-  if (ac === "vino" || ac === "novino" || ac === "atiempo") run.guardarAjusteAsistencia(clave, dia, z.g, z.o, ac === "vino" ? "Sí vino" : ac === "atiempo" ? "A tiempo" : ""); else run.registrarAusencia(clave, z.g, z.o, dia, ac === "faltoj");
+  if (ac === "vino" || ac === "novino" || ac === "atiempo") run.guardarAjusteAsistencia(clave, dia, z.g, z.o, ac === "vino" ? "Sí vino" : ac === "atiempo" ? "A tiempo" : ""); else run.registrarAusencia(clave, z.g, z.o, dia, ac === "faltoj", motivoJ, supNombre || "Supervisión");
  }));
 }
 
@@ -6389,7 +6409,7 @@ function renderNovedades() {
   const sj = AUS.filter((a => !a[2])).length;
   h += cab("nv-aus", "Ausencias", AUS.length ? cuenta(AUS.length, "ausencia", "ausencias") + (sj ? ' · <span class="mal">' + sj + " sin justificar</span>" : "") : "", "Días en que un operador faltó (de los últimos 60 días). Si no está justificada, pierde su descanso; si la justificas, lo recupera. En los dos casos el horario de su grupo se acomoda solo. Se guardan en la pestaña AUSENCIAS del archivo de horarios.");
  }
- if (!AUS.length) h += '<div class="state" style="padding:18px 0">No hay ausencias anotadas. Para anotar una, elige "Ausencia" arriba.</div>'; else h += '<div class="table-scroll"><table class="sr-t"><thead><tr><th>Fecha</th><th>Operador</th><th>Grupo</th><th>Estado</th>' + (window.ES_PRIME !== false ? "<th>Horas por reponer</th>" : "") + "<th>Cómo quedó el horario</th><th></th></tr></thead><tbody>" + AUS.map(((a, i) => "<tr><td>" + DSEM[new Date(a[0] + "T12:00:00").getDay()] + " " + fe(a[0]) + '</td><td class="name"><b>' + esc(titulo(a[1])) + "</b></td><td>" + esc(titulo(grupoDe(a[1]))) + "</td>" + "<td>" + (a[2] ? '<span class="rv-pill info">Justificada</span>' : '<span class="rv-pill accion">Sin justificar</span>') + "</td>" + (window.ES_PRIME !== false ? '<td style="white-space:normal;min-width:170px">' + horasCelda(a) + "</td>" : "") + '<td style="white-space:normal;min-width:200px;max-width:340px"><small>' + esc(a[3] || "—") + "</small></td>" + '<td style="white-space:nowrap"><button type="button" class="sr-x" data-au="' + i + '" data-ac="' + (a[2] ? "injustificar" : "justificar") + '">' + (a[2] ? "Quitar justificación" : "Justificar") + '</button> <button type="button" class="sr-x" data-au="' + i + '" data-ac="quitar">Quitar</button></td></tr>')).join("") + "</tbody></table></div>";
+ if (!AUS.length) h += '<div class="state" style="padding:18px 0">No hay ausencias anotadas. Para anotar una, elige "Ausencia" arriba.</div>'; else h += '<div class="table-scroll"><table class="sr-t"><thead><tr><th>Fecha</th><th>Operador</th><th>Grupo</th><th>Estado</th>' + (window.ES_PRIME !== false ? "<th>Horas por reponer</th>" : "") + "<th>Cómo quedó el horario</th><th></th></tr></thead><tbody>" + AUS.map(((a, i) => "<tr><td>" + DSEM[new Date(a[0] + "T12:00:00").getDay()] + " " + fe(a[0]) + '</td><td class="name"><b>' + esc(titulo(a[1])) + "</b></td><td>" + esc(titulo(grupoDe(a[1]))) + "</td>" + '<td style="white-space:normal;min-width:150px">' + (a[2] ? '<span class="rv-pill info">Justificada</span>' + (a[5] || a[4] ? '<div class="aus-por"><small>' + (a[5] ? "Por <b>" + esc(a[5]) + "</b>" + (a[6] ? " · " + esc(a[6]) : "") : "") + "</small>" + (a[4] ? '<small class="aus-mot">«' + esc(a[4]) + "»</small>" : "") + "</div>" : "") : '<span class="rv-pill accion">Sin justificar</span>') + "</td>" + (window.ES_PRIME !== false ? '<td style="white-space:normal;min-width:170px">' + horasCelda(a) + "</td>" : "") + '<td style="white-space:normal;min-width:200px;max-width:340px"><small>' + esc(a[3] || "—") + "</small></td>" + '<td style="white-space:nowrap"><button type="button" class="sr-x" data-au="' + i + '" data-ac="' + (a[2] ? "injustificar" : "justificar") + '">' + (a[2] ? "Quitar justificación" : "Justificar") + '</button> <button type="button" class="sr-x" data-au="' + i + '" data-ac="quitar">Quitar</button></td></tr>')).join("") + "</tbody></table></div>";
  h += "</section>";
  if (window.ES_PRIME !== false) {
   const INC = turnosIncompletos();
@@ -6421,6 +6441,65 @@ function renderNovedades() {
   const a = AUS[Number(q.dataset.au)];
   q.onclick = () => {
    const ac = q.dataset.ac;
+   if (ac === "justificar" && !q.dataset.ok) {
+    const td = q.parentNode, antes = td.innerHTML;
+    td.innerHTML = '<div class="aus-jf"><input type="text" maxlength="300" placeholder="Motivo (ej.: incapacidad médica, calamidad…)"><div><button type="button" class="sr-x aus-ok">Guardar justificación</button> <button type="button" class="sr-x aus-no">Cancelar</button></div><small class="aus-err"></small></div>';
+    const inp = td.querySelector("input");
+    inp.focus();
+    td.querySelector(".aus-no").onclick = () => {
+     renderNovedades.forzar = true;
+     try {
+      renderNovedades();
+     } finally {
+      renderNovedades.forzar = false;
+     }
+    };
+    const ok = td.querySelector(".aus-ok");
+    ok.onclick = () => {
+     const m = inp.value.trim();
+     if (!m) {
+      td.querySelector(".aus-err").textContent = "Escribe el motivo.";
+      inp.focus();
+      return;
+     }
+     if (!esApps) {
+      DATA.ausencias = DATA.ausencias.filter((x => x !== a));
+      DATA.ausencias.push([ a[0], a[1], true, "✓ Justificada: no pierde su descanso", m, supNombre || "Supervisión", "ahora" ]);
+      renderNovedades.forzar = true;
+      try {
+       renderNovedades();
+      } finally {
+       renderNovedades.forzar = false;
+      }
+      return;
+     }
+     ok.disabled = true;
+     ok.textContent = "Acomodando…";
+     google.script.run.withFailureHandler((() => {
+      ok.disabled = false;
+      ok.textContent = "Guardar justificación";
+      td.querySelector(".aus-err").textContent = "No se pudo guardar.";
+     })).withSuccessHandler((t => {
+      let d;
+      try {
+       d = JSON.parse(t);
+      } catch (e) {
+       d = {};
+      }
+      if (!d.ok) {
+       ok.disabled = false;
+       ok.textContent = "Guardar justificación";
+       td.querySelector(".aus-err").textContent = d.error || "No se pudo guardar.";
+       return;
+      }
+      cargar(true);
+     })).ajustarAusencia(clave, a[1], a[0], "justificar", m, supNombre || "Supervisión");
+    };
+    inp.onkeydown = e => {
+     if (e.key === "Enter") ok.click();
+    };
+    return;
+   }
    if (ac === "quitar" && !confirm("¿Quitar la ausencia de " + titulo(a[1]) + " del " + fe(a[0]) + "? Si había perdido su descanso, lo recupera.")) return;
    if (!esApps) {
     DATA.ausencias = DATA.ausencias.filter((x => x !== a));
@@ -6451,7 +6530,7 @@ function renderNovedades() {
      return;
     }
     cargar(true);
-   })).ajustarAusencia(clave, a[1], a[0], ac);
+   })).ajustarAusencia(clave, a[1], a[0], ac, undefined, supNombre || "Supervisión");
   };
  }));
  const f = caja.querySelector(".nov-f"), selOp = f.querySelector(".nov-op"), proxy = [ {
@@ -11419,4 +11498,4 @@ if (typeof google !== "undefined" && google.script && google.script.url) {
 } else if (/[?&]vista=panel/.test(location.search)) verVista("dash"); else if (/[?&]vista=puntos/.test(location.search)) verVista("pts"); else if (/[?&]vista=monitores/.test(location.search)) verVista("mon");</script>
 </body>
 </html>
-<!-- var HUELLA = '1c08f8c0fa63' -->
+<!-- var HUELLA = '7c5593f54516' -->
