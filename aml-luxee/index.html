@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr03m5tH4HrrssdWXzoGtKFAqbvOnPPA7tRjsFSRsE16hLkv-w/exec";
 
 (function() {
- var n = 0, VER = "web 142", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 143", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "68c43c5493f1";
+ var HUELLA = "29945b2c5acf";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -5242,6 +5242,12 @@ setInterval((() => {
 }), 3e4);
 
 function asistenciaHtml(soloFilas, diasF) {
+ const r = asistenciaHtmlBase(soloFilas, diasF);
+ if (soloFilas || window.ES_PRIME !== false || typeof r !== "string") return r;
+ return r.split("la casilla «Estoy de turno»").join("el botón «Empiezo mi turno» (o «Estoy de turno» en PRIME, para quienes están en los dos)").split("No marcó la casilla").join("No marcó la entrada").split("Marcó la casilla").join("Marcó").split("no ha quitado la casilla").join("no ha marcado «Terminé mi turno»").split("Borrar esta marca de «Estoy de turno»").join("Borrar esta marca de entrada").split("<small>clientes</small>").join("<small>puntos</small>").split("sin clientes").join("sin puntos");
+}
+
+function asistenciaHtmlBase(soloFilas, diasF) {
  const H = DATA.horarios, ahora = DATA.reloj && DATA.reloj.ahora ? DATA.reloj.ahora : (new Date).toISOString().slice(0, 16), hoy = ahora.slice(0, 10), now = minAbs(hoy, ahora.slice(11, 16));
  const adel = !(DATA.reloj && DATA.reloj.nocheSig), fe = x => x.slice(8) + "/" + x.slice(5, 7);
  if (!H || !H.semanas || !H.semanas.length) return soloFilas ? [] : '<section class="panel"><h2>Asistencia</h2><div class="state" style="padding:18px 0">Todavía no hay horarios publicados. La asistencia se calcula con el horario de cada semana.</div></section>';
@@ -6771,19 +6777,14 @@ function renderNovedades() {
   luxEnlazar(caja);
   return;
  }
- if (NOVUI.vista === "asis" && window.ES_PRIME === false) {
-  caja.innerHTML = barra + asistenciaAmlHtml();
-  cambiar();
-  asistenciaAmlEnlazar(caja);
-  if (!window._amlAuto) window._amlAuto = setInterval((() => {
-   try {
-    if (typeof VISTA_ACTUAL !== "undefined" && VISTA_ACTUAL === "nov" && NOVUI.vista === "asis" && !document.hidden && esApps && clave) cargar(true);
-   } catch (e) {}
-  }), 6e4);
-  return;
- }
+ if (NOVUI.vista === "asis" && window.ES_PRIME === false && !window._amlAuto) window._amlAuto = setInterval((() => {
+  try {
+   if (typeof VISTA_ACTUAL !== "undefined" && VISTA_ACTUAL === "nov" && NOVUI.vista === "asis" && !document.hidden && esApps && clave) cargar(true);
+  } catch (e) {}
+ }), 6e4);
  if (NOVUI.vista === "asis") {
-  const swQ = '<div class="sub-barra amon-sw" style="margin:-4px 0 14px">' + [ [ "op", "Operadores" ], [ "mon", "Monitores" ] ].map((v => '<button type="button" data-aq="' + v[0] + '" aria-selected="' + (NOVUI.asisQ === v[0]) + '">' + v[1] + "</button>")).join("") + "</div>";
+  if (window.ES_PRIME === false) NOVUI.asisQ = "op";
+  const swQ = window.ES_PRIME === false ? "" : '<div class="sub-barra amon-sw" style="margin:-4px 0 14px">' + [ [ "op", "Operadores" ], [ "mon", "Monitores" ] ].map((v => '<button type="button" data-aq="' + v[0] + '" aria-selected="' + (NOVUI.asisQ === v[0]) + '">' + v[1] + "</button>")).join("") + "</div>";
   const enlQ = () => caja.querySelectorAll("[data-aq]").forEach((q => q.onclick = () => {
    NOVUI.asisQ = q.dataset.aq;
    renderNovedades.forzar = true;
@@ -12277,4 +12278,4 @@ if (typeof google !== "undefined" && google.script && google.script.url) {
 } else if (/[?&]vista=panel/.test(location.search)) verVista("dash"); else if (/[?&]vista=puntos/.test(location.search)) verVista("pts"); else if (/[?&]vista=monitores/.test(location.search)) verVista("mon");</script>
 </body>
 </html>
-<!-- var HUELLA = '68c43c5493f1' -->
+<!-- var HUELLA = '29945b2c5acf' -->
