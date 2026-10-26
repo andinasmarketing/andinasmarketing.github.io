@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr03m5tH4HrrssdWXzoGtKFAqbvOnPPA7tRjsFSRsE16hLkv-w/exec";
 
 (function() {
- var n = 0, VER = "web 148", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 150", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "71523fb10269";
+ var HUELLA = "8246f48d9dd4";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -7375,7 +7375,18 @@ function cargarSolic(forzar) {
  };
  if (!esApps) return listo(JSON.stringify({
   ok: true,
-  sol: [ [ 2, "20/10 12:10", "2026-10", "GRUPO LONDRES", "194592342", "Zhuhey Staper", "Cómo lo retrajo", "Cliente envió mensaje por chat", "Me equivoqué al elegir", "metodo", "Respondió por chat", "si" ] ]
+  sol: [ [ 2, "26/10 14:51", "2026-10", "GRUPO RIO", "195412432", "Zhuhey Staper", "Nombre del cliente", "Sharon, 64", "corrección de nombre", "cliente", "Sharon 46", "si", {
+   op: "MARWIN OLLARVES",
+   pf: "ALDEMARO",
+   dia: 26,
+   jo: "NOCHE",
+   q: "Zhuhey Staper",
+   t: "26/10 14:32",
+   r: "si",
+   n: "Sharon 46",
+   m: "Respondió por chat",
+   correo: "Andialdemaro8421g10322d6313@gmail.com"
+  } ] ]
  }));
  google.script.run.withSuccessHandler(listo).withFailureHandler((() => {})).solicitudesCorreccion(clave);
 }
@@ -7390,10 +7401,30 @@ function solicHtml() {
  if (clave && !SOLIC.t) setTimeout((() => cargarSolic()), 0);
  const xs = SOLIC.sol || [];
  if (!xs.length) return "";
- return '<div class="sr-al si-sol" style="margin:0 0 12px"><b>' + (xs.length === 1 ? "Un monitor avisa que se equivocó" : xs.length + " avisos de monitores que se equivocaron") + " en una verificación</b><p>Ellos no pueden cambiar lo que ya verificaron: revisa y toca «Corregir» (queda a tu nombre) o «Descartar».</p>" + xs.map(((r, i) => '<div class="sr-al-f" data-sol="' + i + '"><span><b>' + esc(r[5]) + "</b> · ID <b>" + esc(r[4]) + "</b> · " + esc(titulo(r[3])) + "<small>" + esc(r[6]) + ": hoy dice «" + esc(r[10]) + "»" + (r[9] === "resultado" ? " → debe quedar «" + (r[11] === "si" ? "No retraído" : "Retraído") + "»" : "") + (r[8] ? " · Nota: " + esc(r[8]) : "") + " · " + esc(r[1]) + "</small></span>" + (r[9] === "metodo" ? '<select class="sol-v" style="font:inherit;padding:6px 10px;border:1px solid var(--line);border-radius:8px">' + METODOS_SUP.concat(/^Otra: /.test(r[7]) ? [ r[7] ] : []).map((o => "<option" + (o === r[7] ? " selected" : "") + ">" + esc(o) + "</option>")).join("") + "</select>" : r[9] === "cliente" ? '<input type="text" class="sol-v" value="' + esc(r[7]) + '" maxlength="60" style="font:inherit;width:170px;padding:6px 10px;border:1px solid var(--line);border-radius:8px">' : "") + '<button type="button" class="btn sol-ok">Corregir</button><button type="button" class="sr-x sol-no">Descartar</button><span class="rac-err" style="color:var(--down);font-size:12.5px"></span></div>')).join("") + "</div>";
+ return '<div class="sr-al si-sol" style="margin:0 0 12px"><b>' + (xs.length === 1 ? "Un monitor avisa que se equivocó" : xs.length + " avisos de monitores que se equivocaron") + " en una verificación</b><p>Ellos no pueden cambiar lo que ya verificaron: revisa y toca «Corregir» (queda a tu nombre) o «Descartar».</p>" + xs.map(((r, i) => {
+  const I = r[12] || null, MESES = [ "ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic" ], mm = MESES[Number(String(r[2]).slice(5, 7)) - 1] || "";
+  const ficha = '<div class="sol-ficha">' + "<div><small>Operador</small><b>" + esc(I && I.op ? titulo(I.op) : "—") + "</b></div>" + '<div class="sol-pf"><small>Perfil</small><b>' + esc(I && I.pf ? I.pf : "—") + "</b>" + (I && I.correo ? '<span class="sol-correo"><em>' + esc(I.correo) + '</em><button type="button" class="sr-x sol-copiar" data-id="' + esc(I.correo) + '" data-t="Copiar correo">Copiar correo</button></span>' : "") + "</div>" + "<div><small>Día y jornada</small><b>" + (I && I.dia ? I.dia + " " + mm : "—") + (I && I.jo ? " · " + esc(titulo(I.jo)) : "") + "</b></div>" + '<div class="sol-hoy"><small>Cómo está hoy</small><b>' + (I ? (I.r === "si" ? "Retraído" : "No retraído") + (I.n ? " · cliente «" + esc(I.n) + "»" : "") + (I.m ? " · " + esc(I.m) : "") : "Sin verificar") + "</b>" + (I ? "<em>Lo verificó " + esc(I.q) + " el " + esc(I.t) + "</em>" : "") + "</div>" + '<div class="sol-pide"><small>Lo que pide ' + esc(r[5].split(" ")[0]) + "</small><b>" + esc(r[6]) + ": «" + esc(r[9] === "resultado" ? r[11] === "si" ? "No retraído" : "Retraído" : r[7]) + "»</b>" + (r[8] ? "<em>Nota: " + esc(r[8]) + "</em>" : "") + "<em>Pedido el " + esc(r[1]) + "</em></div></div>";
+  return '<div class="sr-al-f sol-f" data-sol="' + i + '"><span class="sol-cab"><b>' + esc(r[5]) + '</b> · ID <b class="sol-id">' + esc(r[4]) + "</b> · " + esc(titulo(r[3])) + ' <button type="button" class="sr-x sol-copiar" data-id="' + esc(r[4]) + '">Copiar ID</button></span>' + ficha + '<div class="sol-acc">' + (r[9] === "metodo" ? '<select class="sol-v" style="font:inherit;padding:6px 10px;border:1px solid var(--line);border-radius:8px">' + METODOS_SUP.concat(/^Otra: /.test(r[7]) ? [ r[7] ] : []).map((o => "<option" + (o === r[7] ? " selected" : "") + ">" + esc(o) + "</option>")).join("") + "</select>" : r[9] === "cliente" ? '<input type="text" class="sol-v" value="' + esc(r[7]) + '" maxlength="60" style="font:inherit;width:170px;padding:6px 10px;border:1px solid var(--line);border-radius:8px">' : "") + '<button type="button" class="btn sol-ok">Corregir</button><button type="button" class="sr-x sol-no">Descartar</button><span class="rac-err" style="color:var(--down);font-size:12.5px"></span></div></div>';
+ })).join("") + "</div>";
 }
 
 function solicEnlazar(caja) {
+ if (!document.getElementById("solCss")) {
+  const st = document.createElement("style");
+  st.id = "solCss";
+  st.textContent = ".sol-f{display:block!important}.sol-cab{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.sol-ficha{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:10px 0}.sol-ficha div{background:var(--surface,#fff);border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:2px}.sol-ficha small{font-size:11px;color:var(--faint,#8A867C);text-transform:uppercase;letter-spacing:.06em}.sol-ficha b{font-size:14px}.sol-ficha em{font-style:normal;font-size:12px;color:var(--muted)}.sol-hoy,.sol-pide{grid-column:span 2}.sol-pf{grid-column:span 2}.sol-correo{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:2px}.sol-correo em{word-break:break-all}.sol-pide{border-color:#C9A227!important;background:var(--oro-suave,#F6EDD3)!important}.sol-acc{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}@media (max-width:760px){.sol-ficha{grid-template-columns:1fr 1fr}}";
+  document.head.appendChild(st);
+ }
+ caja.querySelectorAll(".sol-copiar").forEach((b => b.onclick = () => {
+  try {
+   navigator.clipboard.writeText(b.dataset.id);
+   const t0 = b.dataset.t || "Copiar ID";
+   b.textContent = "Copiado";
+   setTimeout((() => {
+    b.textContent = t0;
+   }), 1500);
+  } catch (e) {}
+ }));
  caja.querySelectorAll("[data-sol]").forEach((f => {
   const r = (SOLIC.sol || [])[Number(f.dataset.sol)];
   if (!r) return;
@@ -12407,4 +12438,4 @@ if (typeof google !== "undefined" && google.script && google.script.url) {
 } else if (/[?&]vista=panel/.test(location.search)) verVista("dash"); else if (/[?&]vista=puntos/.test(location.search)) verVista("pts"); else if (/[?&]vista=monitores/.test(location.search)) verVista("mon");</script>
 </body>
 </html>
-<!-- var HUELLA = '71523fb10269' -->
+<!-- var HUELLA = '8246f48d9dd4' -->
