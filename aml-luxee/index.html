@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr03m5tH4HrrssdWXzoGtKFAqbvOnPPA7tRjsFSRsE16hLkv-w/exec";
 
 (function() {
- var n = 0, VER = "web 138", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 139", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "f80dd76c5b75";
+ var HUELLA = "c7c3fa1b24cb";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -9555,9 +9555,16 @@ const T10S = {
  err: ""
 };
 
+const T10_ACTIVO = false;
+
 function ptT10() {
  const c = document.getElementById("pgT10");
  if (!c) return;
+ if (!T10_ACTIVO) {
+  c.innerHTML = "";
+  c.hidden = true;
+  return;
+ }
  if (!T10S.d) {
   c.innerHTML = '<section class="panel"><h2>Turnos de 10 horas vs. turnos de 8 horas</h2><div class="state" style="padding:14px 0">' + (T10S.err ? esc(T10S.err) + '<div style="margin-top:10px"><button type="button" class="btn ghost" id="t10Otra">Intentar de nuevo</button></div>' : "Cargando… (la primera vez puede tardar hasta un minuto)") + "</div></section>";
   if (T10S.err) {
@@ -12259,4 +12266,4 @@ if (typeof google !== "undefined" && google.script && google.script.url) {
 } else if (/[?&]vista=panel/.test(location.search)) verVista("dash"); else if (/[?&]vista=puntos/.test(location.search)) verVista("pts"); else if (/[?&]vista=monitores/.test(location.search)) verVista("mon");</script>
 </body>
 </html>
-<!-- var HUELLA = 'f80dd76c5b75' -->
+<!-- var HUELLA = 'c7c3fa1b24cb' -->
