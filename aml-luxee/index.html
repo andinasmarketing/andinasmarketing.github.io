@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr03m5tH4HrrssdWXzoGtKFAqbvOnPPA7tRjsFSRsE16hLkv-w/exec";
 
 (function() {
- var n = 0, VER = "web 141", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 142", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "f00b9ff045d1";
+ var HUELLA = "68c43c5493f1";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -216,7 +216,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr0
 <div id="horCuerpo"><div class="state">Cargando…</div></div>
 </div>
 <div id="vistaNov" class="pt" hidden>
-<div class="pt-cab"><div><h2 class="vt">Novedades de operadores</h2><p class="pt-est">Vacaciones, permisos y retiros, horarios y días de descanso, e histórico de turnos.</p></div></div>
+<div class="pt-cab"><div><h2 class="vt" id="novTit">Novedades de operadores</h2><p class="pt-est" id="novSub">Vacaciones, permisos y retiros, horarios y días de descanso, e histórico de turnos.</p></div></div>
 <div id="novCuerpo"><div class="state">Cargando…</div></div>
 </div>
 <div id="vistaOp" hidden>
@@ -6745,7 +6745,14 @@ function renderNovedades() {
  const caja = document.getElementById("novCuerpo");
  if (!caja || !DATA) return;
  if ((NOVUI.editando || caja.contains(document.activeElement) && /INPUT|SELECT/.test(document.activeElement.tagName)) && !renderNovedades.forzar) return;
- const barra = '<div class="sub-barra" style="margin-bottom:14px">' + [ [ "nov", "Novedades" ], [ "hor", "Horarios y descansos" ], [ "asis", "Asistencia" ], [ "tur", "Histórico de turnos" ], [ "tar", "Tareas LUXEE" ] ].filter((v => window.ES_PRIME !== false ? v[0] !== "tar" : v[0] !== "tur")).map((v => '<button type="button" data-nv="' + v[0] + '" aria-selected="' + (NOVUI.vista === v[0]) + '">' + v[1] + "</button>")).join("") + "</div>";
+ const soloAsis = typeof EN_ASIS !== "undefined" && EN_ASIS;
+ if (soloAsis) NOVUI.vista = "asis"; else if (NOVUI.vista === "asis") NOVUI.vista = "nov";
+ {
+  const t = document.getElementById("novTit"), st = document.getElementById("novSub");
+  if (t) t.textContent = soloAsis ? "Asistencia de operadores" : "Novedades de operadores";
+  if (st) st.textContent = soloAsis ? "Quién llegó a tiempo, quién llegó tarde y quién no vino, por día y por jornada." : window.ES_PRIME !== false ? "Vacaciones, permisos y retiros, horarios y días de descanso, e histórico de turnos." : "Vacaciones, permisos y retiros, horarios y días de descanso, y tareas de LUXEE.";
+ }
+ const barra = soloAsis ? "" : '<div class="sub-barra" style="margin-bottom:14px">' + [ [ "nov", "Novedades" ], [ "hor", "Horarios y descansos" ], [ "tur", "Histórico de turnos" ], [ "tar", "Tareas LUXEE" ] ].filter((v => window.ES_PRIME !== false ? v[0] !== "tar" : v[0] !== "tur")).map((v => '<button type="button" data-nv="' + v[0] + '" aria-selected="' + (NOVUI.vista === v[0]) + '">' + v[1] + "</button>")).join("") + "</div>";
  const cambiar = () => caja.querySelectorAll("[data-nv]").forEach((q => q.onclick = () => {
   NOVUI.vista = q.dataset.nv;
   renderNovedades();
@@ -12270,4 +12277,4 @@ if (typeof google !== "undefined" && google.script && google.script.url) {
 } else if (/[?&]vista=panel/.test(location.search)) verVista("dash"); else if (/[?&]vista=puntos/.test(location.search)) verVista("pts"); else if (/[?&]vista=monitores/.test(location.search)) verVista("mon");</script>
 </body>
 </html>
-<!-- var HUELLA = 'f00b9ff045d1' -->
+<!-- var HUELLA = '68c43c5493f1' -->
