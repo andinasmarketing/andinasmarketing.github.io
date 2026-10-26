@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 147", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 148", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "168ce2442413";
+ var HUELLA = "52b0dd53afae";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -174,6 +174,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
 <button type="button" role="tab" id="navSegMon" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11l2 2 4-4"/><rect x="4" y="4" width="16" height="16" rx="3"/></svg>Seguimiento a monitores</button>
 <button type="button" role="tab" id="navAsis" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/><path d="M16 11l2 2 4-4"/></svg>Asistencia de operadores</button>
 <button type="button" role="tab" id="navNov" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>Novedades de operadores</button>
+<button type="button" role="tab" id="navTar" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 9l1.5 1.5L12 8M8 15l1.5 1.5L12 14M14 9h3M14 15h3"/></svg>Tareas de LUXEE</button>
 </div></div>
 <div class="lado-sec" data-sec="Monitores"><button type="button" class="lado-h" aria-expanded="true">Monitores<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><div class="lado-sub">
 <button type="button" role="tab" id="navMon" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11l2 2 4-4"/><rect x="4" y="4" width="16" height="16" rx="3"/></svg>Mis pendientes</button>
@@ -6595,7 +6596,7 @@ function luxHtml() {
  const fe = x => x.slice(8) + "/" + x.slice(5, 7), cuando = t => t.c === "Siempre" ? "Todos los turnos" : "Solo el " + DSEMLARGO(t.c).toLowerCase() + " " + fe(t.c);
  const selC = (v, cls) => '<select class="' + cls + '"><option value="Siempre"' + (v === "Siempre" ? " selected" : "") + '>Todos los turnos</option><option value="dia"' + (v && v !== "Siempre" ? " selected" : "") + ">Solo un día</option></select>";
  const selJ = (v, cls) => '<select class="' + cls + '">' + [ "Todas", "Mañana", "Tarde", "Noche" ].map((j => "<option" + (j === (v || "Todas") ? " selected" : "") + ' value="' + j + '">' + (j === "Todas" ? "Todas las jornadas" : j) + "</option>")).join("") + "</select>";
- let h = '<section class="panel lx-p"><h2>Tareas de LUXEE</h2><div class="sub">Les salen a los operadores de LUXEE (' + esc(D.ops.map((o => titulo(o.o))).join(", ")) + ") en su vista, en «Mis tareas del turno», y las marcan como hechas. Las de «Todos los turnos» salen siempre (o solo en la jornada que elijas); las de «Solo un día», ese día.</div>";
+ let h = '<section class="panel lx-p"><h2>Lista de tareas</h2><div class="sub">Les salen a los operadores de LUXEE (' + esc(D.ops.map((o => titulo(o.o))).join(", ")) + ") en su vista, en «Mis tareas del turno», y las marcan como hechas. Las de «Todos los turnos» salen siempre (o solo en la jornada que elijas); las de «Solo un día», ese día.</div>";
  if (D.puede) h += '<div class="lx-f"><input type="text" class="lx-txt" maxlength="200" placeholder="Escribe la tarea…">' + selC("Siempre", "lx-c") + '<input type="date" class="lx-d" value="' + D.hoy + '" min="' + D.hoy + '" hidden>' + selJ("Todas", "lx-j") + '<button type="button" class="btn lx-add">+ Agregar</button><small class="lx-err" role="alert"></small></div>'; else h += '<div class="at-nota lx-aviso">Para agregar o cambiar tareas entra con la clave de líderes (encargados, Luizzana, Nelson o Lupe).</div>';
  if (!D.tareas.length) h += '<div class="state" style="padding:14px 0">Todavía no hay tareas.</div>'; else h += '<div class="table-scroll"><table class="sr-t"><thead><tr><th>Tarea</th><th>Cuándo</th><th>Jornada</th><th>La puso</th><th></th></tr></thead><tbody>' + D.tareas.map(((t, i) => LUX.edit === t.id ? '<tr data-lxe="' + i + '"><td><input type="text" class="lx-et" maxlength="200" value="' + esc(t.t) + '" style="width:100%"></td><td>' + selC(t.c, "lx-ec") + ' <input type="date" class="lx-ed" value="' + (t.c === "Siempre" ? D.hoy : t.c) + '"' + (t.c === "Siempre" ? " hidden" : "") + "></td><td>" + selJ(t.j, "lx-ej") + '</td><td></td><td style="white-space:nowrap"><button type="button" class="sr-x" data-lxg="' + i + '">Guardar</button> <button type="button" class="sr-x" data-lxn="1">Cancelar</button></td></tr>' : "<tr><td><b>" + esc(t.t) + "</b></td><td>" + cuando(t) + "</td><td>" + esc(t.j) + "</td><td><small>" + esc(t.por || "") + '</small></td><td style="white-space:nowrap">' + (D.puede ? '<button type="button" class="sr-x" data-lxx="' + i + '">Editar</button> <button type="button" class="sr-x" data-lxq="' + i + '">Quitar</button>' : "") + "</td></tr>")).join("") + "</tbody></table></div>";
  h += '</section><section class="panel"><h2>Cumplimiento</h2><div class="sub">Cuántas tareas marcó cada operador de LUXEE en cada turno (últimos 14 días).</div>';
@@ -6754,14 +6755,14 @@ function renderNovedades() {
  const caja = document.getElementById("novCuerpo");
  if (!caja || !DATA) return;
  if ((NOVUI.editando || caja.contains(document.activeElement) && /INPUT|SELECT/.test(document.activeElement.tagName)) && !renderNovedades.forzar) return;
- const soloAsis = typeof EN_ASIS !== "undefined" && EN_ASIS;
- if (soloAsis) NOVUI.vista = "asis"; else if (NOVUI.vista === "asis") NOVUI.vista = "nov";
+ const soloAsis = typeof EN_ASIS !== "undefined" && EN_ASIS, soloTar = typeof EN_TAR !== "undefined" && EN_TAR && window.ES_PRIME === false;
+ if (soloAsis) NOVUI.vista = "asis"; else if (soloTar) NOVUI.vista = "tar"; else if (NOVUI.vista === "asis" || NOVUI.vista === "tar") NOVUI.vista = "nov";
  {
   const t = document.getElementById("novTit"), st = document.getElementById("novSub");
-  if (t) t.textContent = soloAsis ? "Asistencia de operadores" : "Novedades de operadores";
-  if (st) st.textContent = soloAsis ? "Quién llegó a tiempo, quién llegó tarde y quién no vino, por día y por jornada." : window.ES_PRIME !== false ? "Vacaciones, permisos y retiros, horarios y días de descanso, e histórico de turnos." : "Vacaciones, permisos y retiros, horarios y días de descanso, y tareas de LUXEE.";
+  if (t) t.textContent = soloAsis ? "Asistencia de operadores" : soloTar ? "Tareas de LUXEE" : "Novedades de operadores";
+  if (st) st.textContent = soloAsis ? "Quién llegó a tiempo, quién llegó tarde y quién no vino, por día y por jornada." : soloTar ? "Las tareas que deben hacer los operadores de LUXEE en su turno, y quién las cumplió." : window.ES_PRIME !== false ? "Vacaciones, permisos y retiros, horarios y días de descanso, e histórico de turnos." : "Vacaciones, permisos y retiros, y horarios y días de descanso.";
  }
- const barra = soloAsis ? "" : '<div class="sub-barra" style="margin-bottom:14px">' + [ [ "nov", "Novedades" ], [ "hor", "Horarios y descansos" ], [ "tur", "Histórico de turnos" ], [ "tar", "Tareas LUXEE" ] ].filter((v => window.ES_PRIME !== false ? v[0] !== "tar" : v[0] !== "tur")).map((v => '<button type="button" data-nv="' + v[0] + '" aria-selected="' + (NOVUI.vista === v[0]) + '">' + v[1] + "</button>")).join("") + "</div>";
+ const barra = soloAsis || soloTar ? "" : '<div class="sub-barra" style="margin-bottom:14px">' + [ [ "nov", "Novedades" ], [ "hor", "Horarios y descansos" ], [ "tur", "Histórico de turnos" ] ].filter((v => window.ES_PRIME !== false || v[0] !== "tur")).map((v => '<button type="button" data-nv="' + v[0] + '" aria-selected="' + (NOVUI.vista === v[0]) + '">' + v[1] + "</button>")).join("") + "</div>";
  const cambiar = () => caja.querySelectorAll("[data-nv]").forEach((q => q.onclick = () => {
   NOVUI.vista = q.dataset.nv;
   renderNovedades();
@@ -7953,16 +7954,17 @@ const NAV = {
  hor: "navHor"
 };
 
-let EN_ASIS = false;
+let EN_ASIS = false, EN_TAR = false;
 
 function verVista(v) {
  if (v === true) v = "dash"; else if (v === false) v = "op";
- const asis = v === "asis";
- if (asis) v = "nov";
+ const asis = v === "asis", tar = v === "tar";
+ if (asis || tar) v = "nov";
  if (typeof NOVUI !== "undefined") {
-  if (asis) NOVUI.vista = "asis"; else if (v === "nov" && EN_ASIS) NOVUI.vista = "nov";
+  if (asis) NOVUI.vista = "asis"; else if (tar) NOVUI.vista = "tar"; else if (v === "nov" && (EN_ASIS || EN_TAR)) NOVUI.vista = "nov";
  }
  EN_ASIS = asis;
+ EN_TAR = tar;
  if (v === VISTA_ACTUAL && v !== "op" && v !== "inicio" && v !== "mon" && v !== "segmon" && v !== "supinicio" && v !== "nov" && v !== "hor") {
   SUBCERRADO[v] = !SUBCERRADO[v];
   window.noCerrarMenu = true;
@@ -7983,7 +7985,8 @@ function verVista(v) {
  }));
  document.body.classList.toggle("seg-mon", v === "segmon");
  if (v === "segmon") document.getElementById("vistaDash").hidden = false;
- Object.keys(NAV).forEach((k => document.getElementById(NAV[k]).setAttribute("aria-selected", String(k === v && !(asis && k === "nov")))));
+ Object.keys(NAV).forEach((k => document.getElementById(NAV[k]).setAttribute("aria-selected", String(k === v && !((asis || tar) && k === "nov")))));
+ document.getElementById("navTar").setAttribute("aria-selected", String(tar));
  document.getElementById("navAsis").setAttribute("aria-selected", String(asis));
  if (v !== "op") [ "op_tabClientes", "op_tabRanking", "op_tabTurnos" ].forEach((id => document.getElementById(id).setAttribute("aria-selected", "false")));
  VISTA_ACTUAL = v;
@@ -8012,6 +8015,8 @@ function verVista(v) {
 Object.keys(NAV).forEach((k => document.getElementById(NAV[k]).addEventListener("click", (() => verVista(k)))));
 
 document.getElementById("navAsis").addEventListener("click", (() => verVista("asis")));
+
+document.getElementById("navTar").addEventListener("click", (() => verVista("tar")));
 
 [ "op_tabClientes", "op_tabRanking", "op_tabTurnos" ].forEach((id => document.getElementById(id).addEventListener("click", (() => verVista("op")))));
 
@@ -8242,6 +8247,12 @@ const PROY = window.PROYECTO || {
 }, ES_PRIME = PROY.id === "prime";
 
 window.ES_PRIME = ES_PRIME;
+
+if (ES_PRIME) {
+ const st0 = document.createElement("style");
+ st0.textContent = "#navTar{display:none !important}";
+ document.head.appendChild(st0);
+}
 
 if (!ES_PRIME) {
  document.body.classList.add("proy-" + PROY.id);
@@ -12396,4 +12407,4 @@ if (typeof google !== "undefined" && google.script && google.script.url) {
 } else if (/[?&]vista=panel/.test(location.search)) verVista("dash"); else if (/[?&]vista=puntos/.test(location.search)) verVista("pts"); else if (/[?&]vista=monitores/.test(location.search)) verVista("mon");</script>
 </body>
 </html>
-<!-- var HUELLA = '168ce2442413' -->
+<!-- var HUELLA = '52b0dd53afae' -->
