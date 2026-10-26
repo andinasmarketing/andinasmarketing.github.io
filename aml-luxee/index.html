@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr03m5tH4HrrssdWXzoGtKFAqbvOnPPA7tRjsFSRsE16hLkv-w/exec";
 
 (function() {
- var n = 0, VER = "web 144", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 145", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "03d05fd6839f";
+ var HUELLA = "2aeeed3fdb8c";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -8832,7 +8832,7 @@ const ptTurno = (d, j) => (d.turno && d.turno[j] ? d.turno[j] : []).map((x => x 
 function ptTurnoCards(d, sel, clic) {
  const turnoDe = j => ptTurno(d, j);
  return J.map(((j, i) => {
-  const a = turnoDe(j), tj = ptTotal(a), m = d.metasJ[j] || 0, p = m ? tj / m : 0, pr = ptProy(a, d);
+  const a = turnoDe(j), tj = ptTotal(a), m = (d.metasJ || {})[j] || 0, p = m ? tj / m : 0, pr = ptProy(a, d);
   return '<button type="button" class="jr-card" data-j="' + j + '" aria-pressed="' + (sel === j) + '"' + (clic ? "" : ' tabindex="-1"') + '  style="border-top-color:' + JC[i] + '"><h4>' + ICO_J[i] + JL[i] + "</h4>" + '<div class="n">' + fmtP.format(tj) + "<small>" + (m ? "de " + fmt0.format(m) : "sin meta") + "</small></div>" + (m ? '<div class="prog mini"><i style="width:' + Math.min(100, p * 100).toFixed(1) + '%"></i><span class="ritmo" style="left:' + (ptEsp(d) * 100).toFixed(1) + '%"></span></div>' + '<div class="d"><b>' + fmt1.format(p * 100) + "%</b> de la meta · proyección " + fmt1.format(pr / m * 100) + "%</div>" + '<div class="d">' + ptPill(ptSemaforo(tj, pr, m)) + (tj < m && ptT(d).rest > 0 ? " Faltan " + fmt0.format(m - tj) + " pts · necesita " + fmt0.format(Math.ceil((m - tj) / ptT(d).rest)) + " pts por día" : "") + "</div>" : "") + "</button>";
  })).join("");
 }
@@ -9319,6 +9319,7 @@ function ptLlenarOps() {
 }
 
 function ptAmlHtml(A) {
+ if (A.error) return '<section class="panel pt-aml"><div class="pt-aml-cab"><span class="pt-aml-tag">AML / LUXEE</span><h2>Tus puntos en AML/LUXEE</h2></div><div class="sub">No se pudieron leer en este momento (' + esc(A.error) + "). Toca «Actualizar» en un rato.</div></section>";
  const n = Math.max(0, Math.min(A.ultimo || 0, (A.p || []).length)), suma = xs => (xs || []).slice(0, n).reduce(((s, x) => s + (Number(x) || 0)), 0);
  const pts = suma(A.p), lib = suma(A.l), tot = pts + lib, dia = i => (Number((A.p || [])[i]) || 0) + (Number((A.l || [])[i]) || 0);
  const semanas = n ? ptSemanas({
@@ -12299,4 +12300,4 @@ if (typeof google !== "undefined" && google.script && google.script.url) {
 } else if (/[?&]vista=panel/.test(location.search)) verVista("dash"); else if (/[?&]vista=puntos/.test(location.search)) verVista("pts"); else if (/[?&]vista=monitores/.test(location.search)) verVista("mon");</script>
 </body>
 </html>
-<!-- var HUELLA = '03d05fd6839f' -->
+<!-- var HUELLA = '2aeeed3fdb8c' -->
