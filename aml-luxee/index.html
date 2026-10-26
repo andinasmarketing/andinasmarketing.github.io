@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr03m5tH4HrrssdWXzoGtKFAqbvOnPPA7tRjsFSRsE16hLkv-w/exec";
 
 (function() {
- var n = 0, VER = "web 140", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 141", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "27f10a578bd7";
+ var HUELLA = "f00b9ff045d1";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -4636,7 +4636,8 @@ function horariosHtml(H, hoy, publico) {
   return d.toISOString().slice(0, 10);
  }, fe = x => x.slice(8) + "/" + x.slice(5, 7);
  const aviso = '<div class="sub">' + (publico ? "Los define el encargado, semana por semana (de lunes a domingo). Si cambia algo, aquí se ve en un par de minutos." : "Solo para consultar: lo llena el encargado en su archivo <b>HORARIOS Y DESCANSOS - OPERADORES</b>, una pestaña por semana (de lunes a domingo). Lo que cambie allá se ve aquí en un minuto. Operadores y monitores ven esto mismo en «Horarios de la semana», sin clave.") + "</div>";
- const prep = (H.pend || []).length ? '<div class="sub" style="margin-top:8px"><span class="rv-pill info">En preparación</span> ' + H.pend.map((l => "semana del " + fe(l) + " al " + fe(mas(l, 6)))).join(", ") + ". Se verá aquí cuando el encargado la publique.</div>" : "";
+ const pendV = (H.pend || []).filter((l => mas(l, 6) >= hoy));
+ const prep = pendV.length ? '<div class="sub" style="margin-top:8px"><span class="rv-pill info">En preparación</span> ' + pendV.map((l => "semana del " + fe(l) + " al " + fe(mas(l, 6)))).join(", ") + ". Se verá aquí cuando el encargado la publique.</div>" : "";
  window.HOR_SEM = null;
  if (!H.semanas.length) return '<section class="panel"><h2>Horarios por semana</h2>' + aviso + prep + '<div class="state" style="padding:18px 0">Todavía no hay horarios publicados.</div></section>';
  const actual = H.semanas.filter((x => x.l <= hoy && mas(x.l, 6) >= hoy))[0];
@@ -12269,4 +12270,4 @@ if (typeof google !== "undefined" && google.script && google.script.url) {
 } else if (/[?&]vista=panel/.test(location.search)) verVista("dash"); else if (/[?&]vista=puntos/.test(location.search)) verVista("pts"); else if (/[?&]vista=monitores/.test(location.search)) verVista("mon");</script>
 </body>
 </html>
-<!-- var HUELLA = '27f10a578bd7' -->
+<!-- var HUELLA = 'f00b9ff045d1' -->
