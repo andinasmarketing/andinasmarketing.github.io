@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr03m5tH4HrrssdWXzoGtKFAqbvOnPPA7tRjsFSRsE16hLkv-w/exec";
 
 (function() {
- var n = 0, VER = "web 139", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 140", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "c7c3fa1b24cb";
+ var HUELLA = "27f10a578bd7";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -5926,6 +5926,9 @@ function asistenciaAmlHtml() {
  const fechas = [];
  for (let f = hoy; f >= ini; f = ymdMas(f, -1)) fechas.push(f);
  const ops = [], vistos = {};
+ (DATA.fueraHorario || []).forEach((k => {
+  vistos[nrm(k)] = 1;
+ }));
  DATA.filas.forEach((f => {
   const k = nrm(f.o);
   if (!vistos[k]) {
@@ -12266,4 +12269,4 @@ if (typeof google !== "undefined" && google.script && google.script.url) {
 } else if (/[?&]vista=panel/.test(location.search)) verVista("dash"); else if (/[?&]vista=puntos/.test(location.search)) verVista("pts"); else if (/[?&]vista=monitores/.test(location.search)) verVista("mon");</script>
 </body>
 </html>
-<!-- var HUELLA = 'c7c3fa1b24cb' -->
+<!-- var HUELLA = '27f10a578bd7' -->
