@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr03m5tH4HrrssdWXzoGtKFAqbvOnPPA7tRjsFSRsE16hLkv-w/exec";
 
 (function() {
- var n = 0, VER = "web 159", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 160", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "edb383997b0f";
+ var HUELLA = "0c4f98a41daf";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -6406,6 +6406,7 @@ function amonHtml() {
   const n = c(x[2]);
   return !x[0] || n || AMON.est === x[0] ? '<button type="button" data-ame="' + x[0] + '" aria-selected="' + (AMON.est === x[0]) + '">' + x[1] + " · " + n + "</button>" : "";
  })).join("") + "</div>";
+ if (!D.filas.length) return h + '<div class="state am-vacio" style="padding:22px 0"><b>Todavía no hay monitores en el horario' + (window.ES_PRIME === false ? " de AML/LUXEE" : "") + ".</b><br>Cuando los agreguen en la pestaña PERSONAL del archivo de horarios (cargo «Monitor») y en el cuadro MONITORES de las pestañas «Personal», su asistencia saldrá aquí sola.</div></section>";
  if (!ver.length) return h + '<div class="state" style="padding:18px 0">No hay turnos para mostrar con ese filtro.</div></section>';
  const TIPO = {
   ok: "",
@@ -6857,7 +6858,7 @@ function renderNovedades() {
  if (soloAsis) NOVUI.vista = "asis"; else if (soloTar) NOVUI.vista = "tar"; else if (NOVUI.vista === "asis" || NOVUI.vista === "tar") NOVUI.vista = "nov";
  {
   const t = document.getElementById("novTit"), st = document.getElementById("novSub");
-  const esAmon = soloAsis && window.ES_PRIME !== false && NOVUI.asisQ === "mon";
+  const esAmon = soloAsis && NOVUI.asisQ === "mon";
   if (t) t.textContent = soloAsis ? "Asistencia" : soloTar ? "Tareas de LUXEE" : "Novedades";
   if (st) st.textContent = esAmon ? "A qué hora entró y salió cada monitor, quién faltó y las horas que hizo frente a las de su turno." : soloAsis ? "Quién llegó a tiempo, quién llegó tarde y quién no vino, por día y por jornada." : soloTar ? "Las tareas que deben hacer los operadores de LUXEE en su turno, y quién las cumplió." : window.ES_PRIME !== false ? "Faltas, vacaciones, permisos y retiros de operadores y monitores; horarios y descansos, e histórico de turnos." : "Vacaciones, permisos y retiros, y horarios y días de descanso.";
  }
@@ -6886,8 +6887,8 @@ function renderNovedades() {
   } catch (e) {}
  }), 6e4);
  if (NOVUI.vista === "asis") {
-  if (window.ES_PRIME === false || NOVUI.asisQ !== "mon") NOVUI.asisQ = "op";
-  const swQ = window.ES_PRIME === false ? "" : '<div class="nv-quien" role="tablist"><span>Asistencia de</span>' + [ [ "op", "Operadores" ], [ "mon", "Monitores" ] ].map((v => '<button type="button" data-aq="' + v[0] + '" aria-pressed="' + (NOVUI.asisQ === v[0]) + '">' + v[1] + "</button>")).join("") + "</div>";
+  if (NOVUI.asisQ !== "mon") NOVUI.asisQ = "op";
+  const swQ = '<div class="nv-quien" role="tablist"><span>Asistencia de</span>' + [ [ "op", "Operadores" ], [ "mon", "Monitores" ] ].map((v => '<button type="button" data-aq="' + v[0] + '" aria-pressed="' + (NOVUI.asisQ === v[0]) + '">' + v[1] + "</button>")).join("") + "</div>";
   const enlQ = () => caja.querySelectorAll("[data-aq]").forEach((q => q.onclick = () => {
    NOVUI.asisQ = q.dataset.aq;
    if (typeof EN_AMON !== "undefined") EN_AMON = q.dataset.aq === "mon";
@@ -12701,4 +12702,4 @@ if (typeof google !== "undefined" && google.script && google.script.url) {
 } else if (/[?&]vista=panel/.test(location.search)) verVista("dash"); else if (/[?&]vista=puntos/.test(location.search)) verVista("pts"); else if (/[?&]vista=monitores/.test(location.search)) verVista("mon");</script>
 </body>
 </html>
-<!-- var HUELLA = 'edb383997b0f' -->
+<!-- var HUELLA = '0c4f98a41daf' -->
