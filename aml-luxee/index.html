@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr03m5tH4HrrssdWXzoGtKFAqbvOnPPA7tRjsFSRsE16hLkv-w/exec";
 
 (function() {
- var n = 0, VER = "web 165", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 166", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "8f6e868fe320";
+ var HUELLA = "74327b24b49f";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -6025,6 +6025,9 @@ function asistenciaAmlHtml() {
    if (x && x.desc) {
     est = "vino";
     nota = "Vino en su descanso" + ptsTxt;
+   } else if (/Fuera/.test(m[4]) || E !== null && ent >= E) {
+    est = !m[3] ? "turno" : "vino";
+    nota = "Marcó fuera de su horario (" + hm(m[2]) + ")" + ptsTxt;
    } else if (tarde > TOL && !aj) {
     est = "tarde";
     nota = tarde + " min tarde" + ptsTxt;
@@ -8766,7 +8769,8 @@ document.getElementById("navInicio").onclick = () => {
   };
   if (!esApps) return listo(JSON.stringify({
    ok: true,
-   fuera: [ [ "GRUPO BRUSELA", "CESAR", "06:15", "20/10", "14:15" ] ],
+   fuera: [ [ "GRUPO ROMA", "HEDUMAR LEAL", "09:45", "27/10", "14:15" ] ],
+   pausas: [ [ "GRUPO BRUSELA", "CESAR SALAZAR", "14:30", 17 ] ],
    faltan: [ [ "GRUPO RIO", "EDGAR ORANCE", "14:15", "22:15" ] ],
    salen: [ [ "GRUPO TOKYO", "YONAIKER VIVAS", "14:15", false ], [ "GRUPO RIO", "NILSON ROJAS", "14:15", false ] ]
   }));
@@ -8780,9 +8784,10 @@ document.getElementById("navInicio").onclick = () => {
    ok: true,
    faltan: G0.faltan || [],
    salen: ROL === "op" ? G0.salen || [] : [],
-   fuera: ROL === "op" ? [] : G0.fuera || []
+   fuera: ROL === "op" ? [] : G0.fuera || [],
+   pausas: ROL === "op" ? [] : G0.pausas || []
   } : G0;
-  if (!G || !G.ok || !G.faltan.length && !G.salen.length && !G.fuera.length) {
+  if (!G || !G.ok || !G.faltan.length && !G.salen.length && !G.fuera.length && !G.pausas.length) {
    caja.hidden = true;
    return;
   }
@@ -8794,6 +8799,7 @@ document.getElementById("navInicio").onclick = () => {
    }
    G.faltan = [];
    G.salen = [];
+   G.pausas = [];
   }
   const sel = ROL === "op" ? document.getElementById("fOperador") : null, yo = sel && sel.value ? nk(sel.value) : "";
   const miS = yo && G.salen.find((x => nk(x[1]) === yo)), miF = yo && G.faltan.find((x => nk(x[1]) === yo));
@@ -8803,9 +8809,10 @@ document.getElementById("navInicio").onclick = () => {
    if (G.salen.length) txt += "<b>Terminan su turno pronto, quiten su casilla «Estoy de turno» al salir:</b> " + esc(lista(G.salen, (x => titulo(x[1]).split(" ")[0] + " (" + titulo(x[0]).replace(/^Grupo /, "") + ", " + x[2] + ")")));
    if (G.faltan.length) txt += (txt ? "<br>" : "") + "<b>Ya les toca turno y no han marcado «Estoy de turno»:</b> " + (ROL === "sup" ? G.faltan.slice(0, 8).map(((x, i) => esc(titulo(x[1]).split(" ")[0] + " (" + titulo(x[0]).replace(/^Grupo /, "") + ")") + ' <button type="button" class="at-ll" data-i="' + i + '" style="padding:3px 10px;font-size:12px">Ya llegó</button>')).join(" ") : esc(lista(G.faltan, (x => titulo(x[1]).split(" ")[0] + " (" + titulo(x[0]).replace(/^Grupo /, "") + ")"))));
    if (G.fuera.length) {
-    const fx = G.fuera.map(((x, i) => '<div class="at-fu" data-i="' + i + '" style="margin-top:8px"><b>' + esc(titulo(x[1]).split(" ")[0]) + " (" + esc(titulo(x[0]).replace(/^Grupo /, "")) + ")</b> vino fuera de su turno (entró el " + esc(x[3]) + " a las " + esc(x[2]) + ") y no ha marcado la salida." + (ROL === "sup" ? '<br><span style="display:inline-flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px"><input type="text" inputmode="numeric" class="at-h" placeholder="ej: 15:30" maxlength="8" title="Formato de 24 horas: 3:30 de la tarde = 15:30" style="font:inherit;width:84px;padding:4px 8px;border-radius:8px;border:1px solid #D4A82A;background:#fff;color:#15161A">' + '<button type="button" class="at-fs" style="padding:3px 10px;font-size:12px">Se fue a esa hora</button><button type="button" class="at-fh" style="padding:3px 10px;font-size:12px">Sigue hasta esa hora</button><small class="at-e" style="color:#FF9A90"></small></span>' : " <small>Avísale a supervisión para que lo revise y registre a qué hora se fue o hasta qué hora se queda.</small>") + "</div>")).join("");
-    txt = (txt ? txt + "<br>" : "") + "<b>Turnos fuera de horario sin salida:</b>" + (ROL === "sup" ? ' <small style="opacity:.8">Si ya se fue, pon a qué hora. Si sigue trabajando, pregúntale hasta qué hora se queda. Hora en formato de 24 horas: 3:30 de la tarde = 15:30, 10 de la noche = 22:00.</small>' : "") + fx;
+    const fx = G.fuera.map(((x, i) => '<div class="at-fu" data-i="' + i + '" style="margin-top:8px"><b>' + esc(titulo(x[1]).split(" ")[0]) + " (" + esc(titulo(x[0]).replace(/^Grupo /, "")) + ")</b> vino fuera de su turno (entró el " + esc(x[3]) + " a las " + esc(x[2]) + ") y no ha marcado la salida." + (ROL === "sup" ? '<br><span style="display:inline-flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px"><input type="text" inputmode="numeric" class="at-h" placeholder="ej: 15:30" maxlength="8" title="Formato de 24 horas: 3:30 de la tarde = 15:30" style="font:inherit;width:84px;padding:4px 8px;border-radius:8px;border:1px solid #D4A82A;background:#fff;color:#15161A">' + '<button type="button" class="at-fs" style="padding:3px 10px;font-size:12px">Se fue a esa hora</button><button type="button" class="at-fh" style="padding:3px 10px;font-size:12px">Sigue hasta esa hora</button><button type="button" class="at-fp" style="padding:3px 10px;font-size:12px" title="Deja de contar como que está operando hasta que vuelva a marcar «Estoy de turno»">Salió un momento, vuelve</button><small class="at-e" style="color:#FF9A90"></small></span>' : " <small>Avísale a supervisión para que lo revise y registre a qué hora se fue o hasta qué hora se queda.</small>") + "</div>")).join("");
+    txt = (txt ? txt + "<br>" : "") + "<b>Turnos fuera de horario sin salida:</b>" + (ROL === "sup" ? ' <small style="opacity:.8">Si ya se fue, pon a qué hora. Si sigue trabajando, pregúntale hasta qué hora se queda. Si salió un rato y vuelve, toca «Salió un momento, vuelve» (sin hora = ahora). Hora en formato de 24 horas: 3:30 de la tarde = 15:30, 10 de la noche = 22:00.</small>' : "") + fx;
    }
+   if (G.pausas.length) txt += (txt ? "<br>" : "") + "<b>Salieron un momento y dijeron que vuelven:</b> " + G.pausas.map(((x, i) => esc(titulo(x[1]).split(" ")[0] + " (" + titulo(x[0]).replace(/^Grupo /, "") + ")") + ' <small style="opacity:.8">salió a las ' + esc(x[2]) + (x[3] >= 1 ? ", hace " + (x[3] >= 60 ? Math.floor(x[3] / 60) + " h " + x[3] % 60 + " min" : x[3] + " min") : "") + "</small>" + (ROL === "sup" ? ' <button type="button" class="at-pv" data-i="' + i + '" style="padding:3px 10px;font-size:12px">Ya volvió</button><button type="button" class="at-pn" data-i="' + i + '" style="padding:3px 10px;font-size:12px">No vuelve</button>' : ""))).join(" · ") + '<br><small style="opacity:.75">' + (ROL === "sup" ? "Mientras tanto no cuenta como que está operando. Al volver marca «Estoy de turno» (o toca «Ya volvió»). Si en 4 horas no vuelve, queda como que se fue a esa hora." : "Al volver debe marcar otra vez «Estoy de turno». Avísale a supervisión si no vuelve.") + "</small>";
    if (ROL === "op" || G.faltan.length) txt += ROL === "op" ? '<br><small style="opacity:.75">Si no la quitan y no anotan más clientes, la salida se marca sola 5 minutos después de su hora.</small>' : ROL === "sup" ? '<br><small style="opacity:.75">Cuando llegue, toca «Ya llegó»: queda con la hora de ahora (si llegó tarde, sale tarde solo). Si faltó, regístralo en Novedades.</small>' : '<br><small style="opacity:.75">Avísale a supervisión cuando llegue.</small>';
   }
   caja.hidden = false;
@@ -8818,7 +8825,9 @@ document.getElementById("navInicio").onclick = () => {
    const x = G.fuera[Number(fu.dataset.i)], inp = fu.querySelector(".at-h"), er = fu.querySelector(".at-e");
    if (!x || !inp) return;
    const ir = (acc, b) => {
-    const ahoraHM = (new Date).toTimeString().slice(0, 5), hv = window.horaSensata ? window.horaSensata(inp.value) : inp.value;
+    const ahoraHM = (new Date).toTimeString().slice(0, 5);
+    if (acc === "pausa" && !inp.value.trim()) inp.value = ahoraHM;
+    const hv = window.horaSensata ? window.horaSensata(inp.value) : inp.value;
     if (!/^\d{2}:\d{2}$/.test(hv)) {
      er.textContent = "Formato de 24 horas, por ejemplo 15:30.";
      inp.focus();
@@ -8833,7 +8842,7 @@ document.getElementById("navInicio").onclick = () => {
       er.textContent = d && d.error || "No se pudo guardar.";
       return;
      }
-     if (window.toast) toast(acc === "salio" ? "Listo: salida de " + titulo(x[1]) + " a las " + d.hora + "." : "Listo: " + titulo(x[1]) + " sigue hasta las " + d.hora + " (a esa hora se le marca la salida sola).");
+     if (window.toast) toast(acc === "salio" ? "Listo: salida de " + titulo(x[1]) + " a las " + d.hora + "." : acc === "pausa" ? "Listo: " + titulo(x[1]) + " salió un momento a las " + d.hora + ". Cuando vuelva, que marque «Estoy de turno»." : "Listo: " + titulo(x[1]) + " sigue hasta las " + d.hora + " (a esa hora se le marca la salida sola).");
      A.gen.fuera = (A.gen.fuera || []).filter((z => z !== x));
      ver();
      window.avisoTurnoRefrescar();
@@ -8860,6 +8869,29 @@ document.getElementById("navInicio").onclick = () => {
    };
    fu.querySelector(".at-fs").onclick = e => ir("salio", e.target);
    fu.querySelector(".at-fh").onclick = e => ir("sigue", e.target);
+   fu.querySelector(".at-fp").onclick = e => ir("pausa", e.target);
+  }));
+  caja.querySelectorAll(".at-pv").forEach((b => b.onclick = () => {
+   const x = G.pausas[Number(b.dataset.i)];
+   if (x && window.marcarEntradaUI) window.marcarEntradaUI({
+    g: x[0],
+    o: x[1]
+   }, b);
+  }));
+  caja.querySelectorAll(".at-pn").forEach((b => b.onclick = () => {
+   const x = G.pausas[Number(b.dataset.i)];
+   if (!x) return;
+   b.disabled = true;
+   const fin = () => {
+    A.gen.pausas = (A.gen.pausas || []).filter((z => z !== x));
+    ver();
+    window.avisoTurnoRefrescar();
+   };
+   if (!esApps) return fin();
+   google.script.run.withFailureHandler((() => {
+    b.disabled = false;
+    alert("No se pudo guardar.");
+   })).withSuccessHandler(fin).pausaOpQuitar(clave, x[0], x[1]);
   }));
   caja.querySelectorAll(".at-ll").forEach((b => b.onclick = () => {
    const x = G.faltan[Number(b.dataset.i)];
@@ -9301,12 +9333,12 @@ function amlTurnoHtml() {
   h += '<div class="at-hor">' + hor(d.hoyH) + '</div><div class="at-nota">Tú también trabajas en PRIME (' + esc(d.prime) + "): marca <b>«Estoy de turno»</b> en PRIME y te cuenta para los dos. Aquí no tienes que marcar nada.</div>";
  } else if (d.abierta) {
   const fin = d.faltaMin !== null && d.faltaMin <= 15;
-  h += '<span class="at-pill ok">De turno desde las ' + d.abierta.ent + "</span>" + (d.abierta.fin ? '<div class="at-hor">Sales a las ' + d.abierta.fin + "</div>" : "") + (fin ? '<div class="at-aviso">⏰ ' + (d.faltaMin > 0 ? "Tu turno termina en " + d.faltaMin + " minutos." : "Tu turno ya terminó.") + " Toca «Terminé mi turno» al salir.</div>" : "") + '<button type="button" class="at-btn neg" data-at="salir">Terminé mi turno</button><div class="at-nota">Si se te olvida, se cierra sola a la hora de salida de tu horario.</div>';
+  h += '<span class="at-pill ok">De turno desde las ' + d.abierta.ent + "</span>" + (d.abierta.fin ? '<div class="at-hor">Sales a las ' + d.abierta.fin + "</div>" : "") + (fin ? '<div class="at-aviso">⏰ ' + (d.faltaMin > 0 ? "Tu turno termina en " + d.faltaMin + " minutos." : "Tu turno ya terminó.") + " Toca «Terminé mi turno» al salir.</div>" : "") + '<button type="button" class="at-btn neg" data-at="salir">Terminé mi turno</button><div class="at-nota">' + (d.fueraAb ? "Marcaste fuera de tu horario publicado: si se te olvida, se cierra sola a las " + esc(d.abierta.fin || "") + "." : "Si se te olvida, se cierra sola a la hora de salida de tu horario.") + "</div>";
  } else {
   const x = d.actual;
   h += '<div class="at-sub">' + fe(d.hoy) + (PT.grupo ? " · " + esc(PT.grupo) : "") + '</div><div class="at-hor">' + hor(x || d.hoyH) + "</div>" + (x ? '<span class="at-pill av">Te toca ahora · son las ' + d.ahora + "</span>" : d.prox ? '<span class="at-pill">Tu próximo turno: ' + fe(d.prox.f) + " a las " + d.prox.e + "</span>" : "") + '<button type="button" class="at-btn oro" data-at="entrar">Empiezo mi turno</button><div class="at-nota">Queda registrada la hora en que lo tocas. Puedes marcar desde ' + d.antes + " minutos antes.</div>";
  }
- if ((d.semana || []).length) h += '<div class="at-sem"><p class="at-cap">Esta semana</p>' + d.semana.map((s => "<div>" + fe(s.f) + " · " + (s.ent ? "llegó " + s.ent + (s.sal ? " → " + s.sal + (s.auto ? " <small>(se cerró sola)</small>" : "") : "") + " " + (s.tarde ? '<span class="at-pill av">' + s.tarde + " min tarde</span>" : '<span class="at-pill ok">A tiempo</span>') : s.desc ? '<span class="at-pill">Descanso</span>' : s.f === d.hoy ? '<span class="at-pill">Todavía no marca</span>' : '<span class="at-pill mal">No marcó</span>') + "</div>")).join("") + "</div>";
+ if ((d.semana || []).length) h += '<div class="at-sem"><p class="at-cap">Esta semana</p>' + d.semana.map((s => "<div>" + fe(s.f) + " · " + (s.ent ? "llegó " + s.ent + (s.sal ? " → " + s.sal + (s.auto ? " <small>(se cerró sola)</small>" : "") : "") + " " + (s.fuera ? '<span class="at-pill">Fuera de su horario</span>' : s.tarde ? '<span class="at-pill av">' + s.tarde + " min tarde</span>" : '<span class="at-pill ok">A tiempo</span>') : s.desc ? '<span class="at-pill">Descanso</span>' : s.f === d.hoy ? '<span class="at-pill">Todavía no marca</span>' : '<span class="at-pill mal">No marcó</span>') + "</div>")).join("") + "</div>";
  h += '<div class="at-err" id="atErr"></div></section>';
  if (d.lux) h += luxTareasHtml(d.lux);
  return h;
@@ -13830,4 +13862,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = '8f6e868fe320' -->
+<!-- var HUELLA = '74327b24b49f' -->
