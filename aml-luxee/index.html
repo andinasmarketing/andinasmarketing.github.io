@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr03m5tH4HrrssdWXzoGtKFAqbvOnPPA7tRjsFSRsE16hLkv-w/exec";
 
 (function() {
- var n = 0, VER = "web 156", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 158", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "dba238da81c2";
+ var HUELLA = "ff93c707a07c";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -75,14 +75,14 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr0
   t = setTimeout((function() {
    limpiar();
    if (mal) mal(new Error(MSG));
-  }), 6e4);
+  }), 15e4);
   s.src = API_URL + "?api=1&fn=" + encodeURIComponent(fn) + "&args=" + encodeURIComponent(JSON.stringify(args)) + "&cb=" + cb;
   document.head.appendChild(s);
  }
  function llamar(fn, args, ok, mal) {
   var ctl = window.AbortController ? new AbortController : null, t = setTimeout((function() {
    if (ctl) ctl.abort();
-  }), 6e4);
+  }), 15e4);
   fetch(API_URL, {
    method: "POST",
    redirect: "follow",
@@ -6637,7 +6637,7 @@ function luxHtml() {
  if (D.puede) h += '<div class="lx-f"><input type="text" class="lx-txt" maxlength="200" placeholder="Escribe la tarea…">' + selC("Siempre", "lx-c") + '<input type="date" class="lx-d" value="' + D.hoy + '" min="' + D.hoy + '" hidden>' + selJ("Todas", "lx-j") + '<button type="button" class="btn lx-add">+ Agregar</button><small class="lx-err" role="alert"></small></div>'; else h += '<div class="at-nota lx-aviso">Para agregar o cambiar tareas entra con la clave de líderes (encargados, Luizzana, Nelson o Lupe).</div>';
  if (!D.tareas.length) h += '<div class="state" style="padding:14px 0">Todavía no hay tareas.</div>'; else h += '<div class="table-scroll"><table class="sr-t"><thead><tr><th>Tarea</th><th>Cuándo</th><th>Jornada</th><th>La puso</th><th></th></tr></thead><tbody>' + D.tareas.map(((t, i) => LUX.edit === t.id ? '<tr data-lxe="' + i + '"><td><input type="text" class="lx-et" maxlength="200" value="' + esc(t.t) + '" style="width:100%"></td><td>' + selC(t.c, "lx-ec") + ' <input type="date" class="lx-ed" value="' + (t.c === "Siempre" ? D.hoy : t.c) + '"' + (t.c === "Siempre" ? " hidden" : "") + "></td><td>" + selJ(t.j, "lx-ej") + '</td><td></td><td style="white-space:nowrap"><button type="button" class="sr-x" data-lxg="' + i + '">Guardar</button> <button type="button" class="sr-x" data-lxn="1">Cancelar</button></td></tr>' : "<tr><td><b>" + esc(t.t) + "</b></td><td>" + cuando(t) + "</td><td>" + esc(t.j) + "</td><td><small>" + esc(t.por || "") + '</small></td><td style="white-space:nowrap">' + (D.puede ? '<button type="button" class="sr-x" data-lxx="' + i + '">Editar</button> <button type="button" class="sr-x" data-lxq="' + i + '">Quitar</button>' : "") + "</td></tr>")).join("") + "</tbody></table></div>";
  h += '</section><section class="panel"><h2>Cumplimiento</h2><div class="sub">Cuántas tareas marcó cada operador de LUXEE en cada turno (últimos 14 días).</div>';
- const C = D.cumpl.filter((z => !z.desc));
+ const C = D.cumpl;
  if (!C.length) h += '<div class="state" style="padding:14px 0">Todavía no hay turnos con tareas.</div>'; else {
   let fA = "";
   h += '<div class="table-scroll"><table class="sr-t"><thead><tr><th>Operador</th><th>Turno</th><th>Hechas</th><th>Pendientes</th></tr></thead><tbody>';
@@ -6646,8 +6646,8 @@ function luxHtml() {
     fA = z.f;
     h += '<tr class="nv-sep"><td colspan="4"><span class="nv-sep-t">' + DSEMLARGO(z.f) + " " + fe(z.f) + (z.f === D.hoy ? " · hoy" : "") + "</span></td></tr>";
    }
-   const pill = z.aun ? '<span class="rv-pill">Aún no empieza</span>' : !z.total ? '<span class="rv-pill">Sin tareas</span>' : '<span class="rv-pill ' + (z.hechas.length >= z.total ? "ok" : z.enCurso ? "info" : z.hechas.length ? "aviso" : "accion") + '">' + z.hechas.length + " de " + z.total + (z.enCurso && z.hechas.length < z.total ? " · en turno" : "") + "</span>";
-   h += '<tr><td class="name"><b>' + esc(titulo(z.o)) + '</b><br><small style="color:var(--faint)">' + esc(titulo(z.g)) + "</small></td><td>" + esc(z.n || "—") + (z.e ? '<br><small style="color:var(--faint)">' + z.e + " – " + z.s + "</small>" : "") + "</td><td>" + pill + (z.hechas && z.hechas.length ? "<div><small>" + z.hechas.map((x => esc(x[0]) + " (" + esc(x[1]) + ")")).join(" · ") + "</small></div>" : "") + '</td><td style="white-space:normal"><small>' + (z.pend || []).map(esc).join(" · ") + "</small></td></tr>";
+   const pill = z.desc ? '<span class="rv-pill" style="opacity:.75">Descansa</span>' : z.aun ? '<span class="rv-pill">Aún no empieza</span>' : !z.total ? '<span class="rv-pill">Sin tareas</span>' : '<span class="rv-pill ' + (z.hechas.length >= z.total ? "ok" : z.enCurso ? "info" : z.hechas.length ? "aviso" : "accion") + '">' + z.hechas.length + " de " + z.total + (z.enCurso && z.hechas.length < z.total ? " · en turno" : "") + "</span>";
+   h += '<tr><td class="name"><b>' + esc(titulo(z.o)) + '</b><br><small style="color:var(--faint)">' + esc(titulo(z.g)) + "</small></td><td>" + esc(z.desc ? "Descanso" : z.n || "—") + (z.e ? '<br><small style="color:var(--faint)">' + z.e + " – " + z.s + "</small>" : "") + "</td><td>" + pill + (z.hechas && z.hechas.length ? "<div><small>" + z.hechas.map((x => esc(x[0]) + " (" + esc(x[1]) + ")")).join(" · ") + "</small></div>" : "") + '</td><td style="white-space:normal"><small>' + (z.pend || []).map(esc).join(" · ") + "</small></td></tr>";
   }));
   h += "</tbody></table></div>";
  }
@@ -12640,4 +12640,4 @@ if (typeof google !== "undefined" && google.script && google.script.url) {
 } else if (/[?&]vista=panel/.test(location.search)) verVista("dash"); else if (/[?&]vista=puntos/.test(location.search)) verVista("pts"); else if (/[?&]vista=monitores/.test(location.search)) verVista("mon");</script>
 </body>
 </html>
-<!-- var HUELLA = 'dba238da81c2' -->
+<!-- var HUELLA = 'ff93c707a07c' -->
