@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 179", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 180", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "a08a93ebd430";
+ var HUELLA = "d3bd3adec7e5";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -662,7 +662,7 @@ function supBarPintar() {
  const ses = supSesion(), h = supHasta(), venc = h && Date.now() >= h, n1 = supNombre.split(" ")[0], finTxt = h ? hmCorta(h - 15 * 6e4) : "";
  const rec = SUP_REC.lista || [];
  bar.className = venc ? "st-venc" : "";
- bar.innerHTML = '<div class="st-top"><span class="st-dot" aria-hidden="true"></span><div class="st-q">' + (venc ? "<b>El turno de " + esc(supNombre) + " terminó a las " + esc(finTxt) + ".</b><span>Si ya te vas, toca «Terminé mi turno». Si no eres " + esc(n1) + ", finaliza su turno e inicia con tu nombre.</span>" : "<b>" + esc(supNombre) + " está de turno</b><span>" + (ses.t ? "Desde las " + hmCorta(ses.t) + (finTxt ? " · su turno va hasta las " + esc(finTxt) : "") + ". " : "") + "Si no eres " + esc(n1) + ", finaliza su turno e inicia con tu nombre.</span>") + "</div>" + '<div class="st-b"><button type="button" class="btn st-fin" data-st="fin">Terminé mi turno</button><button type="button" class="btn ghost" data-st="otro">No soy ' + esc(n1) + "</button></div></div>" + rec.map((x => '<div class="st-rec"><span aria-hidden="true">📋</span><div><b>Recordatorio</b><span>No olvides cargar la solicitud de revisión de perfiles por puntos.</span></div>' + '<div class="st-rb"><button type="button" class="btn ghost" data-rp="' + esc(x.fecha) + "|" + esc(x.j) + '">Cargarla</button><button type="button" class="st-x" data-rok="' + esc(x.k) + '">Ya la cargué</button></div></div>')).join("") + "";
+ bar.innerHTML = '<div class="st-top"><span class="st-dot" aria-hidden="true"></span><div class="st-q">' + (venc ? "<b>El turno de " + esc(supNombre) + " terminó a las " + esc(finTxt) + ".</b><span>Si ya te vas, toca «Terminé mi turno». Si no eres " + esc(n1) + ", finaliza su turno e inicia con tu nombre.</span>" : "<b>" + esc(supNombre) + " está de turno</b><span>" + (window.SUP_DESDE || ses.t ? "Desde las " + hmCorta(window.SUP_DESDE || ses.t) + (finTxt ? " · su turno va hasta las " + esc(finTxt) : "") + ". " : "") + "Si no eres " + esc(n1) + ", finaliza su turno e inicia con tu nombre.</span>") + "</div>" + '<div class="st-b"><button type="button" class="btn st-fin" data-st="fin">Terminé mi turno</button><button type="button" class="btn ghost" data-st="otro">No soy ' + esc(n1) + "</button></div></div>" + rec.map((x => '<div class="st-rec"><span aria-hidden="true">📋</span><div><b>Recordatorio</b><span>No olvides cargar la solicitud de revisión de perfiles por puntos.</span></div>' + '<div class="st-rb"><button type="button" class="btn ghost" data-rp="' + esc(x.fecha) + "|" + esc(x.j) + '">Cargarla</button><button type="button" class="st-x" data-rok="' + esc(x.k) + '">Ya la cargué</button></div></div>')).join("") + "";
  bar.querySelectorAll("[data-st]").forEach((b => b.onclick = () => supTerminar(b.dataset.st === "otro" ? "otro" : "", b)));
  bar.querySelectorAll("[data-rp]").forEach((b => b.onclick = () => {
   const [f, j] = b.dataset.rp.split("|");
@@ -771,6 +771,7 @@ function recibir(texto) {
   } catch (e) {}
  }
  window.liderRecordar(d);
+ window.SUP_DESDE = Number(d.supDesde) || 0;
  setTimeout((() => {
   supGuardarSesion();
   window.supRecordar();
@@ -15403,4 +15404,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = 'a08a93ebd430' -->
+<!-- var HUELLA = 'd3bd3adec7e5' -->
