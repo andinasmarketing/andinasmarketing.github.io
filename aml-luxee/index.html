@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr03m5tH4HrrssdWXzoGtKFAqbvOnPPA7tRjsFSRsE16hLkv-w/exec";
 
 (function() {
- var n = 0, VER = "web 177", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 178", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "8f0ff4726f0c";
+ var HUELLA = "c49b8ba516d3";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -451,6 +451,17 @@ try {
  supNombre = sessionStorage.getItem("retr_nombre") || "";
 } catch (e) {}
 
+try {
+ const g = JSON.parse(localStorage.getItem("retr_sesion") || "null");
+ if (!clave && g && g.k && g.n) {
+  clave = g.k;
+  supNombre = g.n;
+  sessionStorage.setItem("retr_clave", clave);
+  sessionStorage.setItem("retr_nombre", supNombre);
+  if (g.h) sessionStorage.setItem("retr_hasta", String(g.h));
+ }
+} catch (e) {}
+
 if (clave && !supNombre) {
  clave = "";
  try {
@@ -521,6 +532,9 @@ function salirSupervision(porTurno) {
  clave = "";
  supNombre = "";
  try {
+  localStorage.removeItem("retr_sesion");
+ } catch (e) {}
+ try {
   sessionStorage.removeItem("retr_clave");
   sessionStorage.removeItem("retr_nombre");
   sessionStorage.removeItem("mon_clave");
@@ -545,16 +559,193 @@ function salirSupervision(porTurno) {
  verVista("inicio");
 }
 
-setInterval((() => {
- let h = 0;
+/* ---------- SUPERVISIÓN DE TURNO: quién está, «Terminé mi turno» y recordatorio de la revisión por puntos ---------- */
+function supGuardarSesion() {
  try {
-  h = Number(sessionStorage.getItem("retr_hasta") || 0);
+  const g = JSON.parse(localStorage.getItem("retr_sesion") || "null") || {}, nuevo = !g.n || nrm(g.n) !== nrm(supNombre);
+  localStorage.setItem("retr_sesion", JSON.stringify({
+   k: clave,
+   n: supNombre,
+   h: Number(sessionStorage.getItem("retr_hasta") || 0),
+   t: nuevo ? Date.now() : g.t || Date.now()
+  }));
  } catch (e) {}
- if (!clave || !h || Date.now() < h) return;
- const n = supNombre;
- salirSupervision(true);
- setTimeout((() => alert("Terminó el turno de " + n + ": se cerró la sesión de supervisión. Para seguir, entra de nuevo con tu nombre y la clave.")), 50);
-}), 3e4);
+}
+
+function supSesion() {
+ try {
+  return JSON.parse(localStorage.getItem("retr_sesion") || "null") || {};
+ } catch (e) {
+  return {};
+ }
+}
+
+function supHasta() {
+ try {
+  return Number(sessionStorage.getItem("retr_hasta") || 0);
+ } catch (e) {
+  return 0;
+ }
+}
+
+const hmCorta = ms => {
+ const d = new Date(ms);
+ return ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
+};
+
+function supTerminar(como, b) {
+ const n = supNombre, n1 = (n || "").split(" ")[0];
+ if (como !== "otro" && !confirm("¿Terminaste tu turno? Queda la hora de ahora como tu salida y se cierra la sesión para el siguiente supervisor.")) return;
+ if (como === "otro" && !confirm(n + " no marcó que terminó su turno. Se cierra su sesión y entras tú con tu nombre. ¿Seguir?")) return;
+ const fin = d => {
+  if (b) b.disabled = false;
+  const c = document.getElementById("supFinT");
+  if (c) c.remove();
+  salirSupervision(true);
+  setTimeout((() => {
+   pedirClave("");
+   if (window.toast) toast(como === "otro" ? "Se cerró la sesión de " + n + ". Entra con tu nombre y la clave." : "Listo, " + n1 + ": tu salida quedó a las " + (d && d.hora || hmCorta(Date.now())) + ". ¡Gracias!");
+  }), 60);
+ };
+ if (b) b.disabled = true;
+ if (!esApps) return setTimeout((() => fin({
+  ok: true
+ })), 120);
+ google.script.run.withFailureHandler((() => fin(null))).withSuccessHandler((t => {
+  let d = null;
+  try {
+   d = JSON.parse(t);
+  } catch (e) {}
+  fin(d);
+ })).terminarTurnoSupervision(clave, n, como || "");
+}
+
+const SUP_JOR = [ [ "NOCHE", "06:15" ], [ "MAÑANA", "14:15" ], [ "TARDE", "22:15" ] ], SUP_REC = {
+ antes: 15,
+ despues: 180,
+ ok: {}
+};
+
+function supRecordatorios() {
+ if (window.ES_PRIME === false || !DATA) return [];
+ const ahora = new Date, hoy = ymdMas(ahora.getFullYear() + "-" + ("0" + (ahora.getMonth() + 1)).slice(-2) + "-" + ("0" + ahora.getDate()).slice(-2), 0), now = minAbs(hoy, hmCorta(ahora.getTime()));
+ const out = [];
+ [ ymdMas(hoy, -1), hoy ].forEach((f => SUP_JOR.forEach((([j, h]) => {
+  const fin = minAbs(f, h);
+  if (now < fin - SUP_REC.antes || now > fin + SUP_REC.despues) return;
+  const fechaJ = j === "NOCHE" ? ymdMas(f, -1) : f, k = fechaJ + "|" + j;
+  if (SUP_REC.ok[k] || out.some((x => x.k === k))) return;
+  out.push({
+   k: k,
+   j: j,
+   fecha: fechaJ,
+   fechas: [ fechaJ, f ],
+   fin: h,
+   ya: now >= fin
+  });
+ }))));
+ const fuera = [];
+ (DATA.histTurnos || []).forEach((t => {
+  if (!t[3] || t[4] || !/^En turno/.test(t[6] || "") || t[0] !== hoy && t[0] !== ymdMas(hoy, -1)) return;
+  const ent = minAbs(t[0], t[3]);
+  let dentro = false, dur = 480;
+  [ ymdMas(t[0], -1), t[0] ].forEach((f => {
+   const x = typeof horarioDia === "function" ? horarioDia(t[2], f) : null;
+   if (!x || x.desc || !x.e || !x.s) return;
+   const S = minAbs(f, x.e);
+   let E = minAbs(f, x.s);
+   if (E <= S) E += 1440;
+   if (ent >= S - 240 && ent < E) dentro = true;
+   dur = E - S;
+  }));
+  if (dentro) return;
+  const finM = ent + dur;
+  if (now < finM - SUP_REC.antes || now > finM + 60) return;
+  const k = "op|" + nrm(t[2]) + "|" + t[0] + t[3];
+  if (SUP_REC.ok[k]) return;
+  const hh = (Math.floor(finM / 60) % 24 + "").padStart(2, "0") + ":" + ("0" + finM % 60).slice(-2);
+  fuera.push({
+   k: k,
+   o: t[2],
+   g: t[1],
+   fin: hh,
+   fecha: t[0],
+   j: (h => h < 10 ? "MAÑANA" : h < 18 ? "TARDE" : "NOCHE")(Number(t[3].slice(0, 2)))
+  });
+ }));
+ return out.concat(fuera.length ? [ {
+  fuera: fuera
+ } ] : []);
+}
+
+function supBarPintar() {
+ let bar = document.getElementById("supTurno");
+ if (!bar) {
+  const host = document.getElementById("vistaSupInicio");
+  if (!host) return;
+  bar = document.createElement("section");
+  bar.id = "supTurno";
+  host.parentNode.insertBefore(bar, host.parentNode.firstChild);
+ }
+ const ver = !!clave && !!supNombre && ROL === "sup";
+ bar.hidden = !ver;
+ if (!ver) return;
+ const ses = supSesion(), h = supHasta(), venc = h && Date.now() >= h, n1 = supNombre.split(" ")[0], finTxt = h ? hmCorta(h - 15 * 6e4) : "";
+ const rec = SUP_REC.lista || [];
+ bar.className = venc ? "st-venc" : "";
+ bar.innerHTML = '<div class="st-top"><span class="st-dot" aria-hidden="true"></span><div class="st-q">' + (venc ? "<b>El turno de " + esc(supNombre) + " terminó a las " + esc(finTxt) + ".</b><span>Si ya te vas, toca «Terminé mi turno». Si no eres " + esc(n1) + ", finaliza su turno e inicia con tu nombre.</span>" : "<b>" + esc(supNombre) + " está de turno</b><span>" + (ses.t ? "Desde las " + hmCorta(ses.t) + (finTxt ? " · su turno va hasta las " + esc(finTxt) : "") + ". " : "") + "Si no eres " + esc(n1) + ", finaliza su turno e inicia con tu nombre.</span>") + "</div>" + '<div class="st-b"><button type="button" class="btn st-fin" data-st="fin">Terminé mi turno</button><button type="button" class="btn ghost" data-st="otro">No soy ' + esc(n1) + "</button></div></div>" + rec.map((x => x.fuera ? '<div class="st-rec fu"><span aria-hidden="true">📋</span><div><b>Corte aparte: vinieron fuera de su horario</b><span>' + x.fuera.map((y => esc(titulo(y.o)) + " (" + esc(titulo(y.g).replace(/^Grupo /, "")) + ") termina a las <b>" + esc(y.fin) + "</b>")).join(" · ") + ". Su revisión por puntos va con la hora en que terminen, no con la de la jornada.</span></div>" + '<div class="st-rb"><button type="button" class="btn ghost" data-rp="' + esc(x.fuera[0].fecha) + "|" + esc(x.fuera[0].j) + '">Pedir revisión</button><button type="button" class="st-x" data-rok="' + esc(x.fuera.map((y => y.k)).join("~")) + '">Listo</button></div></div>' : '<div class="st-rec"><span aria-hidden="true">📋</span><div><b>' + (x.ya ? "Ya terminó" : "Termina") + " la jornada de la " + esc((JL[J.indexOf(x.j)] || x.j).toLowerCase()) + " (" + esc(x.fin) + ")</b><span>No olvides cargar la solicitud de revisión de perfiles por puntos de esta jornada. El corte es a las " + esc(x.fin) + " en punto.</span></div>" + '<div class="st-rb"><button type="button" class="btn" data-rp="' + esc(x.fecha) + "|" + esc(x.j) + '">Pedir revisión por puntos</button><button type="button" class="st-x" data-rok="' + esc(x.k) + '" title="Ya la cargué">Ya la cargué</button></div></div>')).join("");
+ bar.querySelectorAll("[data-st]").forEach((b => b.onclick = () => supTerminar(b.dataset.st === "otro" ? "otro" : "", b)));
+ bar.querySelectorAll("[data-rp]").forEach((b => b.onclick = () => {
+  const [f, j] = b.dataset.rp.split("|");
+  if (window.audPedirCon) window.audPedirCon(f, j);
+ }));
+ bar.querySelectorAll("[data-rok]").forEach((b => b.onclick = () => {
+  b.dataset.rok.split("~").forEach((k => {
+   SUP_REC.ok[k] = 1;
+  }));
+  try {
+   localStorage.setItem("sup_rec_ok", JSON.stringify(SUP_REC.ok));
+  } catch (e) {}
+  SUP_REC.lista = (SUP_REC.lista || []).filter((x => x.fuera ? (x.fuera = x.fuera.filter((y => !SUP_REC.ok[y.k]))).length : !SUP_REC.ok[x.k]));
+  supBarPintar();
+ }));
+ const caja = document.getElementById("supFinT");
+ if (h && Date.now() >= h + 105 * 6e4) {
+  if (!caja) {
+   document.body.insertAdjacentHTML("beforeend", '<div class="mn-finT" id="supFinT" role="dialog" aria-modal="true"><div class="mn-finT-c"><span class="mn-finT-i" aria-hidden="true">⏰</span><h2>El turno de ' + esc(n1) + " terminó a las " + esc(finTxt) + "</h2><p>La sesión de supervisión sigue a nombre de <b>" + esc(supNombre) + "</b>.</p>" + '<button type="button" class="btn mn-finT-b" data-sf="fin">Soy ' + esc(n1) + ': terminé mi turno <small>Queda la hora de ahora como mi salida</small></button><button type="button" class="btn ghost mn-finT-b" data-sf="otro">No soy ' + esc(n1) + " <small>Cierro su sesión y entro con mi nombre</small></button></div></div>");
+   document.querySelectorAll("#supFinT [data-sf]").forEach((b => b.onclick = () => supTerminar(b.dataset.sf === "otro" ? "otro" : "", b)));
+  }
+ } else if (caja) caja.remove();
+}
+
+window.supRecordar = () => {
+ try {
+  SUP_REC.ok = JSON.parse(localStorage.getItem("sup_rec_ok") || "{}");
+  Object.keys(SUP_REC.ok).forEach((k => {
+   if (!/^\d{4}-\d{2}-\d{2}\|/.test(k) && !/^op\|/.test(k)) delete SUP_REC.ok[k];
+  }));
+ } catch (e) {}
+ const L = supRecordatorios();
+ SUP_REC.lista = L;
+ supBarPintar();
+ if (window.audPtsCargada) L.filter((x => !x.fuera)).forEach((x => window.audPtsCargada(x.fechas, x.j).then((ya => {
+  if (ya) {
+   SUP_REC.ok[x.k] = 1;
+   SUP_REC.lista = (SUP_REC.lista || []).filter((y => y.k !== x.k));
+   supBarPintar();
+  }
+ }))));
+};
+
+setInterval((() => {
+ if (clave && ROL === "sup") window.supRecordar(); else supBarPintar();
+}), 6e4);
+
+(() => {
+ const st = document.createElement("style");
+ st.textContent = "#supTurno{margin:0 0 14px;border:1px solid var(--line);border-radius:16px;background:var(--surface,#fff);padding:10px 14px;display:flex;flex-direction:column;gap:8px}#supTurno[hidden]{display:none}" + "#supTurno .st-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}#supTurno .st-dot{width:10px;height:10px;border-radius:50%;background:#1E7A4F;box-shadow:0 0 0 4px rgba(30,122,79,.15);flex:none}" + "#supTurno .st-q{flex:1 1 320px;display:flex;flex-direction:column;min-width:0}#supTurno .st-q b{font-size:14.5px}#supTurno .st-q span{font-size:12.5px;color:var(--muted)}" + "#supTurno .st-b{display:flex;gap:8px;flex-wrap:wrap}#supTurno .st-b .btn{padding:7px 14px;font-size:13px}#supTurno .st-fin{background:var(--oro,#C9A227)!important;color:#15161A!important;border-color:transparent!important;font-weight:800}" + "#supTurno.st-venc{background:#FBEFD9;border-color:#E9C98A}#supTurno.st-venc .st-dot{background:#D68910;box-shadow:0 0 0 4px rgba(214,137,16,.2)}#supTurno.st-venc .st-q b{color:#7A4B00}" + "#supTurno .st-rec{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:12px;background:#15161A;color:#F6F1E4}#supTurno .st-rec>span{font-size:20px}" + "#supTurno .st-rec>div:not(.st-rb){flex:1 1 300px;display:flex;flex-direction:column;min-width:0}#supTurno .st-rec b{color:#E7C35A;font-size:14px}#supTurno .st-rec span{font-size:12.5px;opacity:.9}#supTurno .st-rec span b{font-size:12.5px}" + "#supTurno .st-rec.fu{background:#2a2410}#supTurno .st-rb{display:flex;gap:8px;align-items:center;flex-wrap:wrap}#supTurno .st-rb .btn{padding:7px 14px;font-size:13px}#supTurno .st-rb .btn.ghost{color:#E7C35A;border-color:#E7C35A;background:transparent}" + "#supTurno .st-x{font:inherit;font-size:12.5px;font-weight:700;border:0;background:none;color:#d8cfb6;cursor:pointer;text-decoration:underline}" + "@media (max-width:640px){#supTurno .st-b,#supTurno .st-rb{width:100%}#supTurno .st-b .btn,#supTurno .st-rb .btn{flex:1}}";
+ document.head.appendChild(st);
+})();
 
 /* ================== Carga ================== */
 function cargar(forzar) {
@@ -613,6 +804,10 @@ function recibir(texto) {
   } catch (e) {}
  }
  window.liderRecordar(d);
+ setTimeout((() => {
+  supGuardarSesion();
+  window.supRecordar();
+ }), 0);
  if (d.supHasta) {
   try {
    if (window.SUP_NUEVO || !sessionStorage.getItem("retr_hasta")) sessionStorage.setItem("retr_hasta", String(d.supHasta));
@@ -8723,6 +8918,9 @@ function verVista(v) {
   window.renderAvisoAusencias();
  } catch (e) {}
  if (window.avisoTurnoVer) window.avisoTurnoVer();
+ try {
+  if (typeof supBarPintar === "function") supBarPintar();
+ } catch (e) {}
  window.claveDestino = v === "ptsgen" ? "pts" : "dash";
  if (v === "dash" || v === "segmon" || v === "supinicio" || v === "nov") {
   if (DATA) {
@@ -14989,6 +15187,44 @@ function supDe(nombre) {
    return '<div class="au-rv"><div class="au-rv-h"><b>' + dia(g.fecha) + '</b><span class="au-jor" style="--c:' + colTurno(g.jornada) + '">' + e(JN[g.jornada] || t(g.jornada)) + "</span><small>" + g.filas.length + (g.filas.length === 1 ? " perfil" : " perfiles") + " · " + fmtPts(tot) + " pts" + (mons.length ? " · revisó " + e(mons.join(", ")) : "") + "</small></div>" + '<div class="au-rv-l">' + g.filas.map((x => '<details class="au-rv-c"><summary><span class="au-rv-p"><b>' + e(t(x.perfil)) + "</b><strong>" + fmtPts(x.puntos) + '<i> pts</i></strong></span><span class="au-rv-t">' + e(x.hallazgo) + "</span></summary>" + (mons.length > 1 ? '<small class="au-mut">Revisó ' + e(t(x.auditor)) + "</small>" : "") + "</details>")).join("") + "</div></div>";
   })).join("") + (grupos.length > 4 ? '<div class="au-acc"><button type="button" class="btn ghost au-mini" id="audRvMas">' + (SUP.rvMas ? "Ver menos" : "Ver las " + grupos.length + " jornadas revisadas") + "</button></div>" : "");
  }
+ window.audPedirCon = (fecha, jornada) => {
+  SUP.pedir = {
+   fecha: fecha,
+   jornada: jornada,
+   supervisor: supDe(window.supNombre && window.supNombre()),
+   perfiles: {}
+  };
+  verVista("aud");
+  setTimeout((() => {
+   SUP.tabAntes = SUP.tab === "pedir" ? "res" : SUP.tab;
+   SUP.tab = "pedir";
+   audSupTabs();
+   audSupCargar(true);
+   window.scrollTo(0, 0);
+  }), 350);
+ };
+ const PJ = {
+  t: 0,
+  d: null,
+  p: null
+ };
+ window.audPtsCargada = (fechas, jornada) => {
+  const ver = d => !!d && [].concat(d.pendientes || [], d.hechas || []).some((x => x.jornada === jornada && fechas.indexOf(String(x.fecha || "").split("/").reverse().join("-")) >= 0));
+  if (PJ.d && Date.now() - PJ.t < 12e4) return Promise.resolve(ver(PJ.d));
+  if (!PJ.p) PJ.p = audLlamar("audPuntosPendientes", [ claveSup() ]).then((d => {
+   PJ.d = d;
+   PJ.t = Date.now();
+   PJ.p = null;
+   return d;
+  })).catch((() => {
+   PJ.p = null;
+   return null;
+  }));
+  return PJ.p.then(ver);
+ };
+ window.audPtsOlvidar = () => {
+  PJ.t = 0;
+ };
  function audPedirPintar(c, d) {
   const C = SUP.cat, P = SUP.pedir = SUP.pedir || {
    fecha: hoyISO(),
@@ -15051,6 +15287,8 @@ function supDe(nombre) {
     supervisor: P.supervisor,
     perfiles: lista
    } ]).then((r => {
+    PJ.t = 0;
+    if (window.supRecordar) setTimeout(window.supRecordar, 500);
     P.perfiles = {};
     SUP.aviso = "Listo: " + (r.guardadas === 1 ? "1 perfil quedó" : r.guardadas + " perfiles quedaron") + " pendientes para los monitores.";
     audSupCargar(true);
@@ -15186,4 +15424,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = '8f0ff4726f0c' -->
+<!-- var HUELLA = 'c49b8ba516d3' -->
