@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr03m5tH4HrrssdWXzoGtKFAqbvOnPPA7tRjsFSRsE16hLkv-w/exec";
 
 (function() {
- var n = 0, VER = "web 182", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 183", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "cab44fc8e3ea";
+ var HUELLA = "100f575ebefa";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -3513,10 +3513,12 @@ function sgProdRender() {
  T.forEach((t => {
   if (mons.indexOf(t.n) < 0) mons.push(t.n);
  }));
+ const brkDesde = d.turnos.filter((t => (t.pausas || []).some((p => p[0] === "Break")))).map((t => t.f)).sort()[0] || "";
  const R = mons.map((n => {
   const ts = T.filter((t => t.n === n && !t.enCurso)), N = ts.length || 1, sum = k => ts.reduce(((x, t) => x + (t.cnt[k] || 0)), 0), con = k => ts.filter((t => t.cnt[k] > 0)).length;
   const tm = ts.filter((t => t.tareasMin)), pf = tm.reduce(((x, t) => x + t.tareasMin.perfiles), 0), mn = tm.reduce(((x, t) => x + t.tareasMin.min), 0);
-  const pausas = ts.map((t => t.pausas.filter((p => p[0] === "Break")))).filter((x => x.length)), exceso = pausas.filter((x => x.reduce(((y, p) => y + p[3]), 0) > (d.breakMin || 20))).length;
+  const tsB = ts.filter((t => brkDesde && t.f >= brkDesde)), brkMin = tsB.map((t => t.pausas.filter((p => p[0] === "Break")).reduce(((y, p) => y + p[3]), 0))).filter((m => m > 0));
+  const pausas = tsB.map((t => t.pausas.filter((p => p[0] === "Break")))).filter((x => x.length)), exceso = pausas.filter((x => x.reduce(((y, p) => y + p[3]), 0) > (d.breakMin || 20))).length;
   return {
    n: n,
    N: ts.length,
@@ -3528,6 +3530,8 @@ function sgProdRender() {
    trab: Math.round(ts.reduce(((x, t) => x + t.trab), 0) / N),
    porPerfil: pf ? Math.round(mn * 10 / pf) / 10 : null,
    conBreak: pausas.length,
+   nB: tsB.length,
+   promB: brkMin.length ? Math.round(brkMin.reduce(((a, b) => a + b), 0) / brkMin.length) : 0,
    exceso: exceso,
    sinBreak: ts.filter((t => !t.pausas.length)).length
   };
@@ -3546,7 +3550,7 @@ function sgProdRender() {
  const barra = (p, nm) => '<div class="pd-b"><span>' + nm + '</span><i><em style="width:' + Math.max(2, p) + "%;background:" + (p >= 80 ? "#1E7A4F" : p >= 50 ? "#C9A227" : "#B3312A") + '"></em></i><b>' + p + "%</b></div>";
  let h = '<div class="pd-nota">Del ' + fe(d.desde) + " al " + fe(d.hasta) + ". Un <b>rato sin registros</b> es tiempo dentro del turno (sin contar el break) de " + d.hueco + " minutos o más en que no quedó nada a su nombre. Revisar chats o apoyar a un operador no deja registro: úsalo para preguntar, no como prueba." + (d.audOk === false ? " <b>No se pudo leer REGISTROS AUDITORIA:</b> faltan tareas, multimedia y faltas." : "") + "</div>";
  if (alertas.length) h += '<div class="pd-al"><b>Lo que hay que mirar</b><ul>' + alertas.map((x => '<li class="' + x[0] + '">' + x[1] + "</li>")).join("") + "</ul></div>";
- h += '<div class="pd-mons">' + R.map((x => '<div class="pd-m"><div class="pd-mh"><b>' + esc(x.n) + "</b><span>" + x.N + (x.N === 1 ? " turno" : " turnos") + "</span></div>" + '<div class="pd-ks">' + kpi(fmt.format(x.prom("V")), "IDs verificados", "por turno") + kpi(fmt.format(x.prom("D")), "Clientes digitados", "por turno") + kpi(fmt.format(x.prom("tar")), "Perfiles revisados", "tareas por turno") + kpi(fmt.format(x.sum("mm")), "Multimedia", "en " + x.con("mm") + " de " + x.N + " turnos", x.pct("mm") < 50 ? "r" : "") + kpi(hm(x.sinReg), "Sin registros", "promedio por turno", x.sinReg >= 180 ? "r" : "") + kpi(x.porPerfil === null ? "—" : x.porPerfil + " min", "Por perfil", x.porPerfil === null ? "se mide desde hoy" : "en el control de tareas") + "</div>" + '<div class="pd-bs"><small>Turnos en que lo hizo</small>' + TAR.map((([k, nm]) => barra(x.pct(k), nm))).join("") + "</div>" + '<div class="pd-brk">☕ Break marcado en ' + x.conBreak + " de " + x.N + " turnos" + (x.exceso ? " · <b>" + x.exceso + " pasado" + (x.exceso === 1 ? "" : "s") + " de " + (d.breakMin || 20) + " min</b>" : "") + "</div></div>")).join("") + "</div>";
+ h += '<div class="pd-mons">' + R.map((x => '<div class="pd-m"><div class="pd-mh"><b>' + esc(x.n) + "</b><span>" + x.N + (x.N === 1 ? " turno" : " turnos") + "</span></div>" + '<div class="pd-ks">' + kpi(fmt.format(x.prom("V")), "IDs verificados", "por turno") + kpi(fmt.format(x.prom("D")), "Clientes digitados", "por turno") + kpi(fmt.format(x.prom("tar")), "Perfiles revisados", "tareas por turno") + kpi(fmt.format(x.sum("mm")), "Multimedia", "en " + x.con("mm") + " de " + x.N + " turnos", x.pct("mm") < 50 ? "r" : "") + kpi(hm(x.sinReg), "Sin registros", "promedio por turno", x.sinReg >= 180 ? "r" : "") + kpi(x.porPerfil === null ? "—" : x.porPerfil + " min", "Por perfil", x.porPerfil === null ? "se mide desde hoy" : "en el control de tareas") + "</div>" + '<div class="pd-bs"><small>Turnos en que lo hizo</small>' + TAR.map((([k, nm]) => barra(x.pct(k), nm))).join("") + "</div>" + '<div class="pd-brk">☕ ' + (!brkDesde ? "Break: todavía nadie lo ha marcado con el botón «Salgo a break» (es nuevo)." : !x.nB ? "Break: no ha tenido turnos desde que existe el botón «Salgo a break»." : !x.conBreak ? "Break: <b>no lo marcó</b> en sus " + x.nB + (x.nB === 1 ? " turno" : " turnos") + " desde el " + brkDesde.slice(8) + "/" + brkDesde.slice(5, 7) + "." : "Break: lo marcó en " + x.conBreak + " de " + x.nB + (x.nB === 1 ? " turno" : " turnos") + " (desde el " + brkDesde.slice(8) + "/" + brkDesde.slice(5, 7) + "), en promedio " + x.promB + " min." + (x.exceso ? " <b>Se pasó de " + (d.breakMin || 20) + " min en " + x.exceso + (x.exceso === 1 ? " turno" : " turnos") + ".</b>" : "")) + "</div></div>")).join("") + "</div>";
  const ley = '<div class="pd-ley">' + Object.keys(PROD_K).map((k => '<span><i style="background:' + PROD_K[k][1] + '"></i>' + PROD_K[k][0] + "</span>")).join("") + '<span><i class="hu"></i>Sin registros</span><span><i class="br"></i>Break</span></div>';
  const linea = t => {
   const L = t.dur, pc = m => Math.max(0, Math.min(100, m * 100 / L));
@@ -15448,4 +15452,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = 'cab44fc8e3ea' -->
+<!-- var HUELLA = '100f575ebefa' -->
