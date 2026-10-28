@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr03m5tH4HrrssdWXzoGtKFAqbvOnPPA7tRjsFSRsE16hLkv-w/exec";
 
 (function() {
- var n = 0, VER = "web 188", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 189", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "1815546aaed1";
+ var HUELLA = "e3f0df999b1b";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -12386,6 +12386,7 @@ function monRender() {
  const listos = O.filter((x => yaDig(x) && !hecho(x)));
  const tabs = [ [ "ver", "Verificar IDs", vfPend.length ], [ "pend", "Pendientes", P.length ], [ "tur", "Turnos de operadores", O.filter((x => x.est === "turno")).length ], [ "rev", "Para revisar", nRev ], [ "cero", "Perfiles sin retraer", S.length ] ].concat(d.sup ? [ [ "reg", "Registros de los monitores", d.historial.length ] ] : []);
  if (window.audTab && window.audTab()) tabs.push(window.audTab());
+ if (window.audTabEq && window.audTabEq()) tabs.push(window.audTabEq());
  const cab = (k, tit, sub) => '<div class="mn-h"><span class="mn-hi">' + monIco(k) + "</span><div><h2>" + tit + '</h2><div class="sub">' + sub + "</div></div></div>";
  let html = '<div class="mn-hero"><div class="mn-hero-t"><b>' + (P.length ? P.length === 1 ? "Tienes 1 pendiente" : "Tienes " + fmt.format(P.length) + " pendientes" : "Estás al día") + "</b>" + "<span>" + (P.length ? "Corrígelos en la hoja del mes: la celda está en rojo o en amarillo." : "No hay celdas por corregir ni por diligenciar.") + "</span></div>" + '<div class="mn-kp">' + '<button type="button" data-tab="ver" class="a"><b>' + fmt.format(vfPend.length) + "</b><span>IDs por verificar</span></button>" + '<button type="button" data-tab="pend" class="r"><b>' + fmt.format(dif.length) + "</b><span>No coinciden</span></button>" + '<button type="button" data-tab="pend" class="a"><b>' + fmt.format(fal.length) + "</b><span>Por diligenciar</span></button>" + '<button type="button" data-tab="rev"><b>' + fmt.format(nRev) + "</b><span>Para revisar</span></button>" + (d.sup ? '<button type="button" data-tab="reg" class="v"><b>' + fmt.format(d.hoy || 0) + "</b><span>Registros de hoy</span></button>" : "") + "</div></div>";
  if (!monEsSup() && MON.nombre) html += monTurnoHtml();
@@ -12396,7 +12397,7 @@ function monRender() {
   const chip = (x, fin) => '<span class="mn-chip"><b>' + esc(titulo(x.o)) + "</b><span>" + esc(titulo(x.g)) + "</span>" + fin + (x.otro ? '<em class="mn-otro">Vino en otro horario: ' + esc(x.otro) + "</em>" : "") + "</span>";
   html += '<div class="mn-ops">' + (listos.length ? '<div class="mn-ops-f ok"><div class="mn-ops-t">✅ Ya salieron: digita sus clientes ahora</div><div class="mn-chips">' + listos.map((x => chip(x, "<em>Columna del día " + x.col + "</em>"))).join("") + "</div></div>" : "") + (sinMarca.length ? '<div class="mn-ops-f mal"><div class="mn-ops-t">⚠ Ya les toca y NO han marcado «Estoy de turno» en su tabla</div><div class="mn-chips">' + sinMarca.map((x => chip(x, "<em>Entra a las <b>" + esc(x.e) + "</b></em>" + btnLl(x)))).join("") + "</div>" + (monEsSup() ? '<div class="sub" style="margin-top:6px">Si el operador sí está trabajando y se le olvidó marcar, toca «Llegó a tiempo»: queda confirmado y se le marca la casilla con la hora de su horario.</div>' : '<div class="sub" style="margin-top:6px">Avísale a supervisión si el operador sí está trabajando y se le olvidó marcar.</div>') + "</div>" : "") + (prox.length ? '<div class="mn-ops-f"><div class="mn-ops-t">⏳ Siguen trabajando: NO digites sus clientes todavía</div><div class="mn-chips">' + prox.slice(0, 8).map((x => chip(x, "<em>Sale a las <b>" + esc(x.sale) + "</b>" + (x.diez ? " · turno de 10 h" : "") + "</em>"))).join("") + "</div>" + '<button type="button" class="mn-ver" data-tab="tur">' + (prox.length > 8 ? "Ver los " + prox.length + " que siguen de turno" : "Ver la lista completa") + "</button></div>" : "") + "</div>";
  }
- html += '<div class="mn-tabs" role="tablist">' + tabs.map((t => '<button type="button" role="tab" data-tab="' + t[0] + '" aria-selected="' + (MON.tab === t[0]) + '">' + monIco(t[0]) + t[1] + "<i>" + fmt.format(t[2]) + "</i></button>")).join("") + "</div>";
+ html += '<div class="mn-tabs" role="tablist">' + tabs.map((t => '<button type="button" role="tab" data-tab="' + t[0] + '" aria-selected="' + (MON.tab === t[0]) + '">' + monIco(t[0]) + t[1] + (t[2] === null ? "" : "<i>" + fmt.format(t[2]) + "</i>") + "</button>")).join("") + "</div>";
  html += '<section class="panel mn-sec">';
  if (MON.tab === "ver") {
   html += cab("ver", "Verificar IDs", "Revisa en la plataforma los IDs que anotaron los operadores. Cuando termine su turno, transcribes el número en tu archivo como siempre.");
@@ -12497,7 +12498,7 @@ function monRender() {
   };
   html += cab("reg", "Mis registros", "Lo último que se escribió, cambió o borró en la hoja del mes, con su hora.");
   html += !d.historial.length ? '<div class="vacio">Todavía no hay registros guardados.</div>' : '<div class="table-scroll" style="max-height:520px;overflow-y:auto"><table class="sr-t"><thead><tr><th>Hora</th><th>Día</th><th>Grupo</th><th>Operador</th><th>Perfil</th><th>Quién registró</th><th class="num">Antes</th><th class="num">Ahora</th><th>Qué se hizo</th></tr></thead><tbody>' + d.historial.map((r => "<tr><td><b>" + esc(String(r[0]).slice(11, 19)) + '</b> <small style="color:var(--faint)">' + esc(String(r[0]).slice(0, 5)) + "</small></td><td>" + r[2] + "</td><td>" + esc(titulo(r[3])) + "</td><td>" + esc(titulo(opDelDia(r[5], r[2]))) + "</td><td>" + esc(titulo(r[6])) + "</td><td>" + (r[10] ? /^Sin identificar/.test(r[10]) ? '<span class="rv-pill aviso">Sin identificar</span>' : esc(r[10]) : "—") + '</td><td class="num">' + (r[7] === "" ? "—" : esc(r[7])) + '</td><td class="num"><b>' + (r[8] === "" ? "—" : esc(r[8])) + '</b></td><td><span class="rv-pill ' + (r[9] === "Corrección" ? "aviso" : r[9] === "Borrado" ? "accion" : "") + '">' + esc(r[9]) + "</span></td></tr>")).join("") + "</tbody></table></div>";
- } else if (MON.tab === "aud" && window.audSeccionHtml) html += audSeccionHtml();
+ } else if (MON.tab === "aud" && window.audSeccionHtml) html += audSeccionHtml(); else if (MON.tab === "eq" && window.audEqHtml) html += audEqHtml();
  html += "</section>";
  const llaveDet = d => ((d.querySelector("summary") || d).textContent || "").replace(/^\s*[\d.,]+/, "").trim();
  const estDet = {};
@@ -12516,6 +12517,7 @@ function monRender() {
  }));
  c.innerHTML = html;
  if (window.audMontar) audMontar();
+ if (window.audEqMontar) audEqMontar();
  c.querySelectorAll("details").forEach((d => {
   const k = llaveDet(d);
   if (k in estDet) d.open = estDet[k];
@@ -13797,6 +13799,7 @@ const esSupMon = () => typeof monEsSup === "function" && monEsSup();
 
 /* ================== MONITORES: pestaña "Auditoría" ================== */
 if (typeof MON_ICO !== "undefined") MON_ICO.aud = '<path d="M9 4h6l1 2h3v14H5V6h3z"/><path d="M9 12l2 2 4-4"/>';
+ if (typeof MON_ICO !== "undefined") MON_ICO.eq = '<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20a6 6 0 0 1 12 0M14 20a4.5 4.5 0 0 1 7-3.7"/>';
  window.audTab = () => {
   if (!window.ES_PRIME) return null;
   return [ "aud", "Auditoría", AUD.pts ? AUD.pts.pendientes.length : 0 ];
@@ -13853,7 +13856,7 @@ if (typeof MON_ICO !== "undefined") MON_ICO.aud = '<path d="M9 4h6l1 2h3v14H5V6h
    return;
   }
   const quien = audQuien();
-  AUD.el.innerHTML = '<div class="au-quien"><span>Registras como <b>' + e(audComo(quien)) + "</b>" + (esSupMon() ? " (supervisión)" : "") + "</span><span>Así aparece en la columna AUDITOR.</span>" + (esSupMon() ? '<button type="button" class="btn ghost au-mini" id="auIrSup" style="margin-left:auto">Ver estadísticas de auditoría</button>' : "") + "</div>" + '<div class="au-base"><div class="field"><label for="auFecha">Fecha</label><input type="date" id="auFecha" value="' + e(AUD.fecha || AUD.cat.hoy || hoyISO()) + '"></div>' + '<div class="field au-tur"><label>Turno que revisaste</label><div class="seg-ctrl" id="auTurno">' + J3.map((j => '<button type="button" data-t="' + j + '" aria-pressed="' + (AUD.turno === j) + '">' + JN[j] + "</button>")).join("") + "</div></div></div>" + '<h3 class="au-paso"><span>1</span>¿Qué vas a registrar?</h3><div class="au-clases" id="auClases">' + [ [ "tareas", "Tareas del turno", "Cartas, newsfeed, likes y depuración de cada perfil." ], [ "falta", "El operador incumplió una regla", "En los chats o en su turno (por ejemplo, pidió o dio datos personales). No es para cartas ni tareas: eso va en «Tareas del turno»." ], [ "multimedia", "Revisión de multimedia", "Se revisó la multimedia: si no se quitó nada, o lo que se eliminó o rechazaron (con autorización)." ], [ "cobertura", "Cobertura de perfil", "Alguien atendió el perfil porque el titular no estaba." ], [ "perfil", "Cambio de perfil", "Se abrió un perfil nuevo, se cerró uno o un perfil pasó a otro grupo (supervisión lo ajusta en las tablas)." ], [ "puntos", "Revisión por puntos", "Perfiles que supervisión pidió revisar por sus puntos." ] ].map((c => '<button type="button" data-clase="' + c[0] + '" aria-pressed="' + (AUD.clase === c[0]) + '"><b>' + c[1] + (c[0] === "puntos" ? ' <i class="au-n" id="auPtsN"' + (AUD.pts && AUD.pts.pendientes.length ? "" : " hidden") + ">" + (AUD.pts ? AUD.pts.pendientes.length : "") + "</i>" : "") + "</b><span>" + c[2] + "</span></button>")).join("") + "</div>" + '<div id="auForm"></div><div id="auMsg" class="au-msg" role="status"></div>' + '<h3 class="au-paso">Lo que registraste <small>últimos 3 días · puedes borrar un registro tuyo durante 2 horas si te equivocaste</small> <button type="button" class="btn ghost au-mini" id="auMisAct">Actualizar</button></h3><div id="auMis"><div class="vacio">Cargando…</div></div>' + '<h3 class="au-paso">Historial del equipo <small>lo que registraron todos los monitores: faltas, multimedia, coberturas y cambios de perfil (las tareas no salen)</small> <button type="button" class="btn ghost au-mini" id="auEqAct">Actualizar</button></h3>' + '<div class="au-eqf"><div class="seg-ctrl" id="auEqC">' + [ [ "", "Todo" ], [ "Falta o novedad", "Faltas" ], [ "Multimedia", "Multimedia" ], [ "Cobertura", "Coberturas" ], [ "Cambio de perfil", "Cambios de perfil" ] ].map((c => '<button type="button" data-c="' + c[0] + '" aria-pressed="' + ((AUD.eq.c || "") === c[0]) + '">' + c[1] + "</button>")).join("") + "</div>" + '<select id="auEqD" aria-label="Días">' + [ [ 3, "Últimos 3 días" ], [ 7, "Últimos 7 días" ], [ 14, "Últimos 14 días" ] ].map((d => '<option value="' + d[0] + '"' + (AUD.eq.d === d[0] ? " selected" : "") + ">" + d[1] + "</option>")).join("") + "</select>" + '<input type="search" id="auEqQ" placeholder="Buscar perfil u operador" value="' + e(AUD.eq.q || "") + '"></div><div id="auEq"><div class="vacio">Cargando…</div></div>';
+  AUD.el.innerHTML = '<div class="au-quien"><span>Registras como <b>' + e(audComo(quien)) + "</b>" + (esSupMon() ? " (supervisión)" : "") + "</span><span>Así aparece en la columna AUDITOR.</span>" + (esSupMon() ? '<button type="button" class="btn ghost au-mini" id="auIrSup" style="margin-left:auto">Ver estadísticas de auditoría</button>' : "") + "</div>" + '<div class="au-base"><div class="field"><label for="auFecha">Fecha</label><input type="date" id="auFecha" value="' + e(AUD.fecha || AUD.cat.hoy || hoyISO()) + '"></div>' + '<div class="field au-tur"><label>Turno que revisaste</label><div class="seg-ctrl" id="auTurno">' + J3.map((j => '<button type="button" data-t="' + j + '" aria-pressed="' + (AUD.turno === j) + '">' + JN[j] + "</button>")).join("") + "</div></div></div>" + '<h3 class="au-paso"><span>1</span>¿Qué vas a registrar?</h3><div class="au-clases" id="auClases">' + [ [ "tareas", "Tareas del turno", "Cartas, newsfeed, likes y depuración de cada perfil." ], [ "falta", "El operador incumplió una regla", "En los chats o en su turno (por ejemplo, pidió o dio datos personales). No es para cartas ni tareas: eso va en «Tareas del turno»." ], [ "multimedia", "Revisión de multimedia", "Se revisó la multimedia: si no se quitó nada, o lo que se eliminó o rechazaron (con autorización)." ], [ "cobertura", "Cobertura de perfil", "Alguien atendió el perfil porque el titular no estaba." ], [ "perfil", "Cambio de perfil", "Se abrió un perfil nuevo, se cerró uno o un perfil pasó a otro grupo (supervisión lo ajusta en las tablas)." ], [ "puntos", "Revisión por puntos", "Perfiles que supervisión pidió revisar por sus puntos." ] ].map((c => '<button type="button" data-clase="' + c[0] + '" aria-pressed="' + (AUD.clase === c[0]) + '"><b>' + c[1] + (c[0] === "puntos" ? ' <i class="au-n" id="auPtsN"' + (AUD.pts && AUD.pts.pendientes.length ? "" : " hidden") + ">" + (AUD.pts ? AUD.pts.pendientes.length : "") + "</i>" : "") + "</b><span>" + c[2] + "</span></button>")).join("") + "</div>" + '<div id="auForm"></div><div id="auMsg" class="au-msg" role="status"></div>' + '<h3 class="au-paso">Lo que registraste <small>últimos 3 días · puedes borrar un registro tuyo durante 2 horas si te equivocaste</small> <button type="button" class="btn ghost au-mini" id="auMisAct">Actualizar</button></h3><div id="auMis"><div class="vacio">Cargando…</div></div>';
   q("#auFecha").onchange = ev => {
    AUD.fecha = ev.target.value;
    audDescSup();
@@ -13861,21 +13864,6 @@ if (typeof MON_ICO !== "undefined") MON_ICO.aud = '<path d="M9 4h6l1 2h3v14H5V6h
   q("#auTurno").querySelectorAll("button").forEach((b => b.onclick = () => audTurno(b.dataset.t)));
   q("#auClases").querySelectorAll("button").forEach((b => b.onclick = () => audClase(b.dataset.clase)));
   q("#auMisAct").onclick = audCargarMis;
-  q("#auEqAct").onclick = () => audCargarEq(true);
-  q("#auEqC").querySelectorAll("button").forEach((b => b.onclick = () => {
-   AUD.eq.c = b.dataset.c;
-   q("#auEqC").querySelectorAll("button").forEach((x => x.setAttribute("aria-pressed", String(x === b))));
-   audPintarEq();
-  }));
-  q("#auEqD").onchange = ev => {
-   AUD.eq.d = Number(ev.target.value);
-   audCargarEq(true);
-  };
-  q("#auEqQ").oninput = ev => {
-   AUD.eq.q = ev.target.value;
-   audPintarEq();
-  };
-  audCargarEq(false);
   const irs = q("#auIrSup");
   if (irs) irs.onclick = () => {
    SUP.desdeReg = true;
@@ -14617,12 +14605,40 @@ function audCargarMis() {
   d0: null,
   k: ""
  };
+ window.audTabEq = () => window.ES_PRIME ? [ "eq", "Historial del equipo", AUD.eq.d0 ? (AUD.eq.d0.filas || []).length : null ] : null;
+ window.audEqHtml = () => '<div class="mn-h"><span class="mn-hi">' + (typeof monIco === "function" ? monIco("eq") : "") + '</span><div><h2>Historial del equipo</h2><div class="sub">Lo que registraron todos los monitores: faltas, multimedia, coberturas y cambios de perfil. Las tareas no salen aquí.</div></div></div><div id="audEqHost"></div>';
+ window.audEqMontar = () => {
+  const host = $("audEqHost");
+  if (!host) return;
+  if (!AUD.eqEl) {
+   AUD.eqEl = document.createElement("div");
+   AUD.eqEl.id = "audEqBox";
+   AUD.eqEl.innerHTML = '<div class="au-eqf"><div class="seg-ctrl" id="auEqC">' + [ [ "", "Todo" ], [ "Falta o novedad", "Faltas" ], [ "Multimedia", "Multimedia" ], [ "Cobertura", "Coberturas" ], [ "Cambio de perfil", "Cambios de perfil" ] ].map((c => '<button type="button" data-c="' + c[0] + '" aria-pressed="' + ((AUD.eq.c || "") === c[0]) + '">' + c[1] + "</button>")).join("") + "</div>" + '<select id="auEqD" aria-label="Días">' + [ [ 3, "Últimos 3 días" ], [ 7, "Últimos 7 días" ], [ 14, "Últimos 14 días" ] ].map((d => '<option value="' + d[0] + '"' + (AUD.eq.d === d[0] ? " selected" : "") + ">" + d[1] + "</option>")).join("") + "</select>" + '<input type="search" id="auEqQ" placeholder="Buscar perfil u operador" value="' + e(AUD.eq.q || "") + '"><button type="button" class="btn ghost au-mini" id="auEqAct">Actualizar</button></div><div id="auEq"><div class="vacio">Cargando…</div></div>';
+   const qe = x => AUD.eqEl.querySelector(x);
+   qe("#auEqC").querySelectorAll("button").forEach((b => b.onclick = () => {
+    AUD.eq.c = b.dataset.c;
+    qe("#auEqC").querySelectorAll("button").forEach((x => x.setAttribute("aria-pressed", String(x === b))));
+    audPintarEq();
+   }));
+   qe("#auEqD").onchange = ev => {
+    AUD.eq.d = Number(ev.target.value);
+    audCargarEq(true);
+   };
+   qe("#auEqQ").oninput = ev => {
+    AUD.eq.q = ev.target.value;
+    audPintarEq();
+   };
+   qe("#auEqAct").onclick = () => audCargarEq(true);
+  }
+  if (AUD.eqEl.parentNode !== host) host.appendChild(AUD.eqEl);
+  audCargarEq(false);
+ };
  function audCargarEq(forzar) {
   const k = String(AUD.eq.d);
   if (!forzar && AUD.eq.d0 && AUD.eq.k === k && Date.now() - AUD.eq.t < 12e4) return audPintarEq();
   if (AUD.eq.cargando) return;
   AUD.eq.cargando = true;
-  const box = q("#auEq");
+  const box = AUD.eqEl && AUD.eqEl.querySelector("#auEq");
   if (box && !AUD.eq.d0) box.innerHTML = '<div class="vacio">Cargando…</div>';
   const desde = new Date(Date.now() - (AUD.eq.d - 1) * 864e5), ymd = desde.getFullYear() + "-" + ("0" + (desde.getMonth() + 1)).slice(-2) + "-" + ("0" + desde.getDate()).slice(-2);
   audLlamar("audHistorialEquipo", [ audClaveMon(), {
@@ -14635,16 +14651,21 @@ function audCargarMis() {
    audPintarEq();
   })).catch((er => {
    AUD.eq.cargando = false;
-   const b = q("#auEq");
+   const b = AUD.eqEl && AUD.eqEl.querySelector("#auEq");
    if (b) b.innerHTML = '<div class="vacio">' + e(er.message) + "</div>";
   }));
  }
  function audPintarEq() {
-  const box = q("#auEq");
+  const box = AUD.eqEl && AUD.eqEl.querySelector("#auEq");
   if (!box || !AUD.eq.d0) return;
   const qq = String(AUD.eq.q || "").trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const filas = (AUD.eq.d0.filas || []).filter((r => (!AUD.eq.c || r.clase === AUD.eq.c) && (!qq || [ r.perfil, r.operador, r.novedad, r.auditor ].join(" ").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").indexOf(qq) >= 0)));
-  box.innerHTML = filas.length ? tablaRegistros(filas.slice(0, 200), "ver") + (filas.length > 200 ? '<div class="au-mut" style="margin-top:6px">Se muestran los 200 más recientes de ' + filas.length + ". Usa el buscador para encontrar uno.</div>" : "") : '<div class="vacio">No hay registros con ese filtro en estos días.</div>';
+  const fe = r => {
+   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(r.fecha || "");
+   return m ? m[3] + "/" + m[2] : e(r.fecha);
+  };
+  const tabla = l => '<div class="table-scroll vt-cel"><table class="sr-t au-reg"><thead><tr><th>Día</th><th>Turno</th><th>Perfil</th><th>Operador</th><th>Qué</th><th>Detalle</th><th>Registró</th></tr></thead><tbody>' + l.map((r => '<tr><td data-l="Día"><b>' + fe(r) + "</b>" + (r.sello ? ' <small class="au-mut">' + e(r.sello.slice(11, 16)) + "</small>" : "") + '</td><td data-l="Turno">' + e(JN[r.turno] || t(r.turno)) + '</td><td data-l="Perfil"><b>' + e(t(r.perfil)) + '</b></td><td data-l="Operador">' + e(t(r.operador) || "—") + '</td><td data-l="Qué">' + pillTipo(r) + " " + e(t(r.novedad)) + '</td><td data-l="Detalle" class="au-obs">' + e(r.observacion) + '</td><td data-l="Registró">' + e(t(r.auditor)) + "</td></tr>")).join("") + "</tbody></table></div>";
+  box.innerHTML = filas.length ? tabla(filas.slice(0, 200)) + (filas.length > 200 ? '<div class="au-mut" style="margin-top:6px">Se muestran los 200 más recientes de ' + filas.length + ". Usa el buscador para encontrar uno.</div>" : "") : '<div class="vacio">No hay registros con ese filtro en estos días.</div>';
  }
  function audPintarMis() {
   const m = q("#auMis");
@@ -15568,4 +15589,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = '1815546aaed1' -->
+<!-- var HUELLA = 'e3f0df999b1b' -->
