@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 178", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 179", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "a1c113a54ef8";
+ var HUELLA = "a08a93ebd430";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -644,38 +644,7 @@ function supRecordatorios() {
    ya: now >= fin
   });
  }))));
- const fuera = [];
- (DATA.histTurnos || []).forEach((t => {
-  if (!t[3] || t[4] || !/^En turno/.test(t[6] || "") || t[0] !== hoy && t[0] !== ymdMas(hoy, -1)) return;
-  const ent = minAbs(t[0], t[3]);
-  let dentro = false, dur = 480;
-  [ ymdMas(t[0], -1), t[0] ].forEach((f => {
-   const x = typeof horarioDia === "function" ? horarioDia(t[2], f) : null;
-   if (!x || x.desc || !x.e || !x.s) return;
-   const S = minAbs(f, x.e);
-   let E = minAbs(f, x.s);
-   if (E <= S) E += 1440;
-   if (ent >= S - 240 && ent < E) dentro = true;
-   dur = E - S;
-  }));
-  if (dentro) return;
-  const finM = ent + dur;
-  if (now < finM - SUP_REC.antes || now > finM + 60) return;
-  const k = "op|" + nrm(t[2]) + "|" + t[0] + t[3];
-  if (SUP_REC.ok[k]) return;
-  const hh = (Math.floor(finM / 60) % 24 + "").padStart(2, "0") + ":" + ("0" + finM % 60).slice(-2);
-  fuera.push({
-   k: k,
-   o: t[2],
-   g: t[1],
-   fin: hh,
-   fecha: t[0],
-   j: (h => h < 10 ? "MAÑANA" : h < 18 ? "TARDE" : "NOCHE")(Number(t[3].slice(0, 2)))
-  });
- }));
- return out.concat(fuera.length ? [ {
-  fuera: fuera
- } ] : []);
+ return out;
 }
 
 function supBarPintar() {
@@ -693,20 +662,18 @@ function supBarPintar() {
  const ses = supSesion(), h = supHasta(), venc = h && Date.now() >= h, n1 = supNombre.split(" ")[0], finTxt = h ? hmCorta(h - 15 * 6e4) : "";
  const rec = SUP_REC.lista || [];
  bar.className = venc ? "st-venc" : "";
- bar.innerHTML = '<div class="st-top"><span class="st-dot" aria-hidden="true"></span><div class="st-q">' + (venc ? "<b>El turno de " + esc(supNombre) + " terminó a las " + esc(finTxt) + ".</b><span>Si ya te vas, toca «Terminé mi turno». Si no eres " + esc(n1) + ", finaliza su turno e inicia con tu nombre.</span>" : "<b>" + esc(supNombre) + " está de turno</b><span>" + (ses.t ? "Desde las " + hmCorta(ses.t) + (finTxt ? " · su turno va hasta las " + esc(finTxt) : "") + ". " : "") + "Si no eres " + esc(n1) + ", finaliza su turno e inicia con tu nombre.</span>") + "</div>" + '<div class="st-b"><button type="button" class="btn st-fin" data-st="fin">Terminé mi turno</button><button type="button" class="btn ghost" data-st="otro">No soy ' + esc(n1) + "</button></div></div>" + rec.map((x => x.fuera ? '<div class="st-rec fu"><span aria-hidden="true">📋</span><div><b>Corte aparte: vinieron fuera de su horario</b><span>' + x.fuera.map((y => esc(titulo(y.o)) + " (" + esc(titulo(y.g).replace(/^Grupo /, "")) + ") termina a las <b>" + esc(y.fin) + "</b>")).join(" · ") + ". Su revisión por puntos va con la hora en que terminen, no con la de la jornada.</span></div>" + '<div class="st-rb"><button type="button" class="btn ghost" data-rp="' + esc(x.fuera[0].fecha) + "|" + esc(x.fuera[0].j) + '">Pedir revisión</button><button type="button" class="st-x" data-rok="' + esc(x.fuera.map((y => y.k)).join("~")) + '">Listo</button></div></div>' : '<div class="st-rec"><span aria-hidden="true">📋</span><div><b>' + (x.ya ? "Ya terminó" : "Termina") + " la jornada de la " + esc((JL[J.indexOf(x.j)] || x.j).toLowerCase()) + " (" + esc(x.fin) + ")</b><span>No olvides cargar la solicitud de revisión de perfiles por puntos de esta jornada. El corte es a las " + esc(x.fin) + " en punto.</span></div>" + '<div class="st-rb"><button type="button" class="btn" data-rp="' + esc(x.fecha) + "|" + esc(x.j) + '">Pedir revisión por puntos</button><button type="button" class="st-x" data-rok="' + esc(x.k) + '" title="Ya la cargué">Ya la cargué</button></div></div>')).join("");
+ bar.innerHTML = '<div class="st-top"><span class="st-dot" aria-hidden="true"></span><div class="st-q">' + (venc ? "<b>El turno de " + esc(supNombre) + " terminó a las " + esc(finTxt) + ".</b><span>Si ya te vas, toca «Terminé mi turno». Si no eres " + esc(n1) + ", finaliza su turno e inicia con tu nombre.</span>" : "<b>" + esc(supNombre) + " está de turno</b><span>" + (ses.t ? "Desde las " + hmCorta(ses.t) + (finTxt ? " · su turno va hasta las " + esc(finTxt) : "") + ". " : "") + "Si no eres " + esc(n1) + ", finaliza su turno e inicia con tu nombre.</span>") + "</div>" + '<div class="st-b"><button type="button" class="btn st-fin" data-st="fin">Terminé mi turno</button><button type="button" class="btn ghost" data-st="otro">No soy ' + esc(n1) + "</button></div></div>" + rec.map((x => '<div class="st-rec"><span aria-hidden="true">📋</span><div><b>Recordatorio</b><span>No olvides cargar la solicitud de revisión de perfiles por puntos.</span></div>' + '<div class="st-rb"><button type="button" class="btn ghost" data-rp="' + esc(x.fecha) + "|" + esc(x.j) + '">Cargarla</button><button type="button" class="st-x" data-rok="' + esc(x.k) + '">Ya la cargué</button></div></div>')).join("") + "";
  bar.querySelectorAll("[data-st]").forEach((b => b.onclick = () => supTerminar(b.dataset.st === "otro" ? "otro" : "", b)));
  bar.querySelectorAll("[data-rp]").forEach((b => b.onclick = () => {
   const [f, j] = b.dataset.rp.split("|");
   if (window.audPedirCon) window.audPedirCon(f, j);
  }));
  bar.querySelectorAll("[data-rok]").forEach((b => b.onclick = () => {
-  b.dataset.rok.split("~").forEach((k => {
-   SUP_REC.ok[k] = 1;
-  }));
+  SUP_REC.ok[b.dataset.rok] = 1;
   try {
    localStorage.setItem("sup_rec_ok", JSON.stringify(SUP_REC.ok));
   } catch (e) {}
-  SUP_REC.lista = (SUP_REC.lista || []).filter((x => x.fuera ? (x.fuera = x.fuera.filter((y => !SUP_REC.ok[y.k]))).length : !SUP_REC.ok[x.k]));
+  SUP_REC.lista = (SUP_REC.lista || []).filter((x => !SUP_REC.ok[x.k]));
   supBarPintar();
  }));
  const caja = document.getElementById("supFinT");
@@ -722,13 +689,13 @@ window.supRecordar = () => {
  try {
   SUP_REC.ok = JSON.parse(localStorage.getItem("sup_rec_ok") || "{}");
   Object.keys(SUP_REC.ok).forEach((k => {
-   if (!/^\d{4}-\d{2}-\d{2}\|/.test(k) && !/^op\|/.test(k)) delete SUP_REC.ok[k];
+   if (!/^\d{4}-\d{2}-\d{2}\|/.test(k)) delete SUP_REC.ok[k];
   }));
  } catch (e) {}
  const L = supRecordatorios();
  SUP_REC.lista = L;
  supBarPintar();
- if (window.audPtsCargada) L.filter((x => !x.fuera)).forEach((x => window.audPtsCargada(x.fechas, x.j).then((ya => {
+ if (window.audPtsCargada) L.forEach((x => window.audPtsCargada(x.fechas, x.j).then((ya => {
   if (ya) {
    SUP_REC.ok[x.k] = 1;
    SUP_REC.lista = (SUP_REC.lista || []).filter((y => y.k !== x.k));
@@ -3383,7 +3350,19 @@ function sgNovRender() {
   if (x.filas) {
    const just = r => r.estado === "Justificado" || (r.estado === "No cumple" || r.estado === "Por revisar") && /Motivo: (Poco flujo|Clientes no cumplen|Perfil nuevo)/i.test(r.observacion || "");
    const ok = x.filas.filter((r => r.estado === "Cumple")).length, nj = x.filas.filter(just).length, id = "t|" + x.auditor + "|" + x.fecha + "|" + x.turno, ab = NOVM.abiertos[id];
-   out += '<div class="nvm-it" style="--c:' + tp[2] + '"><span class="nvm-ic" aria-hidden="true">' + tp[3] + '</span><div class="nvm-b"><div class="nvm-t"><b>Control de tareas · ' + x.filas.length + (x.filas.length === 1 ? " perfil" : " perfiles") + '</b><span class="nvm-p">' + tp[1] + "</span></div>" + '<div class="nvm-m">' + meta + '</div><div class="nvm-r"><span class="ok">' + ok + " llegaron a la meta</span>" + (nj ? '<span class="ju">' + nj + " justificados</span>" : "") + (x.filas.length - ok - nj ? '<span class="no">' + (x.filas.length - ok - nj) + " sin justificar</span>" : "") + '<button type="button" class="nvm-mas" data-nva="' + esc(id) + '" aria-expanded="' + !!ab + '">' + (ab ? "Ocultar perfiles" : "Ver perfiles") + "</button></div>" + (ab ? '<div class="nvm-tt">' + x.filas.slice().sort(((p, q2) => (p.estado === "Cumple") + just(p) - ((q2.estado === "Cumple") + just(q2)))).map((r => "<div><b>" + esc(T(r.perfil)) + "</b><span>" + esc(T(r.operador) || "—") + '</span><em class="' + (r.estado === "Cumple" ? "ok" : just(r) ? "ju" : "no") + '">' + (r.cartas === "" ? "—" : r.cartas) + "/10</em><small>" + esc((String(r.observacion || "").match(/Motivo: ([^·]+)/) || [ "", "" ])[1].trim()) + "</small></div>")).join("") + "</div>" : "") + "</div></div>";
+   out += '<div class="nvm-it" style="--c:' + tp[2] + '"><span class="nvm-ic" aria-hidden="true">' + tp[3] + '</span><div class="nvm-b"><div class="nvm-t"><b>Control de tareas · ' + x.filas.length + (x.filas.length === 1 ? " perfil" : " perfiles") + '</b><span class="nvm-p">' + tp[1] + "</span></div>" + '<div class="nvm-m">' + meta + '</div><div class="nvm-r"><span class="ok">' + ok + " llegaron a la meta</span>" + (nj ? '<span class="ju">' + nj + " justificados</span>" : "") + (x.filas.length - ok - nj ? '<span class="no">' + (x.filas.length - ok - nj) + " sin justificar</span>" : "") + '<button type="button" class="nvm-mas" data-nva="' + esc(id) + '" aria-expanded="' + !!ab + '">' + (ab ? "Ocultar perfiles" : "Ver perfiles") + "</button></div>" + (ab ? (() => {
+    const de = (r, k, et) => r[k] || (String(r.observacion || "").match(new RegExp(et + ": ([^·]+)")) || [ "", "" ])[1].trim();
+    const sn = v => {
+     const t0 = String(v || "").trim();
+     return !t0 ? '<i class="nd">—</i>' : /^s[ií]/i.test(t0) ? '<i class="si">Sí</i>' : /^no$/i.test(t0) ? '<i class="no">No</i>' : "<i>" + esc(t0) + "</i>";
+    };
+    const libre = r => String(r.observacion || "").split(" · ").filter((z => z && !/^(Cartas \d|Motivo:|Cliente nuevo:|Newsfeed:|Likes outbox:|Depuración:)/.test(z))).join(" · ");
+    const noche = x.turno === "NOCHE";
+    return '<div class="nvm-tt"><div class="nvm-th"><span>Perfil</span><span>Operador</span><span>Cartas</span><span>Newsfeed</span><span>Likes outbox</span><span>Depuración</span><span>Cliente nuevo</span><span>Motivo · observación</span></div>' + x.filas.slice().sort(((p, q2) => (p.estado === "Cumple") + just(p) - ((q2.estado === "Cumple") + just(q2)))).map((r => {
+     const cn = de(r, "clienteNuevo", "Cliente nuevo"), mot = de(r, "motivo", "Motivo"), obs = libre(r), nf = de(r, "newsfeed", "Newsfeed");
+     return '<div class="nvm-tr"><b data-l="Perfil">' + esc(T(r.perfil)) + '</b><span data-l="Operador">' + esc(T(r.operador) || "—") + "</span>" + '<em data-l="Cartas" class="' + (r.estado === "Cumple" ? "ok" : just(r) ? "ju" : "no") + '">' + (r.cartas === "" ? "—" : r.cartas) + "/10</em>" + '<span data-l="Newsfeed">' + (nf ? sn(nf) : noche ? '<i class="nd">No aplica</i>' : sn("")) + '</span><span data-l="Likes outbox">' + sn(de(r, "likes", "Likes outbox")) + '</span><span data-l="Depuración">' + sn(de(r, "depuracion", "Depuración")) + "</span>" + '<span data-l="Cliente nuevo">' + (cn ? sn(cn.replace(/\s*\(.*$/, "")) + (r.idCliente ? " <small>" + esc(r.idCliente) + "</small>" : "") : sn("")) + "</span>" + '<small data-l="Motivo · obs.">' + esc([ mot, obs ].filter(Boolean).join(" · ")) + "</small></div>";
+    })).join("") + "</div>";
+   })() : "") + "</div></div>";
   } else {
    const tit = String(x.novedad || "");
    const pie = (x.estado ? "<span>" + esc(x.estado) + "</span>" : "") + (/^S[IÍ]/i.test(x.evidencia || "") ? '<a href="' + NOVM_EVID + '" target="_blank" rel="noopener">📎 Evidencia · busca «' + x.fila + "»</a>" : "");
@@ -3432,7 +3411,7 @@ function sgNovEnlazar(c) {
 
 (() => {
  const st = document.createElement("style");
- st.textContent = ".nvm-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:0 0 12px}.nvm-chips{display:flex;gap:6px;flex-wrap:wrap}" + ".nvm-chips button{font:inherit;font-size:13px;font-weight:650;border:1px solid var(--line);background:var(--surface,#fff);color:var(--ink);border-radius:999px;padding:6px 12px;cursor:pointer;display:flex;align-items:center;gap:6px}.nvm-chips button i{width:9px;height:9px;border-radius:3px;display:inline-block}.nvm-chips button b{font-size:11.5px;color:var(--muted)}" + ".nvm-chips button[aria-pressed=true]{background:#15161A;color:#F6F1E4;border-color:#15161A}.nvm-chips button[aria-pressed=true] b{color:#C9A227}" + "#nvmQ{font:inherit;font-size:14px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface,#fff);color:var(--ink);min-width:240px;flex:0 1 320px}" + ".nvm-mons{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}.nvm-mons button{font:inherit;border:1px solid var(--line);background:var(--surface,#fff);color:var(--ink);border-radius:14px;padding:8px 12px;cursor:pointer;display:grid;grid-template-columns:auto 1fr;column-gap:10px;text-align:left;align-items:center}.nvm-mons button:hover{border-color:var(--oro,#C9A227)}" + ".nvm-mons span{grid-row:span 2;width:32px;height:32px;border-radius:50%;background:#15161A;color:#C9A227;display:grid;place-items:center;font-weight:800;font-size:12px;text-transform:uppercase}.nvm-mons b{font-size:13.5px}.nvm-mons small{font-size:12px;color:var(--muted)}" + ".nvm-dia{display:flex;align-items:baseline;gap:10px;margin:16px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--line)}.nvm-dia:first-child{margin-top:0}.nvm-dia b{font-size:15px}.nvm-dia span{font-size:12.5px;color:var(--muted)}" + ".nvm-list{display:flex;flex-direction:column;gap:8px}.nvm-it{display:grid;grid-template-columns:34px 1fr;gap:12px;padding:12px 14px;border:1px solid var(--line);border-left:4px solid var(--c);border-radius:12px;background:var(--surface,#fff)}" + ".nvm-ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 14%,transparent);color:var(--c);font-weight:800}.nvm-b{min-width:0;display:flex;flex-direction:column;gap:4px}" + ".nvm-t{display:flex;justify-content:space-between;gap:10px;align-items:baseline}.nvm-t b{font-size:14.5px;line-height:1.3}.nvm-p{flex:none;font-size:11.5px;font-weight:700;color:var(--c)}" + ".nvm-m{font-size:13px;color:var(--muted)}.nvm-m .nvm-q{color:var(--ink);font-weight:700}.nvm-m b{color:var(--ink)}.nvm-d{margin:2px 0 0;font-size:13.5px;line-height:1.45;color:var(--ink);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}" + ".nvm-r{display:flex;gap:6px 12px;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--muted)}.nvm-r .ok{color:#17734B;font-weight:700}.nvm-r .no{color:#8a6510;font-weight:700}.nvm-r .ju{color:#3D6F82;font-weight:700}.nvm-r a{color:#8a6510;font-weight:700;text-decoration:none}.nvm-f{margin-left:auto;font-size:11.5px;opacity:.75}" + ".nvm-mas{font:inherit;font-size:12.5px;font-weight:700;border:0;background:none;color:#8a6510;cursor:pointer;padding:0}" + ".nvm-tt{display:flex;flex-direction:column;margin-top:6px;border-top:1px dashed var(--line)}.nvm-tt>div{display:grid;grid-template-columns:minmax(110px,1fr) minmax(110px,1fr) 52px minmax(0,2fr);gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}.nvm-tt span{color:var(--muted)}.nvm-tt em{font-style:normal;font-weight:800;text-align:right}.nvm-tt em.ok{color:#17734B}.nvm-tt em.no{color:#8a6510}.nvm-tt em.ju{color:#3D6F82}.nvm-tt small{color:var(--muted)}" + ".nvm-vm{display:block;margin:14px auto 0}" + "@media (max-width:640px){.nvm-mons{display:grid;grid-template-columns:1fr 1fr}.nvm-mons button{padding:6px 8px;column-gap:8px}.nvm-mons span{width:26px;height:26px;font-size:11px}#nvmQ{flex:1 1 100%;min-width:0}.nvm-it{grid-template-columns:1fr;padding:12px}.nvm-ic{display:none}.nvm-t{flex-direction:column;gap:2px}.nvm-tt>div{grid-template-columns:1fr 1fr 44px}.nvm-tt small{grid-column:1/-1}}";
+ st.textContent = ".nvm-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:0 0 12px}.nvm-chips{display:flex;gap:6px;flex-wrap:wrap}" + ".nvm-chips button{font:inherit;font-size:13px;font-weight:650;border:1px solid var(--line);background:var(--surface,#fff);color:var(--ink);border-radius:999px;padding:6px 12px;cursor:pointer;display:flex;align-items:center;gap:6px}.nvm-chips button i{width:9px;height:9px;border-radius:3px;display:inline-block}.nvm-chips button b{font-size:11.5px;color:var(--muted)}" + ".nvm-chips button[aria-pressed=true]{background:#15161A;color:#F6F1E4;border-color:#15161A}.nvm-chips button[aria-pressed=true] b{color:#C9A227}" + "#nvmQ{font:inherit;font-size:14px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface,#fff);color:var(--ink);min-width:240px;flex:0 1 320px}" + ".nvm-mons{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}.nvm-mons button{font:inherit;border:1px solid var(--line);background:var(--surface,#fff);color:var(--ink);border-radius:14px;padding:8px 12px;cursor:pointer;display:grid;grid-template-columns:auto 1fr;column-gap:10px;text-align:left;align-items:center}.nvm-mons button:hover{border-color:var(--oro,#C9A227)}" + ".nvm-mons span{grid-row:span 2;width:32px;height:32px;border-radius:50%;background:#15161A;color:#C9A227;display:grid;place-items:center;font-weight:800;font-size:12px;text-transform:uppercase}.nvm-mons b{font-size:13.5px}.nvm-mons small{font-size:12px;color:var(--muted)}" + ".nvm-dia{display:flex;align-items:baseline;gap:10px;margin:16px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--line)}.nvm-dia:first-child{margin-top:0}.nvm-dia b{font-size:15px}.nvm-dia span{font-size:12.5px;color:var(--muted)}" + ".nvm-list{display:flex;flex-direction:column;gap:8px}.nvm-it{display:grid;grid-template-columns:34px 1fr;gap:12px;padding:12px 14px;border:1px solid var(--line);border-left:4px solid var(--c);border-radius:12px;background:var(--surface,#fff)}" + ".nvm-ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 14%,transparent);color:var(--c);font-weight:800}.nvm-b{min-width:0;display:flex;flex-direction:column;gap:4px}" + ".nvm-t{display:flex;justify-content:space-between;gap:10px;align-items:baseline}.nvm-t b{font-size:14.5px;line-height:1.3}.nvm-p{flex:none;font-size:11.5px;font-weight:700;color:var(--c)}" + ".nvm-m{font-size:13px;color:var(--muted)}.nvm-m .nvm-q{color:var(--ink);font-weight:700}.nvm-m b{color:var(--ink)}.nvm-d{margin:2px 0 0;font-size:13.5px;line-height:1.45;color:var(--ink);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}" + ".nvm-r{display:flex;gap:6px 12px;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--muted)}.nvm-r .ok{color:#17734B;font-weight:700}.nvm-r .no{color:#8a6510;font-weight:700}.nvm-r .ju{color:#3D6F82;font-weight:700}.nvm-r a{color:#8a6510;font-weight:700;text-decoration:none}.nvm-f{margin-left:auto;font-size:11.5px;opacity:.75}" + ".nvm-mas{font:inherit;font-size:12.5px;font-weight:700;border:0;background:none;color:#8a6510;cursor:pointer;padding:0}" + ".nvm-tt{display:flex;flex-direction:column;margin-top:6px;border-top:1px dashed var(--line);overflow:hidden}" + ".nvm-th,.nvm-tr{display:grid;grid-template-columns:minmax(100px,1.1fr) minmax(110px,1.2fr) 52px 92px 72px 78px 92px minmax(120px,2fr);gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}" + ".nvm-th{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}.nvm-tr span{color:var(--muted)}.nvm-tr em{font-style:normal;font-weight:800}.nvm-tr em.ok{color:#17734B}.nvm-tr em.no{color:#8a6510}.nvm-tr em.ju{color:#3D6F82}" + ".nvm-tr i{font-style:normal;font-weight:700;color:var(--ink)}.nvm-tr i.si{color:#17734B}.nvm-tr i.no{color:#8a6510}.nvm-tr i.nd{color:var(--muted);font-weight:500;opacity:.8}.nvm-tr small{color:var(--muted)}" + ".nvm-vm{display:block;margin:14px auto 0}" + "@media (max-width:640px){.nvm-mons{display:grid;grid-template-columns:1fr 1fr}.nvm-mons button{padding:6px 8px;column-gap:8px}.nvm-mons span{width:26px;height:26px;font-size:11px}#nvmQ{flex:1 1 100%;min-width:0}.nvm-it{grid-template-columns:1fr;padding:12px}.nvm-ic{display:none}.nvm-t{flex-direction:column;gap:2px}.nvm-th{display:none}.nvm-tr{grid-template-columns:1fr 1fr;gap:4px 10px;padding:10px 0}.nvm-tr>*:not(b){display:flex;gap:6px;align-items:baseline}.nvm-tr>[data-l]:not(b)::before{content:attr(data-l);font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase}.nvm-tr>b{grid-column:1/-1;font-size:14px}.nvm-tr>small{grid-column:1/-1}}";
  document.head.appendChild(st);
 })();
 
@@ -15424,4 +15403,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = 'a1c113a54ef8' -->
+<!-- var HUELLA = 'a08a93ebd430' -->
