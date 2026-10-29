@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 196", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 197", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "814e9404574b";
+ var HUELLA = "f7ba43858581";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -4081,7 +4081,7 @@ const HALLS = {
  cargando: false
 };
 
-const HALL_TURNOS = [ "Mañana (6 a 14)", "Tarde (14 a 22)", "Noche (22 a 6)", "Día 12 h (6 a 18)", "Noche 12 h (18 a 6)" ];
+const HALL_TURNOS = [ "Mañana (6 a 14)", "Tarde (14 a 22)", "Noche (22 a 6)", "Día 12 h (6 a 18)", "Noche 12 h (18 a 6)", "Varios turnos (un periodo)" ];
 
 function hallVez(lista, h) {
  const lim = ymdMas(h.fecha, -60);
@@ -4267,7 +4267,7 @@ function hallRender(forzar) {
  const fe2 = f => f.slice(8) + "/" + f.slice(5, 7);
  let h = '<div class="hl-bar"><button type="button" class="btn" id="hlNuevo">' + (HALLS.nuevo ? "Cerrar" : "＋ Nuevo hallazgo") + "</button>" + '<label class="hl-fm">Monitor <select id="hlFiltro"><option value="">Todos</option>' + mons.map((m => "<option" + (m === HALLS.mon ? " selected" : "") + ">" + esc(m) + "</option>")).join("") + "</select></label>" + '<label class="hl-fm">Estado <select id="hlEst">' + [ [ "", "Todos" ], [ "Pendiente", "Sin responder" ], [ "Entendido", "Entendido" ], [ "No de acuerdo", "No está de acuerdo" ] ].map((o => '<option value="' + o[0] + '"' + (o[0] === estF ? " selected" : "") + ">" + o[1] + "</option>")).join("") + "</select></label>" + '<span class="hl-vis" role="tablist"><button type="button" data-hv="tar" aria-selected="' + (HALLS.vista !== "tabla") + '">Tarjetas</button><button type="button" data-hv="tabla" aria-selected="' + (HALLS.vista === "tabla") + '">Histórico (tabla)</button></span>' + '<button type="button" class="sr-x" id="hlAct">Actualizar</button></div>';
  const selM = ((HALLS.form || {}).mons || []).filter((m => mons.indexOf(m) >= 0));
- if (HALLS.nuevo) h += '<div class="hl-form">' + '<div class="hl-mons"><span>Monitor(es) <small>(puedes elegir varios)</small></span><div>' + mons.map((m => '<label class="hl-chk"><input type="checkbox" value="' + esc(m) + '"' + ((HALLS.form && HALLS.form.mons || []).indexOf(m) >= 0 ? " checked" : "") + ">" + esc(m) + "</label>")).join("") + "</div></div>" + (selM.length > 1 ? '<div class="hl-tms"><span>Turno en que pasó, de cada monitor</span>' + selM.map((m => "<label>" + esc(m) + '<select data-tm="' + esc(m) + '">' + HALL_TURNOS.map((t => "<option" + (((HALLS.form || {}).turnos || {})[m] === t ? " selected" : "") + ">" + esc(t) + "</option>")).join("") + "</select></label>")).join("") + "</div>" : "") + '<div class="hl-g">' + '<label>Fecha del turno<input type="date" id="hlFecha" value="' + hoy + '" max="' + hoy + '"></label>' + (selM.length > 1 ? "" : '<label>Turno en que pasó<select id="hlTurno">' + HALL_TURNOS.map((t => "<option>" + esc(t) + "</option>")).join("") + "</select></label>") + '<label class="hl-w">Tipo de hallazgo<select id="hlTipo"><option value="">Elige…</option>' + (d.grupos ? d.grupos.map((g => '<optgroup label="' + esc(g[0]) + '">' + g[1].map((t => "<option>" + esc(t) + "</option>")).join("") + "</optgroup>")).join("") : (d.tipos || []).map((t => "<option>" + esc(t) + "</option>")).join("")) + "</select></label>" + '<label>ID del cliente <small>(si aplica)</small><input type="text" id="hlCli" inputmode="numeric" placeholder="194305147"></label></div>' + '<label class="hl-txt">Qué pasó<textarea id="hlTxt" rows="3" placeholder="Describe lo que encontraste"></textarea></label>' + '<div class="hl-ev"><b>Evidencia</b> <small>(hasta 4 fotos; también puedes pegar una captura con Ctrl+V)</small><div class="hl-prev">' + HALLS.fotos.map(((f, i) => '<span class="hl-pf"><img src="' + f.url + '" alt=""><button type="button" data-hx="' + i + '" title="Quitar">✕</button></span>')).join("") + (HALLS.fotos.length < 4 ? '<label class="hl-add">＋ Foto<input type="file" id="hlFile" accept="image/*" multiple hidden></label>' : "") + "</div></div>" + '<div class="hl-acc"><button type="button" class="btn" id="hlGuardar">Guardar hallazgo</button><small id="hlMsg" role="alert"></small></div></div>';
+ if (HALLS.nuevo) h += '<div class="hl-form">' + '<div class="hl-mons"><span>Monitor(es) <small>(puedes elegir varios)</small></span><div>' + mons.map((m => '<label class="hl-chk"><input type="checkbox" value="' + esc(m) + '"' + ((HALLS.form && HALLS.form.mons || []).indexOf(m) >= 0 ? " checked" : "") + ">" + esc(m) + "</label>")).join("") + "</div></div>" + (selM.length > 1 ? '<div class="hl-tms"><span>Turno en que pasó, de cada monitor</span>' + selM.map((m => "<label>" + esc(m) + '<select data-tm="' + esc(m) + '">' + HALL_TURNOS.map((t => "<option" + (((HALLS.form || {}).turnos || {})[m] === t ? " selected" : "") + ">" + esc(t) + "</option>")).join("") + "</select></label>")).join("") + "</div>" : "") + '<div class="hl-g">' + (/^Varios/.test((HALLS.form || {}).hlTurno || "") || Object.values((HALLS.form || {}).turnos || {}).some((t => /^Varios/.test(t))) ? '<label>Desde<input type="date" id="hlDesde" max="' + hoy + '"></label><label>Hasta<input type="date" id="hlFecha" value="' + hoy + '" max="' + hoy + '"></label>' : '<label>Fecha del turno<input type="date" id="hlFecha" value="' + hoy + '" max="' + hoy + '"></label>') + (selM.length > 1 ? "" : '<label>Turno en que pasó<select id="hlTurno">' + HALL_TURNOS.map((t => "<option>" + esc(t) + "</option>")).join("") + "</select></label>") + '<label class="hl-w">Tipo de hallazgo<select id="hlTipo"><option value="">Elige…</option>' + (d.grupos ? d.grupos.map((g => '<optgroup label="' + esc(g[0]) + '">' + g[1].map((t => "<option>" + esc(t) + "</option>")).join("") + "</optgroup>")).join("") : (d.tipos || []).map((t => "<option>" + esc(t) + "</option>")).join("")) + "</select></label>" + '<label>ID del cliente <small>(si aplica)</small><input type="text" id="hlCli" inputmode="numeric" placeholder="194305147"></label></div>' + '<label class="hl-txt">Qué pasó<textarea id="hlTxt" rows="3" placeholder="Describe lo que encontraste"></textarea></label>' + '<div class="hl-ev"><b>Evidencia</b> <small>(hasta 4 fotos; también puedes pegar una captura con Ctrl+V)</small><div class="hl-prev">' + HALLS.fotos.map(((f, i) => '<span class="hl-pf"><img src="' + f.url + '" alt=""><button type="button" data-hx="' + i + '" title="Quitar">✕</button></span>')).join("") + (HALLS.fotos.length < 4 ? '<label class="hl-add">＋ Foto<input type="file" id="hlFile" accept="image/*" multiple hidden></label>' : "") + "</div></div>" + '<div class="hl-acc"><button type="button" class="btn" id="hlGuardar">Guardar hallazgo</button><small id="hlMsg" role="alert"></small></div></div>';
  if (filasR) h += '<details class="rv" open style="margin:12px 0"><summary><span class="rv-t"><b>Reincidencias por monitor</b><small>Mes en curso y últimos 60 días. En rojo, los tipos que se repiten.</small></span></summary><div class="rv-c"><div class="table-scroll"><table><thead><tr><th>Monitor</th><th class="num">Este mes</th><th class="num">60 días</th><th class="num">Sin responder</th><th class="num">No de acuerdo</th><th>Se repite</th></tr></thead><tbody>' + filasR + "</tbody></table></div></div></details>";
  if (HALLS.vista === "tabla") h += verE.length ? '<div class="table-scroll vt-cel" style="max-height:620px;overflow-y:auto"><table><thead><tr><th>Monitor</th><th>Turno del hallazgo</th><th>Tipo</th><th>Notificado el</th><th>Lo vio el</th><th>Estado</th><th>Respondió el</th><th>Tardó en responder</th><th>Comentario del monitor</th><th>Anotó</th></tr></thead><tbody>' + verE.map((x => '<tr><td data-l="Monitor" class="name"><b>' + esc(x.mon) + '</b></td><td data-l="Turno">' + fe2(x.fecha) + ' <small style="color:var(--faint)">' + esc(x.turno) + "</small></td>" + '<td data-l="Tipo" style="min-width:220px;white-space:normal">' + esc(x.tipo) + (hallVez(L, x) > 1 ? ' <span class="rv-pill accion">' + hallVez(L, x) + ".ª vez</span>" : "") + '</td><td data-l="Notificado">' + esc(x.reg) + "</td>" + '<td data-l="Lo vio">' + (x.visto ? esc(x.visto) : '<small style="color:var(--faint)">' + (x.est === "Pendiente" ? "Todavía no" : "—") + "</small>") + '</td><td data-l="Estado">' + pillEst(x) + "</td>" + '<td data-l="Respondió">' + (x.respT ? esc(x.respT) : "—") + '</td><td data-l="Tardó" class="num">' + (x.respT ? dur(x.reg, x.respT) : x.est === "Pendiente" ? '<small style="color:var(--faint)">lleva ' + dur(x.reg, (() => {
   const d = new Date;
@@ -4319,7 +4319,7 @@ function hallRender(forzar) {
   })).borrarHallazgo(clave, b.dataset.hb);
  }));
  if (!HALLS.nuevo) return;
- const F = HALLS.form || (HALLS.form = {}), ids = [ "hlFecha", "hlTurno", "hlTipo", "hlCli", "hlTxt" ];
+ const F = HALLS.form || (HALLS.form = {}), ids = [ "hlFecha", "hlDesde", "hlTurno", "hlTipo", "hlCli", "hlTxt" ];
  c.querySelectorAll(".hl-chk input").forEach((x => x.onchange = () => {
   const antes = (F.mons || []).length;
   F.mons = Array.from(c.querySelectorAll(".hl-chk input:checked")).map((y => y.value));
@@ -4327,7 +4327,9 @@ function hallRender(forzar) {
  }));
  c.querySelectorAll("[data-tm]").forEach((x => {
   x.onchange = () => {
+   const antes = /^Varios/.test((F.turnos || {})[x.dataset.tm] || "");
    (F.turnos = F.turnos || {})[x.dataset.tm] = x.value;
+   if (antes !== /^Varios/.test(x.value)) hallRender(true);
   };
  }));
  ids.forEach((k => {
@@ -4335,7 +4337,9 @@ function hallRender(forzar) {
   if (!el) return;
   if (F[k] !== undefined) el.value = F[k];
   el.oninput = el.onchange = () => {
+   const antes = /^Varios/.test(F.hlTurno || "");
    F[k] = el.value;
+   if (k === "hlTurno" && antes !== /^Varios/.test(el.value)) hallRender(true);
   };
  }));
  const msg = c.querySelector("#hlMsg");
@@ -4373,11 +4377,18 @@ function hallRender(forzar) {
    const x = c.querySelector('[data-tm="' + CSS.escape(m) + '"]');
    return x ? x.value : v("hlTurno");
   }));
+  const fdm = y => y ? y.slice(8) + "/" + y.slice(5, 7) : "", des = v("hlDesde"), has = v("hlFecha");
+  if (turnos.concat([ v("hlTurno") ]).some((t => /^Varios/.test(t || "")))) {
+   if (!des) return msg.textContent = "Pon desde qué fecha es el periodo.";
+   if (des > has) return msg.textContent = "La fecha «Desde» no puede ser después de «Hasta».";
+   for (let i = 0; i < turnos.length; i++) if (/^Varios/.test(turnos[i] || "")) turnos[i] = "Varios turnos (del " + fdm(des) + " al " + fdm(has) + ")";
+  }
+  const tur0 = /^Varios/.test(v("hlTurno")) ? "Varios turnos (del " + fdm(des) + " al " + fdm(has) + ")" : v("hlTurno");
   const datos = {
    mons: mSel,
    mon: mSel.join(" y "),
    fecha: v("hlFecha"),
-   turno: turnos[0] || v("hlTurno"),
+   turno: turnos[0] || tur0,
    turnos: turnos,
    tipo: v("hlTipo"),
    cli: v("hlCli"),
@@ -15910,4 +15921,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = '814e9404574b' -->
+<!-- var HUELLA = 'f7ba43858581' -->
