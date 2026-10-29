@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "9d5b441f22b6";
+ var HUELLA = "dfb7852a6fcb";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -5514,7 +5514,8 @@ function personalHtml(H, sem, iHoy) {
  const P = personalSem(H, sem);
  if (!P) return "";
  const i = NOVUI.dimg >= 0 && NOVUI.dimg <= 6 ? NOVUI.dimg : iHoy >= 0 ? iHoy : 0;
- return '<section class="panel"><h2>Encargados, supervisores y monitores</h2><div class="sub">Quién no está cada día y quién trabaja, con tarjetas como las de los operadores. Elige el día aquí mismo.</div>' + '<div class="sub-barra" style="margin-top:12px">' + DIAS_L.map(((n, k) => '<button type="button" data-pdi="' + k + '" aria-selected="' + (k === i) + '">' + n.slice(0, 3) + " " + Number(ymdMas(sem.l, k).slice(8)) + (k === iHoy ? " · hoy" : "") + "</button>")).join("") + "</div>" + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0"><button class="btn" type="button" data-pimg="dia">Descargar imagen del ' + DIAS_L[i].toLowerCase() + '</button><button class="btn ghost" type="button" data-pimg="sem">Descargar imagen de la semana</button></div>' + '<div class="pimg-prev" style="border-radius:12px;overflow:hidden;border:1px solid var(--line,#ddd)"></div></section>';
+ const conCr = P.f.some((r => r[0] === "Creadores"));
+ return '<section class="panel"><h2>' + (conCr ? "Encargados, supervisores, monitores y creadores de contenido" : "Encargados, supervisores y monitores") + '</h2><div class="sub">Quién no está cada día y quién trabaja, con tarjetas como las de los operadores. Elige el día aquí mismo.</div>' + '<div class="sub-barra" style="margin-top:12px">' + DIAS_L.map(((n, k) => '<button type="button" data-pdi="' + k + '" aria-selected="' + (k === i) + '">' + n.slice(0, 3) + " " + Number(ymdMas(sem.l, k).slice(8)) + (k === iHoy ? " · hoy" : "") + "</button>")).join("") + "</div>" + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0"><button class="btn" type="button" data-pimg="dia">Descargar imagen del ' + DIAS_L[i].toLowerCase() + '</button><button class="btn ghost" type="button" data-pimg="sem">Descargar imagen de la semana</button></div>' + '<div class="pimg-prev" style="border-radius:12px;overflow:hidden;border:1px solid var(--line,#ddd)"></div></section>';
 }
 
 function personalSem(H, sem) {
@@ -5524,6 +5525,7 @@ function personalSem(H, sem) {
   ENCARGADOS: "Encargados",
   SUPERVISORES: "Supervisores",
   MONITORES: "Monitores",
+  "CREADORES DE CONTENIDO": "Creadores",
   OTROS: "Otros"
  }, f = [];
  P.b.forEach((b => b.f.forEach((r => {
@@ -5543,7 +5545,7 @@ function personalDibujo(H, sem, dias) {
  NOVUI.hg = "";
  try {
   return dibujarDescansos(S, dias, H, {
-   tit: "ENCARGADOS, SUPERVISORES Y MONITORES",
+   tit: (H.personal || []).some((x => x.l === sem.l && x.b.some((b => b.c === "CREADORES DE CONTENIDO")))) ? "PERSONAL: ENCARGADOS, SUPERVISORES, MONITORES Y CREADORES" : "ENCARGADOS, SUPERVISORES Y MONITORES",
    grupo: "cargo",
    g: "CARGO"
   });
@@ -5643,6 +5645,13 @@ function turnosDia(sem, i, H) {
 }
 
 function dibujarDescansos(sem, dias, H, op) {
+ const OC = [ "Encargados", "Supervisores", "Monitores", "Creadores" ], cmpG = (x, y) => {
+  if (op && op.grupo === "cargo") {
+   const a = OC.indexOf(x), b = OC.indexOf(y);
+   if (a !== b) return (a < 0 ? 9 : a) - (b < 0 ? 9 : b);
+  }
+  return x.localeCompare(y);
+ };
  op = op || {};
  const W = 1500, ESC = 2, M = 40, GAP = 18, NC = 3, CW = (W - 2 * M - GAP * (NC - 1)) / NC, FILA = 30, ORD = {
   "MAÑANA": 0,
@@ -5655,7 +5664,7 @@ function dibujarDescansos(sem, dias, H, op) {
  };
  const FI = 34, altoTarjeta = z => 44 + 34 + z.fuera.length * FI + 18 + 34 + Math.max(1, z.trabajan.length) * FI + 14;
  const bloques = dias.map((i => {
-  const d = descansosDia(sem, i, H).sort(((a, b) => ORD[a.j] - ORD[b.j] || a.g.localeCompare(b.g) || a.o.localeCompare(b.o))), filas = [];
+  const d = descansosDia(sem, i, H).sort(((a, b) => ORD[a.j] - ORD[b.j] || cmpG(a.g, b.g) || a.o.localeCompare(b.o))), filas = [];
   const porG = {};
   d.forEach((z => {
    const k = nrm(z.g);
@@ -5665,7 +5674,7 @@ function dibujarDescansos(sem, dias, H, op) {
     trabajan: z.cubren.slice()
    }).fuera.push(z);
   }));
-  const tarjetas = Object.keys(porG).map((k => porG[k])).sort(((a, b) => b.fuera.length - a.fuera.length || a.g.localeCompare(b.g)));
+  const tarjetas = Object.keys(porG).map((k => porG[k])).sort(((a, b) => b.fuera.length - a.fuera.length || cmpG(a.g, b.g)));
   tarjetas.forEach((t => {
    const fuera = t.fuera.map((z => nrm(z.o)));
    t.trabajan = t.trabajan.filter((q => fuera.indexOf(nrm(q[0])) < 0));
@@ -5675,7 +5684,7 @@ function dibujarDescansos(sem, dias, H, op) {
   d.forEach((z => {
    conFalta[nrm(z.g)] = 1;
   }));
-  const tg = turnosDia(sem, i, H).filter((z => !conFalta[nrm(z.g)])), filasT = [];
+  const tg = turnosDia(sem, i, H).filter((z => !conFalta[nrm(z.g)])).sort(((a, b) => cmpG(a.g, b.g))), filasT = [];
   for (let k = 0; k < tg.length; k += NC) filasT.push(tg.slice(k, k + NC));
   const jDe = e => {
    const hh = Number(String(e || "0").slice(0, 2));
@@ -16086,4 +16095,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = '9d5b441f22b6' -->
+<!-- var HUELLA = 'dfb7852a6fcb' -->
