@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr0
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "9b9cfb866f7e";
+ var HUELLA = "d70912099f5c";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -5016,6 +5016,7 @@ function histSinRetraer(clave) {
   let n = 0;
   if (a.d2 && a.d2 < m.diasMes) return;
   for (let q = dias.length - 1; q >= 0 && !(a.act[dias[q] - 1] > 0); q--) {
+   if (a0.tramos && a0.tramos.length && !tramoDe(a0, dias[q])) break;
    const as = (DATA.asis || {})[nrm(a.o) + "|" + ymd(m, dias[q])];
    if (as && as[0] === "marco") break;
    if (as && (as[0] === "desc" || as[0] === "nada")) continue;
@@ -15921,4 +15922,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = '9b9cfb866f7e' -->
+<!-- var HUELLA = 'd70912099f5c' -->
