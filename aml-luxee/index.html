@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr03m5tH4HrrssdWXzoGtKFAqbvOnPPA7tRjsFSRsE16hLkv-w/exec";
 
 (function() {
- var n = 0, VER = "web 193", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 194", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "283d1febafa6";
+ var HUELLA = "5f3b58d14e18";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -14787,9 +14787,14 @@ function audCargarMis() {
   if (r.evid > 0) return '<br><a class="au-evl" href="' + e(r.evidUrl) + '" target="_blank" rel="noopener">📎 ' + r.evid + (r.evid === 1 ? " evidencia" : " evidencias") + " · busca «" + r.fila + "»</a>";
   return /MULTIMEDIA/.test(String(r.tipo || "").toUpperCase()) ? '<br><span class="au-evl no">Sin evidencias</span>' : "";
  }
+ const opTxt = r => {
+  const o = String(r.operador || "").trim();
+  if (o && !/^(MULTIMEDIA|CONTINGENCIA)$/i.test(o)) return e(t(o));
+  return /MULTIMEDIA|POST RECHAZ/i.test(String(r.tipo || "") + " " + String(r.clase || "")) ? '<span class="au-mut">No aplica (revisión del perfil)</span>' : "—";
+ };
  function tablaRegistros(filas, conAuditor) {
   if (!filas.length) return '<div class="vacio">Todavía no hay registros en estos días.</div>';
-  return '<div class="table-scroll vt-cel"><table class="sr-t au-reg"><thead><tr><th>Guardado</th><th>Fecha</th><th>Turno</th><th>Perfil</th><th>Operador</th><th>Qué</th><th>Detalle</th>' + (conAuditor ? "<th>Auditor</th>" : "") + "<th></th></tr></thead><tbody>" + filas.map((r => '<tr><td data-l="Guardado">' + e(r.sello ? r.sello.slice(0, 16) : "—") + '</td><td data-l="Fecha">' + e(r.fecha) + '</td><td data-l="Turno">' + e(JN[r.turno] || t(r.turno)) + '</td><td data-l="Perfil"><b>' + e(t(r.perfil)) + '</b></td><td data-l="Operador">' + e(t(r.operador) || "—") + '</td><td data-l="Qué">' + pillTipo(r) + " " + e(t(r.novedad)) + '</td><td data-l="Detalle" class="au-obs">' + e(r.observacion) + evLink(r) + "</td>" + (conAuditor ? '<td data-l="Auditor">' + e(t(r.auditor)) + "</td>" : "") + "<td>" + (r.borrable || conAuditor === true ? '<button type="button" class="au-borrar" data-fila="' + r.fila + '" data-sello="' + e(r.sello) + '">Borrar</button>' : conAuditor ? "" : '<small class="au-mut" title="Pasaron más de 2 horas: pídele a supervisión que lo borre o corrija.">Pídelo a supervisión</small>') + "</td></tr>")).join("") + "</tbody></table></div>";
+  return '<div class="table-scroll vt-cel"><table class="sr-t au-reg"><thead><tr><th>Guardado</th><th>Fecha</th><th>Turno</th><th>Perfil</th><th>Operador</th><th>Qué</th><th>Detalle</th>' + (conAuditor ? "<th>Auditor</th>" : "") + "<th></th></tr></thead><tbody>" + filas.map((r => '<tr><td data-l="Guardado">' + e(r.sello ? r.sello.slice(0, 16) : "—") + '</td><td data-l="Fecha">' + e(r.fecha) + '</td><td data-l="Turno">' + e(JN[r.turno] || t(r.turno)) + '</td><td data-l="Perfil"><b>' + e(t(r.perfil)) + '</b></td><td data-l="Operador">' + opTxt(r) + '</td><td data-l="Qué">' + pillTipo(r) + " " + e(t(r.novedad)) + '</td><td data-l="Detalle" class="au-obs">' + e(r.observacion) + evLink(r) + "</td>" + (conAuditor ? '<td data-l="Auditor">' + e(t(r.auditor)) + "</td>" : "") + "<td>" + (r.borrable || conAuditor === true ? '<button type="button" class="au-borrar" data-fila="' + r.fila + '" data-sello="' + e(r.sello) + '">Borrar</button>' : conAuditor ? "" : '<small class="au-mut" title="Pasaron más de 2 horas: pídele a supervisión que lo borre o corrija.">Pídelo a supervisión</small>') + "</td></tr>")).join("") + "</tbody></table></div>";
  }
  function conectarBorrar(cont, clave, nombre, recargar) {
   cont.querySelectorAll(".au-borrar").forEach((b => b.onclick = () => {
@@ -14877,7 +14882,7 @@ function audCargarMis() {
    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(r.fecha || "");
    return m ? m[3] + "/" + m[2] : e(r.fecha);
   };
-  const tabla = l => '<div class="table-scroll vt-cel"><table class="sr-t au-reg"><thead><tr><th>Día</th><th>Turno</th><th>Perfil</th><th>Operador</th><th>Qué</th><th>Detalle</th><th>Registró</th></tr></thead><tbody>' + l.map((r => '<tr><td data-l="Día"><b>' + fe(r) + "</b>" + (r.sello ? ' <small class="au-mut">' + e(r.sello.slice(11, 16)) + "</small>" : "") + '</td><td data-l="Turno">' + e(JN[r.turno] || t(r.turno)) + '</td><td data-l="Perfil"><b>' + e(t(r.perfil)) + '</b></td><td data-l="Operador">' + e(t(r.operador) || "—") + '</td><td data-l="Qué">' + pillTipo(r) + " " + e(t(r.novedad)) + '</td><td data-l="Detalle" class="au-obs">' + e(r.observacion) + '</td><td data-l="Registró">' + e(t(r.auditor)) + "</td></tr>")).join("") + "</tbody></table></div>";
+  const tabla = l => '<div class="table-scroll vt-cel"><table class="sr-t au-reg"><thead><tr><th>Día</th><th>Turno</th><th>Perfil</th><th>Operador</th><th>Qué</th><th>Detalle</th><th>Registró</th></tr></thead><tbody>' + l.map((r => '<tr><td data-l="Día"><b>' + fe(r) + "</b>" + (r.sello ? ' <small class="au-mut">' + e(r.sello.slice(11, 16)) + "</small>" : "") + '</td><td data-l="Turno">' + e(JN[r.turno] || t(r.turno)) + '</td><td data-l="Perfil"><b>' + e(t(r.perfil)) + '</b></td><td data-l="Operador">' + opTxt(r) + '</td><td data-l="Qué">' + pillTipo(r) + " " + e(t(r.novedad)) + '</td><td data-l="Detalle" class="au-obs">' + e(r.observacion) + '</td><td data-l="Registró">' + e(t(r.auditor)) + "</td></tr>")).join("") + "</tbody></table></div>";
   box.innerHTML = filas.length ? tabla(filas.slice(0, 200)) + (filas.length > 200 ? '<div class="au-mut" style="margin-top:6px">Se muestran los 200 más recientes de ' + filas.length + ". Usa el buscador para encontrar uno.</div>" : "") : '<div class="vacio">No hay registros con ese filtro en estos días.</div>';
  }
  function audPintarMis() {
@@ -15802,4 +15807,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = '283d1febafa6' -->
+<!-- var HUELLA = '5f3b58d14e18' -->
