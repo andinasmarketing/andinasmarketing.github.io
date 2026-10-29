@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr03m5tH4HrrssdWXzoGtKFAqbvOnPPA7tRjsFSRsE16hLkv-w/exec";
 
 (function() {
- var n = 0, VER = "web 189", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 190", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "e3f0df999b1b";
+ var HUELLA = "ea105ee493d6";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -3216,7 +3216,7 @@ const NOVM = {
  abiertos: {}
 };
 
-const NOVM_T = [ [ "Falta o novedad", "Faltas", "#B3312A", "!" ], [ "Multimedia", "Multimedia", "#2A7F9E", "▣" ], [ "Tareas", "Control de tareas", "#1E7A4F", "✓" ], [ "Cobertura", "Coberturas", "#7D8190", "⇄" ], [ "Cambio de perfil", "Cambios de perfil", "#7A5D00", "+" ] ];
+const NOVM_T = [ [ "Falta o novedad", "Faltas", "#B3312A", "!" ], [ "Digitación", "Digitación de clientes", "#C9A227", "✎" ], [ "Multimedia", "Multimedia", "#2A7F9E", "▣" ], [ "Tareas", "Control de tareas", "#1E7A4F", "✓" ], [ "Cobertura", "Coberturas", "#7D8190", "⇄" ], [ "Cambio de perfil", "Cambios de perfil", "#7A5D00", "+" ] ];
 
 const NOVM_EVID = "https://drive.google.com/drive/folders/1xSvQv9tWsBvAjYtYSbYF8N8zPjgzeTNy";
 
@@ -3255,6 +3255,21 @@ function sgNovCargar(forzar) {
   ok: false,
   error: er.message
  })));
+ NOVM.dig = null;
+ const kd = k;
+ const finD = t => {
+  let d0 = null;
+  try {
+   d0 = typeof t === "string" ? JSON.parse(t) : t;
+  } catch (e) {}
+  if (NOVM.k !== kd) return;
+  NOVM.dig = d0 && d0.ok ? d0.turnos || [] : [];
+  if (SEGMON.tab === "nov" && NOVM.d) sgNovRender();
+ };
+ if (!esApps) setTimeout((() => finD(window.PROD_DEMO || {
+  ok: true,
+  turnos: []
+ })), 250); else google.script.run.withFailureHandler((() => finD(null))).withSuccessHandler(finD).productividadMonitores(clave, a, b);
 }
 
 function sgNovRender() {
@@ -3319,6 +3334,22 @@ function sgNovRender() {
    sk: sk(r)
   }, r));
  }));
+ (NOVM.dig || []).forEach((t => {
+  if (mon && nrm(t.n).split(" ")[0] !== mon) return;
+  (t.dig || []).forEach((g => {
+   const it = {
+    clase: "Digitación",
+    fecha: t.f,
+    turno: t.jor,
+    auditor: nrm(t.n).split(" ")[0],
+    hora: g[0],
+    dig: g,
+    sk: t.f.replace(/-/g, "") + g[0].replace(":", "")
+   };
+   if (q && nrm([ t.n, "digitacion clientes nuevos" ].join(" ")).indexOf(q) < 0) return;
+   items.push(it);
+  }));
+ }));
  const cuenta = {};
  let nTot = 0;
  items.forEach((x => {
@@ -3349,7 +3380,10 @@ function sgNovRender() {
   }
   const tp = tipo(x.clase), quien = String(x.auditor || "").split(", ").map(nomDe).join(" y "), hora = x.filas ? x.h0 && x.h0 !== x.hora ? x.h0 + "–" + x.hora : x.hora : x.hora;
   const meta = '<span class="nvm-q">' + esc(quien) + "</span>" + (hora ? " · " + esc(hora) : ' · <span title="Se anotó en la hoja, no en la página">sin hora</span>') + (x.turno ? " · turno " + esc((JL[J.indexOf(x.turno)] || T(x.turno)).toLowerCase()) : "");
-  if (x.filas) {
+  if (x.dig) {
+   const g = x.dig;
+   out += '<div class="nvm-it" style="--c:' + tp[2] + '"><span class="nvm-ic" aria-hidden="true">' + tp[3] + '</span><div class="nvm-b"><div class="nvm-t"><b>Digitó en «Clientes Nuevos – Monitores» · de ' + esc(g[0]) + " a " + esc(g[1]) + '</b><span class="nvm-p">' + tp[1] + "</span></div>" + '<div class="nvm-m"><span class="nvm-q">' + esc(String(x.auditor || "").split(", ").map(nomDe).join(" y ")) + "</span>" + (x.turno ? " · turno " + esc((JL[J.indexOf(x.turno)] || T(x.turno)).toLowerCase()) : "") + "</div>" + '<div class="nvm-r"><span>' + g[2] + " min</span><span>" + g[3] + (g[3] === 1 ? " celda" : " celdas") + "</span>" + (g[4] ? "<span>" + g[4] + (g[4] === 1 ? " perfil" : " perfiles") + "</span>" : "") + "</div></div></div>";
+  } else if (x.filas) {
    const just = r => r.estado === "Justificado" || (r.estado === "No cumple" || r.estado === "Por revisar") && /Motivo: (Poco flujo|Clientes no cumplen|Perfil nuevo)/i.test(r.observacion || "");
    const ok = x.filas.filter((r => r.estado === "Cumple")).length, nj = x.filas.filter(just).length, id = "t|" + x.auditor + "|" + x.fecha + "|" + x.turno, ab = NOVM.abiertos[id];
    out += '<div class="nvm-it" style="--c:' + tp[2] + '"><span class="nvm-ic" aria-hidden="true">' + tp[3] + '</span><div class="nvm-b"><div class="nvm-t"><b>Control de tareas · ' + x.filas.length + (x.filas.length === 1 ? " perfil" : " perfiles") + '</b><span class="nvm-p">' + tp[1] + "</span></div>" + '<div class="nvm-m">' + meta + '</div><div class="nvm-r"><span class="ok">' + ok + " llegaron a la meta</span>" + (nj ? '<span class="ju">' + nj + " justificados</span>" : "") + (x.filas.length - ok - nj ? '<span class="no">' + (x.filas.length - ok - nj) + " sin justificar</span>" : "") + '<button type="button" class="nvm-mas" data-nva="' + esc(id) + '" aria-expanded="' + !!ab + '">' + (ab ? "Ocultar perfiles" : "Ver perfiles") + "</button></div>" + (ab ? (() => {
@@ -3529,6 +3563,8 @@ function sgProdRender() {
    pct: k => Math.round(con(k) * 100 / N),
    sinReg: Math.round(ts.reduce(((x, t) => x + t.sinReg), 0) / N),
    trab: Math.round(ts.reduce(((x, t) => x + t.trab), 0) / N),
+   digMin: Math.round(ts.reduce(((x, t) => x + (t.dig || []).reduce(((y, g) => y + g[2]), 0)), 0) / N),
+   conDig: ts.filter((t => (t.dig || []).length)).length,
    porPerfil: pf ? Math.round(mn * 10 / pf) / 10 : null,
    conBreak: pausas.length,
    nB: tsB.length,
@@ -3551,7 +3587,7 @@ function sgProdRender() {
  const barra = (p, nm) => '<div class="pd-b"><span>' + nm + '</span><i><em style="width:' + Math.max(2, p) + "%;background:" + (p >= 80 ? "#1E7A4F" : p >= 50 ? "#C9A227" : "#B3312A") + '"></em></i><b>' + p + "%</b></div>";
  let h = '<div class="pd-nota">Del ' + fe(d.desde) + " al " + fe(d.hasta) + ". Un <b>rato sin registros</b> es tiempo dentro del turno (sin contar el break) de " + d.hueco + " minutos o más en que no quedó nada a su nombre. Revisar chats o apoyar a un operador no deja registro: úsalo para preguntar, no como prueba." + (d.audOk === false ? " <b>No se pudo leer REGISTROS AUDITORIA:</b> faltan tareas, multimedia y faltas." : "") + "</div>";
  if (alertas.length) h += '<div class="pd-al"><b>Lo que hay que mirar</b><ul>' + alertas.map((x => '<li class="' + x[0] + '">' + x[1] + "</li>")).join("") + "</ul></div>";
- h += '<div class="pd-mons">' + R.map((x => '<div class="pd-m"><div class="pd-mh"><b>' + esc(x.n) + "</b><span>" + x.N + (x.N === 1 ? " turno" : " turnos") + "</span></div>" + '<div class="pd-ks">' + kpi(fmt.format(x.prom("V")), "IDs verificados", "por turno") + kpi(fmt.format(x.prom("D")), "Clientes digitados", "por turno") + kpi(fmt.format(x.prom("tar")), "Perfiles revisados", "tareas por turno") + kpi(fmt.format(x.sum("mm")), "Multimedia", "en " + x.con("mm") + " de " + x.N + " turnos", x.pct("mm") < 50 ? "r" : "") + kpi(hm(x.sinReg), "Sin registros", "promedio por turno", x.sinReg >= 180 ? "r" : "") + kpi(x.porPerfil === null ? "—" : x.porPerfil + " min", "Por perfil", x.porPerfil === null ? "se mide desde hoy" : "en el control de tareas") + "</div>" + '<div class="pd-bs"><small>Turnos en que lo hizo</small>' + TAR.map((([k, nm]) => barra(x.pct(k), nm))).join("") + "</div>" + '<div class="pd-brk">☕ ' + (!brkDesde ? "Break: todavía nadie lo ha marcado con el botón «Salgo a break» (es nuevo)." : !x.nB ? "Break: no ha tenido turnos desde que existe el botón «Salgo a break»." : !x.conBreak ? "Break: <b>no lo marcó</b> en sus " + x.nB + (x.nB === 1 ? " turno" : " turnos") + " desde el " + brkDesde.slice(8) + "/" + brkDesde.slice(5, 7) + "." : "Break: lo marcó en " + x.conBreak + " de " + x.nB + (x.nB === 1 ? " turno" : " turnos") + " (desde el " + brkDesde.slice(8) + "/" + brkDesde.slice(5, 7) + "), en promedio " + x.promB + " min." + (x.exceso ? " <b>Se pasó de " + (d.breakMin || 20) + " min en " + x.exceso + (x.exceso === 1 ? " turno" : " turnos") + ".</b>" : "")) + "</div></div>")).join("") + "</div>";
+ h += '<div class="pd-mons">' + R.map((x => '<div class="pd-m"><div class="pd-mh"><b>' + esc(x.n) + "</b><span>" + x.N + (x.N === 1 ? " turno" : " turnos") + "</span></div>" + '<div class="pd-ks">' + kpi(fmt.format(x.prom("V")), "IDs verificados", "por turno") + kpi(fmt.format(x.prom("D")), "Clientes digitados", "por turno") + kpi(fmt.format(x.prom("tar")), "Perfiles revisados", "tareas por turno") + kpi(fmt.format(x.sum("mm")), "Multimedia", "en " + x.con("mm") + " de " + x.N + " turnos", x.pct("mm") < 50 ? "r" : "") + kpi(hm(x.sinReg), "Sin registros", "promedio por turno", x.sinReg >= 180 ? "r" : "") + kpi(x.porPerfil === null ? "—" : x.porPerfil + " min", "Por perfil", x.porPerfil === null ? "se mide desde hoy" : "en el control de tareas") + "</div>" + '<div class="pd-bs"><small>Turnos en que lo hizo</small>' + TAR.map((([k, nm]) => barra(x.pct(k), nm))).join("") + "</div>" + '<div class="pd-brk">✎ Digitación de clientes nuevos: ' + (x.conDig ? "en <b>" + x.conDig + " de " + x.N + "</b> turnos, en promedio <b>" + hm(x.digMin) + "</b> por turno." : "<b>no digitó</b> en estos turnos.") + "</div>" + '<div class="pd-brk">☕ ' + (!brkDesde ? "Break: todavía nadie lo ha marcado con el botón «Salgo a break» (es nuevo)." : !x.nB ? "Break: no ha tenido turnos desde que existe el botón «Salgo a break»." : !x.conBreak ? "Break: <b>no lo marcó</b> en sus " + x.nB + (x.nB === 1 ? " turno" : " turnos") + " desde el " + brkDesde.slice(8) + "/" + brkDesde.slice(5, 7) + "." : "Break: lo marcó en " + x.conBreak + " de " + x.nB + (x.nB === 1 ? " turno" : " turnos") + " (desde el " + brkDesde.slice(8) + "/" + brkDesde.slice(5, 7) + "), en promedio " + x.promB + " min." + (x.exceso ? " <b>Se pasó de " + (d.breakMin || 20) + " min en " + x.exceso + (x.exceso === 1 ? " turno" : " turnos") + ".</b>" : "")) + "</div></div>")).join("") + "</div>";
  const ley = '<div class="pd-ley">' + Object.keys(PROD_K).map((k => '<span><i style="background:' + PROD_K[k][1] + '"></i>' + PROD_K[k][0] + "</span>")).join("") + '<span><i class="hu"></i>Sin registros</span><span><i class="br"></i>Break</span></div>';
  const linea = t => {
   const L = t.dur, pc = m => Math.max(0, Math.min(100, m * 100 / L));
@@ -3576,7 +3612,7 @@ function sgProdRender() {
   const id = t.n + "|" + t.f + "|" + t.ini, ab = PROD.abierto[id];
   const brk = t.pausas.filter((p => p[0] === "Break")), bmin = brk.reduce(((x, p) => x + p[3]), 0);
   const mayor = t.huecos.slice().sort(((x, y) => y[2] - x[2]))[0];
-  return '<div class="pd-t' + (ab ? " ab" : "") + '"><button type="button" class="pd-tc" data-pdt="' + esc(id) + '" aria-expanded="' + !!ab + '">' + '<span class="pd-tq"><b>' + fe(t.f) + "</b><span>" + esc(t.n.split(" ")[0]) + " · " + esc(t.ini) + "–" + esc(t.fin) + (t.enCurso ? " · <em>en curso</em>" : "") + "</span></span>" + '<span class="pd-ck">' + TAR.map((([k, nm]) => '<span class="' + (ok(t, k) ? "si" : "no") + '" title="' + nm + ": " + (t.cnt[k] || 0) + '">' + (ok(t, k) ? "✓" : "✕") + " " + nm.split(" ").pop() + "</span>")).join("") + "</span>" + '<span class="pd-sr' + (t.sinReg >= 180 ? " r" : "") + '"><b>' + hm(t.sinReg) + "</b> sin registros</span></button>" + linea(t) + (ab ? '<div class="pd-det"><div class="pd-dg">' + "<div><small>Entró · salió</small><b>" + (t.ent || '<span class="nada">sin marca</span>') + " → " + (t.sal || (t.enCurso ? "en turno" : '<span class="nada">sin marca</span>')) + "</b></div>" + "<div><small>Primer y último registro</small><b>" + (t.primero || "—") + " → " + (t.ultimo || "—") + "</b></div>" + '<div><small>Break</small><b class="' + (bmin > (d.breakMin || 20) ? "r" : "") + '">' + (brk.length ? brk.map((p => p[1] + "–" + p[2] + " (" + p[3] + " min)")).join(", ") : '<span class="nada">no lo marcó</span>') + "</b></div>" + "<div><small>Mayor rato sin registros</small><b>" + (mayor ? mayor[0] + " a " + mayor[1] + " (" + hm(mayor[2]) + ")" : "—") + "</b></div></div>" + '<div class="pd-cn">' + Object.keys(PROD_K).map((k => '<span><i style="background:' + PROD_K[k][1] + '"></i>' + PROD_K[k][0] + " <b>" + fmt.format(t.cnt[k] || 0) + "</b></span>")).join("") + '<span><i style="background:#595D67"></i>Revisión por puntos <b>' + (t.cnt.pts || 0) + "</b></span></div>" + (t.tareasMin ? '<div class="pd-tm">Control de tareas: ' + t.tareasMin.perfiles + " perfiles en " + t.tareasMin.min + " min (" + (t.tareasMin.porPerfil || "—") + " min por perfil).</div>" : "") + (t.sinHoraAud ? '<div class="pd-tm">' + t.sinHoraAud + " registros de auditoría sin hora (hechos en la hoja, no en la página): cuentan, pero no salen en la línea de tiempo.</div>" : "") + (t.huecos.length ? '<div class="pd-hu"><small>Ratos sin registros (' + d.hueco + " min o más)</small>" + t.huecos.map((g => "<span>" + g[0] + "–" + g[1] + " · <b>" + hm(g[2]) + "</b></span>")).join("") + "</div>" : "") + "</div>" : "") + "</div>";
+  return '<div class="pd-t' + (ab ? " ab" : "") + '"><button type="button" class="pd-tc" data-pdt="' + esc(id) + '" aria-expanded="' + !!ab + '">' + '<span class="pd-tq"><b>' + fe(t.f) + "</b><span>" + esc(t.n.split(" ")[0]) + " · " + esc(t.ini) + "–" + esc(t.fin) + (t.enCurso ? " · <em>en curso</em>" : "") + "</span></span>" + '<span class="pd-ck">' + TAR.map((([k, nm]) => '<span class="' + (ok(t, k) ? "si" : "no") + '" title="' + nm + ": " + (t.cnt[k] || 0) + '">' + (ok(t, k) ? "✓" : "✕") + " " + nm.split(" ").pop() + "</span>")).join("") + "</span>" + '<span class="pd-sr' + (t.sinReg >= 180 ? " r" : "") + '"><b>' + hm(t.sinReg) + "</b> sin registros</span></button>" + linea(t) + (ab ? '<div class="pd-det"><div class="pd-dg">' + "<div><small>Entró · salió</small><b>" + (t.ent || '<span class="nada">sin marca</span>') + " → " + (t.sal || (t.enCurso ? "en turno" : '<span class="nada">sin marca</span>')) + "</b></div>" + "<div><small>Primer y último registro</small><b>" + (t.primero || "—") + " → " + (t.ultimo || "—") + "</b></div>" + '<div><small>Break</small><b class="' + (bmin > (d.breakMin || 20) ? "r" : "") + '">' + (brk.length ? brk.map((p => p[1] + "–" + p[2] + " (" + p[3] + " min)")).join(", ") : '<span class="nada">no lo marcó</span>') + "</b></div>" + "<div><small>Mayor rato sin registros</small><b>" + (mayor ? mayor[0] + " a " + mayor[1] + " (" + hm(mayor[2]) + ")" : "—") + "</b></div></div>" + '<div class="pd-cn">' + Object.keys(PROD_K).map((k => '<span><i style="background:' + PROD_K[k][1] + '"></i>' + PROD_K[k][0] + " <b>" + fmt.format(t.cnt[k] || 0) + "</b></span>")).join("") + '<span><i style="background:#595D67"></i>Revisión por puntos <b>' + (t.cnt.pts || 0) + "</b></span></div>" + '<div class="pd-tm">✎ Digitación en «Clientes Nuevos – Monitores»: ' + ((t.dig || []).length ? t.dig.map((g => "<b>" + g[0] + "–" + g[1] + "</b> (" + g[2] + " min, " + g[3] + (g[3] === 1 ? " celda" : " celdas") + (g[4] ? ", " + g[4] + (g[4] === 1 ? " perfil" : " perfiles") : "") + ")")).join(" · ") : '<span class="nada">no digitó en este turno</span>') + "</div>" + (t.tareasMin ? '<div class="pd-tm">Control de tareas: ' + t.tareasMin.perfiles + " perfiles en " + t.tareasMin.min + " min (" + (t.tareasMin.porPerfil || "—") + " min por perfil).</div>" : "") + (t.sinHoraAud ? '<div class="pd-tm">' + t.sinHoraAud + " registros de auditoría sin hora (hechos en la hoja, no en la página): cuentan, pero no salen en la línea de tiempo.</div>" : "") + (t.huecos.length ? '<div class="pd-hu"><small>Ratos sin registros (' + d.hueco + " min o más)</small>" + t.huecos.map((g => "<span>" + g[0] + "–" + g[1] + " · <b>" + hm(g[2]) + "</b></span>")).join("") + "</div>" : "") + "</div>" : "") + "</div>";
  })).join("") + "</div>" + (T.length > TV.length ? '<button type="button" class="btn ghost pd-mas" id="pdMas">Ver los ' + T.length + " turnos</button>" : "");
  if (sinTurnos.length) h += '<div class="pd-nota" style="margin-top:12px">Turnos del horario sin ningún registro ni entrada: ' + sinTurnos.map((t => esc(t.n.split(" ")[0]) + " " + fe(t.f))).join(", ") + ".</div>";
  c.innerHTML = h;
@@ -12388,7 +12424,7 @@ function monRender() {
  if (window.audTab && window.audTab()) tabs.push(window.audTab());
  if (window.audTabEq && window.audTabEq()) tabs.push(window.audTabEq());
  const cab = (k, tit, sub) => '<div class="mn-h"><span class="mn-hi">' + monIco(k) + "</span><div><h2>" + tit + '</h2><div class="sub">' + sub + "</div></div></div>";
- let html = '<div class="mn-hero"><div class="mn-hero-t"><b>' + (P.length ? P.length === 1 ? "Tienes 1 pendiente" : "Tienes " + fmt.format(P.length) + " pendientes" : "Estás al día") + "</b>" + "<span>" + (P.length ? "Corrígelos en la hoja del mes: la celda está en rojo o en amarillo." : "No hay celdas por corregir ni por diligenciar.") + "</span></div>" + '<div class="mn-kp">' + '<button type="button" data-tab="ver" class="a"><b>' + fmt.format(vfPend.length) + "</b><span>IDs por verificar</span></button>" + '<button type="button" data-tab="pend" class="r"><b>' + fmt.format(dif.length) + "</b><span>No coinciden</span></button>" + '<button type="button" data-tab="pend" class="a"><b>' + fmt.format(fal.length) + "</b><span>Por diligenciar</span></button>" + '<button type="button" data-tab="rev"><b>' + fmt.format(nRev) + "</b><span>Para revisar</span></button>" + (d.sup ? '<button type="button" data-tab="reg" class="v"><b>' + fmt.format(d.hoy || 0) + "</b><span>Registros de hoy</span></button>" : "") + "</div></div>";
+ let html = '<div class="mn-hero"><div class="mn-hero-t"><b>' + (P.length ? P.length === 1 ? "Tienes 1 pendiente" : "Tienes " + fmt.format(P.length) + " pendientes" : "Estás al día") + "</b>" + "<span>" + (P.length ? "Corrígelos en la hoja del mes: lo que no coincide está en rojo; lo que falta digitar NO tiene color, búscalo en «Pendientes»." : "No hay celdas por corregir ni por diligenciar.") + "</span></div>" + '<div class="mn-kp">' + '<button type="button" data-tab="ver" class="a"><b>' + fmt.format(vfPend.length) + "</b><span>IDs por verificar</span></button>" + '<button type="button" data-tab="pend" class="r"><b>' + fmt.format(dif.length) + "</b><span>No coinciden</span></button>" + '<button type="button" data-tab="pend" class="a"><b>' + fmt.format(fal.length) + "</b><span>Por diligenciar</span></button>" + '<button type="button" data-tab="rev"><b>' + fmt.format(nRev) + "</b><span>Para revisar</span></button>" + (d.sup ? '<button type="button" data-tab="reg" class="v"><b>' + fmt.format(d.hoy || 0) + "</b><span>Registros de hoy</span></button>" : "") + "</div></div>";
  if (!monEsSup() && MON.nombre) html += monTurnoHtml();
  if (d.turno && d.turno.hayHoja) html += d.turno.nombre ? '<div class="mn-turno ' + (d.turno.anterior ? "" : "ok") + '"><b>Monitor de turno: ' + esc(d.turno.nombre) + (d.turno.acomp && !d.turno.anterior ? " · Acompaña: " + esc(d.turno.acomp) : "") + "</b><span>" + (d.turno.anterior ? "Registrado desde las " + esc(d.turno.desde) + '. Ya pasó la hora del cambio: sigue a su nombre (por si no ha terminado) hasta que el monitor que llega escriba su nombre en "MONITOR DE TURNO".' + (d.sup ? ' <button type="button" class="mn-ok" id="monTomar">Quedar yo de turno</button>' : "") : d.sup ? "Registrando desde las " + esc(d.turno.desde) + ". Lo que se digite queda a su nombre hasta que el siguiente monitor se registre." + (window.supNombre && nrm(window.supNombre()) !== nrm(d.turno.nombre) && nrm(d.turno.acomp || "").indexOf(nrm(window.supNombre())) < 0 ? ' <button type="button" class="mn-ok" id="monTomar" data-ac="1">Acompañar este turno</button>' : "") : "Turno iniciado a las " + esc(d.turno.desde) + ".") + "</span></div>" : '<div class="mn-turno"><b>Empieza tu turno</b><span>Abre la hoja y elige tu nombre en la pestaña "MONITOR DE TURNO" (casilla roja).</span></div>';
  if (O.length) {
@@ -15589,4 +15625,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = 'e3f0df999b1b' -->
+<!-- var HUELLA = 'ea105ee493d6' -->
