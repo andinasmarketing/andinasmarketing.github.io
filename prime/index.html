@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "e12c8a8ea059";
+ var HUELLA = "1de97c439b33";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -9531,6 +9531,46 @@ if (window.PROYECTO) {
  vi.insertBefore(vp, vi.firstChild);
 }
 
+const PROY_SW = {
+ aml: {
+  n: "AML",
+  url: "../aml-luxee/"
+ },
+ luxee: {
+  n: "LUXEE",
+  url: "../luxee/"
+ }
+};
+
+if (PROY_SW[PROY.id]) {
+ const st = document.createElement("style");
+ st.textContent = ".proy-sw{display:none;margin:4px 6px 12px;padding:4px;border:1px solid rgba(230,199,102,.35);border-radius:12px;gap:4px}body.rol-sup .proy-sw{display:flex}" + ".proy-sw-t{display:none;margin:2px 10px 4px;font-size:11px;font-weight:700;letter-spacing:.08em;color:#A9A28F;text-transform:uppercase}body.rol-sup .proy-sw-t{display:block}" + ".proy-sw button{flex:1;border:0;border-radius:9px;padding:8px 6px;font:inherit;font-size:13px;font-weight:800;letter-spacing:.04em;cursor:pointer;background:transparent;color:#E6C766}" + ".proy-sw button[aria-pressed=true]{background:#C9A227;color:#15161A;cursor:default}.proy-sw button:not([aria-pressed=true]):hover{background:rgba(230,199,102,.12)}";
+ document.head.appendChild(st);
+ const t = document.createElement("div");
+ t.className = "proy-sw-t";
+ t.textContent = "Proyecto";
+ const sw = document.createElement("div");
+ sw.className = "proy-sw";
+ sw.setAttribute("role", "group");
+ sw.setAttribute("aria-label", "Proyecto");
+ sw.innerHTML = Object.keys(PROY_SW).map((k => '<button type="button" data-psw="' + k + '" aria-pressed="' + (k === PROY.id) + '">' + PROY_SW[k].n + "</button>")).join("");
+ sw.querySelectorAll("[data-psw]").forEach((x => x.onclick = () => {
+  const k = x.dataset.psw;
+  if (k === PROY.id) return;
+  let v = typeof VISTA_ACTUAL !== "undefined" ? VISTA_ACTUAL : "ptsgen";
+  if (v === "nov") v = EN_AMON ? "asismon" : EN_ASIS ? "asis" : "nov";
+  try {
+   sessionStorage.setItem("retr_ir", v);
+  } catch (e) {}
+  location.href = PROY_SW[k].url;
+ }));
+ const ref = document.getElementById("navPtsGen"), cont = ref && ref.parentNode;
+ if (cont) {
+  cont.insertBefore(sw, cont.firstChild);
+  cont.insertBefore(t, sw);
+ }
+}
+
 document.getElementById("iniOp").onclick = () => {
  ROL = "op";
  if (!ES_PRIME) {
@@ -14070,6 +14110,17 @@ function ponerLogo(src) {
 <script>// Al abrir la página se muestra el inicio para elegir la vista
 verVista("inicio");
 
+try {
+ const ir = sessionStorage.getItem("retr_ir");
+ if (ir) {
+  sessionStorage.removeItem("retr_ir");
+  if (clave && [ "ptsgen", "nov", "asis", "asismon", "tar", "hor", "segmon", "supinicio" ].indexOf(ir) >= 0) {
+   ROL = "sup";
+   verVista(ir === "tar" && PROY.id !== "luxee" ? "nov" : ir);
+  }
+ }
+} catch (e) {}
+
 if (typeof google !== "undefined" && google.script && google.script.url) {
  google.script.url.getLocation((loc => {
   const v = loc && loc.parameter && loc.parameter.vista;
@@ -16217,4 +16268,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = 'e12c8a8ea059' -->
+<!-- var HUELLA = '1de97c439b33' -->
