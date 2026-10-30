@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr0
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "cd68e9a3d8d3";
+ var HUELLA = "30f74335feef";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -5256,6 +5256,8 @@ const DEUDAS_MEMO = {
  inc: null
 };
 
+const AUS_NO_ACUMULA = /ya había perdido su descanso/i;
+
 function turnosIncompletos() {
  if (!DEUDAS_MEMO.calc) deudasOp("");
  if (DEUDAS_MEMO.inc) return DEUDAS_MEMO.inc;
@@ -5313,7 +5315,7 @@ function deudasOp(o) {
  };
  const dias = {};
  (DATA.ausencias || []).forEach((a => {
-  if (nrm(a[1]) === nrm(o) && !a[2] && a[0] >= desde && a[0] <= hoy) dias[a[0]] = "la ausencia";
+  if (nrm(a[1]) === nrm(o) && !a[2] && a[0] >= desde && a[0] <= hoy && !AUS_NO_ACUMULA.test(a[3] || "")) dias[a[0]] = "la ausencia";
  }));
  (DATA.novedades || []).forEach((r => {
   if (nrm(r[1]) !== nrm(o) || !/permiso/i.test(r[2] || "") || !r[3]) return;
@@ -5338,14 +5340,28 @@ function deudasOp(o) {
   }
   const p = porDia[h[0]] || (porDia[h[0]] = {
    min: 0,
-   ses: []
+   ses: [],
+   tr: []
   });
   p.min += Math.max(0, E - S);
+  p.tr.push([ S, E ]);
   p.ses.push(h[3] + "–" + (enCurso ? "ahora" : h[4]));
  }));
+ const extraDia = d => {
+  const P = porDia[d], du = turnoDe(d);
+  if (!du) return P.min;
+  const x = horarioDia(o, d);
+  if (!x || !x.e) return P.min - du;
+  const ws = minAbs(d, x.e), we = ws + du;
+  let dentro = 0;
+  P.tr.forEach((([a, b]) => {
+   dentro += Math.max(0, Math.min(b, we) - Math.max(a, ws));
+  }));
+  return du - dentro <= 60 ? P.min - dentro : P.min - du;
+ };
  const extras = Object.keys(porDia).sort().map((d => ({
   d: d,
-  min: porDia[d].min - turnoDe(d),
+  min: extraDia(d),
   ses: porDia[d].ses,
   perdio: perdioDia(d)
  }))).filter((x => x.min >= 15));
@@ -16179,4 +16195,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = 'cd68e9a3d8d3' -->
+<!-- var HUELLA = '30f74335feef' -->
