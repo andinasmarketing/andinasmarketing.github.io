@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "514a18a7a47e";
+ var HUELLA = "1f28dd9a08f5";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -3822,7 +3822,11 @@ function sgProdRender() {
 
 function sgDejados() {
  const M = SEGMON.mon;
- return (SEGMON.dejados || []).filter((x => (!M || sgEs(x.q, M) || nrm(x.q).indexOf(nrm(M)) >= 0) && sgEnPer(Number(x.f.slice(8)), x.f.slice(0, 7))));
+ return (SEGMON.dejados || []).filter((x => !M || sgEs(x.q, M) || nrm(x.q).indexOf(nrm(M)) >= 0));
+}
+
+function sgDejadosPer() {
+ return sgDejados().filter((x => sgEnPer(Number(x.f.slice(8)), x.f.slice(0, 7))));
 }
 
 function sgDejRender() {
@@ -3833,49 +3837,57 @@ function sgDejRender() {
   return;
  }
  const xs = sgDejados();
- const ayuda = '<div class="sg-dej-ay"><b>¿Qué es esto?</b> Cada ID que anota un operador le toca al monitor que está de turno en ese momento. ' + "Lo que se anota en los <b>últimos 10 minutos</b> de un turno ya le toca al monitor que entra (no cuenta aquí). " + "Aquí salen los IDs que un monitor tenía a su cargo, <b>no verificó antes de terminar su turno</b> y tuvo que verificar el compañero que llegó. " + "Si se quedó un rato más y los verificó él mismo, no cuentan.</div>";
+ const ayuda = '<div class="sg-dej-ay"><b>¿Qué es esto?</b> Cada ID que anota un operador le toca al monitor que está de turno en ese momento. ' + "Lo que se anota en los <b>últimos 10 minutos</b> de un turno ya le toca al monitor que entra (no cuenta aquí). " + "Aquí sale, monitor por monitor y día por día, lo que <b>no verificó antes de terminar su turno</b> y tuvo que verificar el compañero que llegó, " + "y los turnos a los que <b>no se presentó</b>. Si se quedó un rato más y los verificó él mismo, no cuenta. Es el historial completo (desde el 20/10), sin importar el periodo de arriba.</div>";
  if (!xs.length) {
-  c.innerHTML = ayuda + '<div class="state" style="padding:18px 0">' + (SEGMON.dejados.length ? "Nadie dejó IDs sin verificar en este periodo" + (SEGMON.mon ? " (" + esc(SEGMON.mon) + ")" : "") + "." : "Ningún monitor ha dejado IDs sin verificar al cierre de su turno (últimos 35 días).") + "</div>";
+  c.innerHTML = ayuda + '<div class="state" style="padding:18px 0">' + (SEGMON.mon ? esc(SEGMON.mon) + " no ha dejado IDs sin verificar." : "Ningún monitor ha dejado IDs sin verificar al cierre de su turno.") + "</div>";
   return;
  }
  const hIni = x => Number((x.t.match(/ (\d{2}):/) || [ 0, 6 ])[1]), largo = x => x.fin - x.ini >= 11 * 36e5;
- const jor = x => largo(x) ? hIni(x) < 12 ? "Turno de día (12 h)" : "Turno de noche (12 h)" : hIni(x) < 10 ? "Mañana" : hIni(x) < 18 ? "Tarde" : "Noche";
+ const jor = x => largo(x) ? hIni(x) < 12 ? "Día (12 h)" : "Noche (12 h)" : hIni(x) < 10 ? "Mañana" : hIni(x) < 18 ? "Tarde" : "Noche";
  const horas = x => x.t.replace(/^\S+ /, "").replace("–", " a ");
  const minTxt = m => m >= 60 ? Math.floor(m / 60) + " h " + (m % 60 ? m % 60 + " min" : "") : m + " min";
+ const pl = (n, s1, s2) => n + " " + (n === 1 ? s1 : s2);
  const porMon = {};
- xs.forEach((x => {
-  const a = porMon[x.q] = porMon[x.q] || {
-   d: 0,
-   n: 0,
-   f: 0,
-   fd: 0
+ xs.forEach(((x, i) => String(x.q).split(" y ").map((q => q.trim())).filter(Boolean).forEach((q => {
+  if (SEGMON.mon && !sgEs(q, SEGMON.mon) && nrm(q).indexOf(nrm(SEGMON.mon)) < 0) return;
+  const a = porMon[q] = porMon[q] || {
+   q: q,
+   ids: 0,
+   turnos: 0,
+   faltas: 0,
+   idsF: 0,
+   just: 0,
+   sinVer: 0,
+   L: []
   };
   if (x.falto) {
-   a.f++;
-   a.fd += x.dej.length;
+   if (x.just) a.just++; else a.faltas++;
+   a.idsF += x.dej.length;
   } else {
-   a.d += x.dej.length;
-   a.n++;
+   a.turnos++;
+   a.ids += x.dej.length;
   }
+  a.sinVer += x.dej.filter((d => !d[6])).length;
+  a.L.push(i);
+ }))));
+ const mons = Object.values(porMon).sort(((a, b) => b.faltas * 1e3 + b.ids + b.idsF - (a.faltas * 1e3 + a.ids + a.idsF) || a.q.localeCompare(b.q)));
+ let h = ayuda;
+ mons.forEach((a => {
+  const sev = a.faltas ? "r" : a.ids >= 20 ? "a" : "";
+  h += '<section class="sg-dm' + (sev ? " " + sev : "") + '"><header class="sg-dm-h"><div><b>' + esc(a.q) + "</b><span>" + pl(a.L.length, "turno con algo pendiente", "turnos con algo pendiente") + "</span></div>" + '<div class="sg-dm-k"><div><b>' + a.ids + "</b><small>" + (a.ids === 1 ? "ID dejado" : "IDs dejados") + "<br>en " + pl(a.turnos, "turno", "turnos") + "</small></div>" + '<div class="' + (a.faltas ? "mal" : "") + '"><b>' + a.faltas + "</b><small>" + (a.faltas === 1 ? "turno sin presentarse" : "turnos sin presentarse") + (a.idsF ? "<br>" + pl(a.idsF, "ID", "IDs") + " sin monitor" : "") + "</small></div>" + (a.just ? "<div><b>" + a.just + "</b><small>" + (a.just === 1 ? "ausencia justificada" : "ausencias justificadas") + "</small></div>" : "") + (a.sinVer ? '<div class="mal"><b>' + a.sinVer + "</b><small>siguen sin<br>verificar</small></div>" : "") + "</div></header>" + '<div class="table-scroll"><table class="sr-t sg-dm-t"><thead><tr><th>Día</th><th>Turno</th><th>Qué pasó</th><th>Pendientes</th><th>Quién los verificó</th><th></th></tr></thead><tbody>' + a.L.map((i => {
+   const x = xs[i], L = x.dej.slice().sort(((p, q) => q[8] - p[8])), ver = L.filter((d => d[6])), sinVer = L.length - ver.length, quien = {};
+   ver.forEach((d => {
+    quien[d[6]] = (quien[d[6]] || 0) + 1;
+   }));
+   const hv = ver.map((d => String(d[7]).slice(-5))).sort(), comp = String(x.q).indexOf(" y ") >= 0 ? " <small>(turno con " + esc(String(x.q).split(" y ").filter((q => q.trim() !== a.q)).join(" y ")) + ")</small>" : "";
+   const que = x.falto ? x.just ? '<span class="rv-pill info">No vino · justificada</span><small>' + esc(x.just) + "</small>" : '<span class="rv-pill accion">No se presentó</span><small>No entró a la página ni verificó nada</small>' : '<span class="rv-pill aviso">Dejó pendientes</span><small>Anotados entre las ' + esc(L[0][5]) + " y las " + esc(L[L.length - 1][5]) + "</small>";
+   return '<tr class="' + (x.falto && !x.just ? "sg-dm-falto" : "") + '"><td><b>' + DSEMLARGO(x.f).slice(0, 3) + " " + x.f.slice(8) + "/" + x.f.slice(5, 7) + "</b></td><td>" + jor(x) + "<small>" + esc(horas(x)) + "</small>" + comp + "</td><td>" + que + "</td>" + '<td><b class="' + (x.falto ? "mal" : "") + '">' + L.length + "</b> <small>de " + x.total + " IDs</small></td>" + "<td>" + (ver.length ? Object.keys(quien).map((q => esc(q) + (Object.keys(quien).length > 1 ? " (" + quien[q] + ")" : ""))).join(", ") + "<small>entre las " + hv[0] + " y las " + hv[hv.length - 1] + "</small>" : "") + (sinVer ? '<b class="mal">' + sinVer + " sin verificar</b>" : "") + "</td>" + '<td class="sg-dm-acc"><button type="button" class="sr-x" data-dv="' + i + '">Ver IDs</button><button type="button" class="sr-x" data-dh="' + i + '">Hallazgo</button>' + (x.falto ? '<button type="button" class="sr-x" data-dasis="1">Asistencia</button>' : "") + "</td></tr>" + '<tr class="sg-dej-det" data-dd="' + i + '" hidden><td colspan="6"><div class="table-scroll"><table class="sr-t"><thead><tr><th>Se anotó</th><th>Tiempo que tuvo para verificarlo</th><th>ID</th><th>Operador</th><th>Grupo · perfil</th><th>Lo verificó</th></tr></thead><tbody>' + L.map((d => "<tr><td><b>" + esc(d[5]) + "</b></td><td>" + minTxt(d[8]) + "</td><td><b>" + esc(d[4]) + "</b></td><td>" + esc(titulo(d[2])) + "</td><td>" + esc(titulo(d[1]).replace(/^Grupo /, "")) + " · " + esc(d[3]) + "</td>" + "<td>" + (d[6] ? esc(d[6]) + " a las " + esc(String(d[7]).slice(-5)) : '<span class="rv-pill aviso">Sin verificar todavía</span>') + "</td></tr>")).join("") + "</tbody></table></div></td></tr>";
+  })).join("") + "</tbody></table></div></section>";
  }));
- const pl = (n, s1, s2) => n + " " + (n === 1 ? s1 : s2);
- let h = ayuda + '<div class="sg-dej-res">' + Object.keys(porMon).sort(((a, b) => porMon[b].d + porMon[b].fd - (porMon[a].d + porMon[a].fd))).map((m => {
-  const a = porMon[m];
-  return "<span><b>" + esc(m) + "</b>: " + [ a.n ? pl(a.d, "ID dejado", "IDs dejados") + " en " + pl(a.n, "turno", "turnos") : "", a.f ? '<b class="mal">no se presentó a ' + pl(a.f, "turno", "turnos") + "</b> (" + pl(a.fd, "ID", "IDs") + " sin monitor)" : "" ].filter(Boolean).join(" · ") + "</span>";
- })).join("") + "</div>";
- xs.forEach(((x, i) => {
-  const L = x.dej.slice().sort(((a, b) => b[8] - a[8]));
-  const ver = L.filter((d => d[6])), sinVer = L.length - ver.length, quien = {};
-  ver.forEach((d => {
-   quien[d[6]] = (quien[d[6]] || 0) + 1;
-  }));
-  const hv = ver.map((d => String(d[7]).slice(-5))).sort();
-  h += '<div class="sg-dej-c' + (x.falto ? " sg-dej-falto" : "") + '"><div class="sg-dej-h"><div><b>' + esc(x.q) + "</b>" + (x.falto ? ' <span class="rv-pill ' + (x.just ? "info" : "accion") + '" style="display:inline-block">' + (x.just ? "No vino · justificada" : "No se presentó a su turno") + "</span>" : "") + "<span>" + jor(x) + " del " + DSEMLARGO(x.f).toLowerCase() + " " + x.f.slice(8) + "/" + x.f.slice(5, 7) + " · " + esc(horas(x)) + "</span></div>" + '<div class="sg-dej-n"><b>' + L.length + "</b><small>de " + x.total + " IDs<br>" + (x.falto ? "sin monitor" : "sin verificar") + "</small></div></div>" + '<p class="sg-dej-t">' + (x.falto ? "<b>No entró a la página, no se registró como monitor de turno y no verificó ningún ID en todo su turno.</b> " + (x.just ? "Ausencia justificada: «" + esc(x.just) + "». " : "Puedes justificar la ausencia en Asistencia → Monitores. ") + "En su turno se anotaron <b>" + x.total + " IDs</b> (entre las " + L[0][5] + " y las " + L[L.length - 1][5] + ") y nadie los verificó en ese turno. " : "En su turno se anotaron <b>" + x.total + " IDs</b> y al terminar dejó <b>" + L.length + "</b> sin verificar (anotados entre las " + L[0][5] + " y las " + L[L.length - 1][5] + "). ") + (ver.length ? "Los verificó " + Object.keys(quien).map((q => "<b>" + esc(q) + "</b>" + (Object.keys(quien).length > 1 ? " (" + quien[q] + ")" : ""))).join(" y ") + " entre las " + hv[0] + " y las " + hv[hv.length - 1] + "." : "") + (sinVer ? ' <b class="mal">' + sinVer + " siguen sin verificar.</b>" : "") + "</p>" + '<div class="sg-dej-b"><button type="button" class="sr-x" data-dv="' + i + '">Ver los ' + L.length + ' IDs</button><button type="button" class="sr-x" data-dh="' + i + '">Poner hallazgo</button>' + (x.falto ? '<button type="button" class="sr-x" data-dasis="1">Ver su asistencia</button>' : "") + "</div>" + '<div class="sg-dej-det" data-dd="' + i + '" hidden><div class="table-scroll"><table class="sr-t"><thead><tr><th>Se anotó</th><th>Tiempo que tuvo para verificarlo</th><th>ID</th><th>Operador</th><th>Grupo · perfil</th><th>Lo verificó</th></tr></thead><tbody>' + L.map((d => "<tr><td><b>" + esc(d[5]) + "</b></td><td>" + minTxt(d[8]) + "</td><td><b>" + esc(d[4]) + "</b></td><td>" + esc(titulo(d[2])) + "</td><td>" + esc(titulo(d[1]).replace(/^Grupo /, "")) + " · " + esc(d[3]) + "</td>" + "<td>" + (d[6] ? esc(d[6]) + " a las " + esc(String(d[7]).slice(-5)) : '<span class="rv-pill aviso">Sin verificar todavía</span>') + "</td></tr>")).join("") + "</tbody></table></div></div></div>";
- }));
- if (!document.getElementById("sgFaltoCss")) {
+ if (!document.getElementById("sgDmCss")) {
   const st = document.createElement("style");
-  st.id = "sgFaltoCss";
-  st.textContent = ".sg-dej-falto{background:rgba(192,57,43,.05)}";
+  st.id = "sgDmCss";
+  st.textContent = ".sg-dm{border:1px solid var(--line);border-left:5px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:14px;background:var(--surface,#fff)}.sg-dm.a{border-left-color:#D68910}.sg-dm.r{border-left-color:var(--down)}" + ".sg-dm-h{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap;margin-bottom:10px}.sg-dm-h>div:first-child b{font-size:17px;display:block}.sg-dm-h>div:first-child span{font-size:12.5px;color:var(--muted)}" + ".sg-dm-k{display:flex;gap:18px;flex-wrap:wrap}.sg-dm-k>div{text-align:right;min-width:74px}.sg-dm-k b{font-size:24px;line-height:1;display:block}.sg-dm-k small{font-size:11.5px;color:var(--muted);line-height:1.3;display:block;margin-top:3px}.sg-dm-k .mal b{color:var(--down)}" + ".sg-dm-t td{vertical-align:top}.sg-dm-t td small{display:block;font-size:11.5px;color:var(--muted);margin-top:2px}.sg-dm-t .rv-pill{display:inline-block}.sg-dm-falto{background:rgba(192,57,43,.05)}.sg-dm-acc{white-space:nowrap}.sg-dm-acc .sr-x{margin-right:8px}" + "@media (max-width:760px){.sg-dm-k>div{text-align:left}}";
   document.head.appendChild(st);
  }
  c.innerHTML = h;
@@ -3884,11 +3896,13 @@ function sgDejRender() {
   verVista("asis");
  }));
  c.querySelectorAll("[data-dv]").forEach((b => b.onclick = () => {
-  const d = c.querySelector('[data-dd="' + b.dataset.dv + '"]'), x = xs[Number(b.dataset.dv)];
-  if (d) {
+  const ds = c.querySelectorAll('[data-dd="' + b.dataset.dv + '"]');
+  let abierto = false;
+  ds.forEach((d => {
    d.hidden = !d.hidden;
-   b.textContent = d.hidden ? "Ver los " + x.dej.length + " IDs" : "Ocultar los IDs";
-  }
+   abierto = !d.hidden;
+  }));
+  c.querySelectorAll('[data-dv="' + b.dataset.dv + '"]').forEach((q => q.textContent = abierto ? "Ocultar IDs" : "Ver IDs"));
  }));
  c.querySelectorAll("[data-dh]").forEach((b => b.onclick = () => {
   const x = xs[Number(b.dataset.dh)];
@@ -3903,7 +3917,7 @@ function sgDejRender() {
    hlTurno: turno,
    hlTipo: "Dejó IDs sin verificar al cierre del turno",
    hlCli: L.length === 1 ? L[0][4] : "",
-   hlTxt: "Turno " + jor(x).toLowerCase() + " del " + x.f.slice(8) + "/" + x.f.slice(5, 7) + " (" + horas(x) + "): de " + x.total + " IDs anotados en su turno, dejó " + L.length + " sin verificar al terminar y los tuvo que verificar el monitor del turno siguiente. " + "IDs (hora en que se anotó): " + L.map((d => d[4] + " (" + d[5] + ")")).join(", ") + "."
+   hlTxt: "Turno " + jor(x).toLowerCase() + " del " + x.f.slice(8) + "/" + x.f.slice(5, 7) + " (" + horas(x) + "): de " + x.total + " IDs anotados en su turno, " + (x.falto ? "no se presentó y quedaron " + L.length + " sin verificar" : "dejó " + L.length + " sin verificar al terminar") + " y los tuvo que verificar el monitor del turno siguiente. " + "IDs (hora en que se anotó): " + L.map((d => d[4] + " (" + d[5] + ")")).join(", ") + "."
   };
   if (mons.length > 1) HALLS.form.turnos = mons.reduce(((o, m) => {
    o[m] = turno;
@@ -4521,7 +4535,7 @@ function segMonVerRender() {
   a.uno++;
  }));
  const dejo = {};
- (typeof sgDejados === "function" ? sgDejados() : []).forEach((x => String(x.q).split(" y ").forEach((q => {
+ (typeof sgDejadosPer === "function" ? sgDejadosPer() : []).forEach((x => String(x.q).split(" y ").forEach((q => {
   q = q.trim();
   if (!q || !okM(q)) return;
   dejo[q] = (dejo[q] || 0) + x.dej.length;
@@ -16195,4 +16209,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = '514a18a7a47e' -->
+<!-- var HUELLA = '1f28dd9a08f5' -->
