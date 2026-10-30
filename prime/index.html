@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "dfb7852a6fcb";
+ var HUELLA = "7a7f74c69d96";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -183,6 +183,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
 <button type="button" role="tab" id="navMonAud" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6l1 2h3v14H5V6h3z"/><path d="M9 12l2 2 4-4"/></svg>Registro de auditoría</button>
 <button type="button" role="tab" id="navMonPts" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></svg>Revisión por puntos<i class="lado-n" id="navMonPtsN" hidden></i></button>
 <button type="button" role="tab" id="navMonTur" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>Turnos de operadores</button>
+<button type="button" role="tab" id="navMonHor" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16M8 14h3M13 14h3M8 17h3"/></svg>Mi horario</button>
 </div></div>
 <button type="button" class="lado-cambiar lado-hor" id="navHor" role="tab" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16M8 14h3M13 14h3M8 17h3"/></svg>Horarios de la semana</button>
 <button type="button" class="lado-cambiar lado-salir" id="navSalirSup" style="margin-top:0"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H4"/></svg>Salir de supervisión</button>
@@ -6001,6 +6002,14 @@ function horPintar() {
  c.innerHTML = horariosHtml(HORPUB, HORPUB.hoy, true);
  horariosEnlazar(c, horPintar);
  if (window.ponerDescargas) window.ponerDescargas();
+ if (window.HOR_IR_PERSONAL) {
+  window.HOR_IR_PERSONAL = false;
+  const s = c.querySelector("[data-pdi]");
+  if (s) setTimeout((() => s.closest("section").scrollIntoView({
+   behavior: "smooth",
+   block: "start"
+  })), 150);
+ }
 }
 
 function horCredencial() {
@@ -6013,6 +6022,10 @@ function horCredencial() {
   o: PT.op,
   k: PT.pin
  };
+ if (typeof MON !== "undefined" && MON.clave && MON.nombre) return {
+  o: "MONITOR",
+  k: MON.clave
+ };
  return null;
 }
 
@@ -6020,7 +6033,7 @@ function horAbrir() {
  const c = document.getElementById("horCuerpo"), cr = horCredencial();
  if (!cr) {
   HORPUB = null;
-  c.innerHTML = '<section class="panel"><h2>Entra con tu clave</h2><div class="sub" style="margin:6px 0 14px">Los horarios los ven solo los operadores con su clave personal y supervisión. Entra primero a "Mis puntos y mi grupo", elige tu nombre y escribe tu clave; después vuelve aquí.</div>' + '<button type="button" class="btn" id="horIrPts">Ir a Mis puntos y mi grupo</button></section>';
+  c.innerHTML = '<section class="panel"><h2>Entra con tu clave</h2><div class="sub" style="margin:6px 0 14px">Los horarios los ven los operadores con su clave personal, los monitores y supervisión. Operador: entra primero a "Mis puntos y mi grupo", elige tu nombre y escribe tu clave. Monitor: entra a "Mis pendientes" con tu nombre y la clave de monitores. Después vuelve aquí.</div>' + '<button type="button" class="btn" id="horIrPts">Ir a Mis puntos y mi grupo</button></section>';
   document.getElementById("horIrPts").onclick = () => verVista("pts");
   return;
  }
@@ -9469,6 +9482,20 @@ document.getElementById("navMon").addEventListener("click", (() => {
  }
 }), true);
 
+document.getElementById("navMonHor").addEventListener("click", (() => {
+ window.HOR_IR_PERSONAL = true;
+ verVista("hor");
+ window.scrollTo(0, 0);
+ setTimeout((() => {
+  const m = document.getElementById("navMonHor");
+  if (m) m.setAttribute("aria-selected", "true");
+  [ "navMon", "navMonAud", "navMonPts", "navMonTur" ].forEach((i => {
+   const b = document.getElementById(i);
+   if (b) b.setAttribute("aria-selected", "false");
+  }));
+ }), 80);
+}));
+
 document.getElementById("navMonPts").addEventListener("click", (() => {
  if (typeof MON !== "undefined") MON.tab = "pts";
  verVista("mon");
@@ -9488,6 +9515,8 @@ document.addEventListener("click", (() => setTimeout((() => {
   const m = document.getElementById("navMon");
   if (m) m.setAttribute("aria-selected", "false");
  }
+ const bh = document.getElementById("navMonHor");
+ if (bh) bh.setAttribute("aria-selected", String(typeof VISTA_ACTUAL !== "undefined" && VISTA_ACTUAL === "hor" && ROL === "mon"));
 }), 60)));
 
 document.getElementById("volverTop").onclick = () => document.getElementById("navInicio").click();
@@ -16095,4 +16124,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = 'dfb7852a6fcb' -->
+<!-- var HUELLA = '7a7f74c69d96' -->
