@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "df643f4afc51";
+ var HUELLA = "e12c8a8ea059";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -9489,7 +9489,7 @@ const PROY = window.PROYECTO || {
 
 window.ES_PRIME = ES_PRIME;
 
-if (ES_PRIME) {
+if (PROY.id !== "luxee") {
  const st0 = document.createElement("style");
  st0.textContent = "#navTar{display:none !important}";
  document.head.appendChild(st0);
@@ -10665,8 +10665,14 @@ function ptLlenarOps() {
 const PROY_L = {
  dos: "Los dos proyectos",
  prime: "Solo PRIME",
- aml: "Solo AML/LUXEE"
+ get aml() {
+  return "Solo " + amlNom();
+ }
 };
+
+function amlNom() {
+ return window.AML_PR || "AML/LUXEE";
+}
 
 function ptProySel() {
  return '<div class="pt-proy" role="tablist" aria-label="Ver mis puntos de"><span>Ver mis puntos de:</span>' + [ "dos", "prime", "aml" ].map((k => '<button type="button" data-proy="' + k + '" aria-pressed="' + (PT.proy === k) + '">' + PROY_L[k] + "</button>")).join("") + "</div>";
@@ -10709,7 +10715,7 @@ function ptDualHtml(o, d, g, A, modo, totG) {
   a.forEach(((x, i) => {
    if (x > a[mejor]) mejor = i;
   }));
-  return '<section class="stats c4">' + ptStat(ICO_P.estrella, "Total de puntos del mes en AML/LUXEE", f(tot), "Día normal: <b>" + f(ptTotal(oA.p)) + "</b> + día libre: <b>" + f(ptTotal(oA.l)) + "</b>") + ptStat(ICO_P.semana, "Semana " + (k + 1) + " (" + sem[k][0] + " al " + sem[k][1] + ")", f(porS[k] || 0), k > 0 ? "Semana anterior: " + f(porS[k - 1] || 0) : "Primera semana del mes") + ptStat(ICO_P.ritmo, "Promedio por día trabajado", trab ? f(ptTotal(oA.p) / trab) : "—", tot && a[mejor] ? "Mejor día: el " + (mejor + 1) + " con " + f(a[mejor]) : "") + ptStat(ICO_P.meta, "Mi grupo en AML/LUXEE", esc(titulo(A.g || "")), esc(titulo(oA.j || "")) + " · su meta y sus puntos se ven en la página de AML/LUXEE") + "</section>" + '<div class="grid"><section class="panel"><div class="panel-head"><div><h2>Mi tendencia de puntos</h2><div class="sub">Tus puntos de AML/LUXEE de cada ' + (PT.modo === "semana" ? "semana" : "día") + ".</div></div>" + ptCtrl("ptModo", PT.modo) + "</div>" + '<div class="gana-res">' + ptDelta(ptTend(a, dA, sem)) + '</div><div class="chart-box"><canvas id="cPtMio"></canvas></div></section>' + '<section class="panel"><h2>Mis puntos día por día</h2><div class="sub">Lo que registró el supervisor en la hoja de puntos de AML/LUXEE para cada día. Una raya significa que ese día no tiene nada anotado.</div>' + ptTablaDias(oA, dA) + "</section></div>";
+  return '<section class="stats c4">' + ptStat(ICO_P.estrella, "Total de puntos del mes en " + amlNom() + "", f(tot), "Día normal: <b>" + f(ptTotal(oA.p)) + "</b> + día libre: <b>" + f(ptTotal(oA.l)) + "</b>") + ptStat(ICO_P.semana, "Semana " + (k + 1) + " (" + sem[k][0] + " al " + sem[k][1] + ")", f(porS[k] || 0), k > 0 ? "Semana anterior: " + f(porS[k - 1] || 0) : "Primera semana del mes") + ptStat(ICO_P.ritmo, "Promedio por día trabajado", trab ? f(ptTotal(oA.p) / trab) : "—", tot && a[mejor] ? "Mejor día: el " + (mejor + 1) + " con " + f(a[mejor]) : "") + ptStat(ICO_P.meta, "Mi grupo en " + amlNom() + "", esc(titulo(A.g || "")), esc(titulo(oA.j || "")) + " · su meta y sus puntos se ven en la página de " + amlNom() + "") + "</section>" + '<div class="grid"><section class="panel"><div class="panel-head"><div><h2>Mi tendencia de puntos</h2><div class="sub">Tus puntos de ' + amlNom() + " de cada " + (PT.modo === "semana" ? "semana" : "día") + ".</div></div>" + ptCtrl("ptModo", PT.modo) + "</div>" + '<div class="gana-res">' + ptDelta(ptTend(a, dA, sem)) + '</div><div class="chart-box"><canvas id="cPtMio"></canvas></div></section>' + '<section class="panel"><h2>Mis puntos día por día</h2><div class="sub">Lo que registró el supervisor en la hoja de puntos de ' + amlNom() + " para cada día. Una raya significa que ese día no tiene nada anotado.</div>" + ptTablaDias(oA, dA) + "</section></div>";
  }
  const n = Math.max(d.ultimo, dA.ultimo), sem = ptSemanas(d), aP = ptDias(o, d.ultimo), aA = ptDias(oA, dA.ultimo);
  const aT = Array.from({
@@ -10731,8 +10737,8 @@ function ptDualHtml(o, d, g, A, modo, totG) {
   filas += "<tr" + (hay ? "" : ' class="sin"') + "><td><b>" + (i + 1) + "</b> <small>" + DIA[(d.dow1 + i) % 7] + '</small></td><td class="num">' + (x === null ? "—" : f(x)) + '</td><td class="num">' + (y === null ? "—" : f(y)) + '</td><td class="num"><b>' + (hay ? f((x || 0) + (y || 0)) : "—") + "</b></td></tr>";
  }
  const semF = sem.filter((s => s[0] <= Math.max(1, n))).map(((s, i) => "<tr" + (i === k ? ' class="pt-act"' : "") + "><td><b>Semana " + (i + 1) + "</b> <small>" + s[0] + " al " + s[1] + '</small></td><td class="num">' + f(pP[i] || 0) + '</td><td class="num">' + f(pA[i] || 0) + '</td><td class="num"><b>' + f((pP[i] || 0) + (pA[i] || 0)) + "</b></td></tr>")).join("");
- const cab = '<thead><tr><th>__</th><th class="num"><span class="pt-dot p"></span>PRIME</th><th class="num"><span class="pt-dot a"></span>AML / LUXEE</th><th class="num">Total</th></tr></thead>';
- return '<section class="stats c4">' + ptStat(ICO_P.estrella, "Total de puntos del mes", f(tot), "PRIME: <b>" + f(totP) + "</b> + AML/LUXEE: <b>" + f(totA) + "</b>") + ptStat(ICO_P.semana, "Semana " + (k + 1) + " (" + sem[k][0] + " al " + sem[k][1] + ")", f((pP[k] || 0) + (pA[k] || 0)), "PRIME: <b>" + f(pP[k] || 0) + "</b> · AML/LUXEE: <b>" + f(pA[k] || 0) + "</b>") + ptStat(ICO_P.ritmo, "Promedio por día trabajado", trab ? f((ptTotal(o.p) + ptTotal(oA.p)) / trab) : "—", tot && aT[mejor] ? "Mejor día: el " + (mejor + 1) + " con " + f(aT[mejor]) : "") + (g.meta ? ptStat(ICO_P.meta, "Meta de mi grupo en PRIME", fmt0.format(g.meta), "El grupo va en " + f(totG) + " (" + fmt1.format(totG / g.meta * 100) + "%) · mi aporte: " + (totG ? fmt1.format(totP / totG * 100) + "%" : "—")) : ptStat(ICO_P.meta, "Mi grupo en AML/LUXEE", esc(titulo(A.g || "")), esc(titulo(oA.j || "")))) + "</section>" + '<div class="grid"><section class="panel"><div class="panel-head"><div><h2>Mi tendencia de puntos</h2><div class="sub">Tus puntos de cada ' + (PT.modo === "semana" ? "semana" : "día") + ", con lo de cada proyecto en su color.</div></div>" + ptCtrl("ptModo", PT.modo) + "</div>" + '<div class="gana-res">' + ptDelta(ptTend(aT, d, sem)) + '</div><div class="chart-box"><canvas id="cPtMio"></canvas></div></section>' + '<section class="panel"><h2>Mis puntos por semana</h2><div class="sub">Lo de cada proyecto y el total. Cada proyecto se paga por separado; el total es para que veas todo junto.</div>' + '<div class="table-scroll"><table class="pt-2p">' + cab.replace("__", "Semana") + "<tbody>" + semF + '<tr class="pt-tot"><td><b>Total del mes</b></td><td class="num"><b>' + f(totP) + '</b></td><td class="num"><b>' + f(totA) + '</b></td><td class="num"><b>' + f(tot) + "</b></td></tr></tbody></table></div></section>" + '<section class="panel"><h2>Mis puntos día por día</h2><div class="sub">Lo de cada proyecto ese día (día normal + día libre). Una raya significa que ese día no tiene nada anotado en ese proyecto.</div>' + '<div class="table-scroll pt-dias"><table class="pt-2p">' + cab.replace("__", "Día") + "<tbody>" + filas + '<tr class="pt-tot"><td><b>Total del mes</b></td><td class="num"><b>' + f(totP) + '</b></td><td class="num"><b>' + f(totA) + '</b></td><td class="num"><b>' + f(tot) + "</b></td></tr></tbody></table></div></section></div>";
+ const cab = '<thead><tr><th>__</th><th class="num"><span class="pt-dot p"></span>PRIME</th><th class="num"><span class="pt-dot a"></span>' + amlNom() + '</th><th class="num">Total</th></tr></thead>';
+ return '<section class="stats c4">' + ptStat(ICO_P.estrella, "Total de puntos del mes", f(tot), "PRIME: <b>" + f(totP) + "</b> + " + amlNom() + ": <b>" + f(totA) + "</b>") + ptStat(ICO_P.semana, "Semana " + (k + 1) + " (" + sem[k][0] + " al " + sem[k][1] + ")", f((pP[k] || 0) + (pA[k] || 0)), "PRIME: <b>" + f(pP[k] || 0) + "</b> · " + amlNom() + ": <b>" + f(pA[k] || 0) + "</b>") + ptStat(ICO_P.ritmo, "Promedio por día trabajado", trab ? f((ptTotal(o.p) + ptTotal(oA.p)) / trab) : "—", tot && aT[mejor] ? "Mejor día: el " + (mejor + 1) + " con " + f(aT[mejor]) : "") + (g.meta ? ptStat(ICO_P.meta, "Meta de mi grupo en PRIME", fmt0.format(g.meta), "El grupo va en " + f(totG) + " (" + fmt1.format(totG / g.meta * 100) + "%) · mi aporte: " + (totG ? fmt1.format(totP / totG * 100) + "%" : "—")) : ptStat(ICO_P.meta, "Mi grupo en " + amlNom() + "", esc(titulo(A.g || "")), esc(titulo(oA.j || "")))) + "</section>" + '<div class="grid"><section class="panel"><div class="panel-head"><div><h2>Mi tendencia de puntos</h2><div class="sub">Tus puntos de cada ' + (PT.modo === "semana" ? "semana" : "día") + ", con lo de cada proyecto en su color.</div></div>" + ptCtrl("ptModo", PT.modo) + "</div>" + '<div class="gana-res">' + ptDelta(ptTend(aT, d, sem)) + '</div><div class="chart-box"><canvas id="cPtMio"></canvas></div></section>' + '<section class="panel"><h2>Mis puntos por semana</h2><div class="sub">Lo de cada proyecto y el total. Cada proyecto se paga por separado; el total es para que veas todo junto.</div>' + '<div class="table-scroll"><table class="pt-2p">' + cab.replace("__", "Semana") + "<tbody>" + semF + '<tr class="pt-tot"><td><b>Total del mes</b></td><td class="num"><b>' + f(totP) + '</b></td><td class="num"><b>' + f(totA) + '</b></td><td class="num"><b>' + f(tot) + "</b></td></tr></tbody></table></div></section>" + '<section class="panel"><h2>Mis puntos día por día</h2><div class="sub">Lo de cada proyecto ese día (día normal + día libre). Una raya significa que ese día no tiene nada anotado en ese proyecto.</div>' + '<div class="table-scroll pt-dias"><table class="pt-2p">' + cab.replace("__", "Día") + "<tbody>" + filas + '<tr class="pt-tot"><td><b>Total del mes</b></td><td class="num"><b>' + f(totP) + '</b></td><td class="num"><b>' + f(totA) + '</b></td><td class="num"><b>' + f(tot) + "</b></td></tr></tbody></table></div></section></div>";
 }
 
 function ptRenderOp() {
@@ -10751,7 +10757,9 @@ function ptRenderOp() {
   const crear = PT.yo === "sinClave", bloq = PT.yo === "bloqueado";
   h += '<section class="panel mon-clave pt-pin"><h2>' + (crear ? "Crea tu clave personal" : "Escribe tu clave personal") + "</h2>" + '<div class="sub">' + esc(PT.op) + ". " + (crear ? "Es la primera vez que entras: elige una clave de 4 a 8 números que solo tú sepas. Con ella nadie más puede ver tus puntos." : bloq ? "Hubo muchos intentos fallidos. Espera 10 minutos y vuelve a intentar." : 'Tus puntos solo los ves tú. Si la olvidaste, toca "¿Olvidaste tu clave?" y pídele a un supervisor que autorice el cambio.') + "</div>" + (bloq ? "" : '<input type="password" id="ptPin1" maxlength="30" autocomplete="off" placeholder="' + (crear ? "Clave nueva" : "Tu clave") + '">' + (crear ? '<input type="password" id="ptPin2" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="Repite la clave" style="margin-top:0">' : "") + '<div class="mon-clave-err" id="ptPinErr">' + (PT.msg || (PT.yo === "mala" ? "Clave incorrecta. Intenta de nuevo." : "")) + '</div><button class="btn" type="button" id="ptPinBtn">' + (crear ? "Guardar y entrar" : "Entrar") + "</button>") + (crear ? "" : '<button type="button" class="pt-olv" id="ptOlvBtn">¿Olvidaste tu clave?</button>' + '<div id="ptOlv" hidden><div class="sub" style="margin-top:10px">Pídele a un supervisor que la autorice: tú escribes tu clave nueva y el supervisor escribe la clave de supervisión.</div>' + '<input type="password" id="ptOlv1" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="Clave nueva (4 a 8 números)">' + '<input type="password" id="ptOlv2" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="Repite la clave nueva" style="margin-top:0">' + '<input type="password" id="ptOlvS" autocomplete="off" placeholder="Clave de supervisión" style="margin-top:0">' + '<div class="mon-clave-err" id="ptOlvErr"></div><button class="btn" type="button" id="ptOlvOk">Cambiar mi clave</button></div>') + "</section>";
  }
- const AML_ = o && window.ES_PRIME !== false ? d.aml : null, dual = !!(AML_ && !AML_.error && String(AML_.mes || "").toUpperCase() === String(d.mes || "").toUpperCase());
+ const AML_ = o && window.ES_PRIME !== false ? d.aml : null;
+ window.AML_PR = AML_ && AML_.pr || "AML/LUXEE";
+ const dual = !!(AML_ && !AML_.error && String(AML_.mes || "").toUpperCase() === String(d.mes || "").toUpperCase());
  if (o) {
   if (!dual) PT.proy = "prime"; else if (!PT.proy || PT.proyOp !== o.n) {
    PT.proy = "dos";
@@ -10796,7 +10804,7 @@ function ptRenderOp() {
  if (o && dual && PT.proy === "aml") {
   const X = ptOpAml(AML_, o);
   ptGrafica("cPtMio", X.d, PT.modo, [ {
-   nombre: "AML/LUXEE",
+   nombre: "" + amlNom() + "",
    color: "#15161A",
    relleno: "#3A3B42",
    a: ptDias(X.o, X.d.ultimo)
@@ -10809,7 +10817,7 @@ function ptRenderOp() {
    relleno: rellenoJornada(0),
    a: ptDias(o, n)
   }, {
-   nombre: "AML/LUXEE",
+   nombre: "" + amlNom() + "",
    color: "#15161A",
    relleno: "#3A3B42",
    a: ptDias(X.o, X.d.ultimo)
@@ -16209,4 +16217,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = 'df643f4afc51' -->
+<!-- var HUELLA = 'e12c8a8ea059' -->
