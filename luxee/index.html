@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycby3GwgzMEi7DcXUkfCtX9J
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "f6dba94af0c5";
+ var HUELLA = "ad29ccc676d7";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -16266,6 +16266,21 @@ const AV = {
  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", conectarSup); else conectarSup();
  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", conectarNavAud); else conectarNavAud();
 })();</script>
+<script>(function(){
+  var hoy = new Date(Date.now() - 5 * 3600000).toISOString().slice(0, 10);      // hora de Colombia
+  if (hoy >= '2026-11-01') return;
+  var st = document.createElement('style');
+  st.textContent = '.av-lx{margin:0 auto 18px;max-width:760px;text-align:left;padding:14px 16px;border-radius:14px;background:#FFF6D6;border:1px solid #E6C766;color:#15161A;font-size:14px;line-height:1.45;display:flex;gap:12px;align-items:flex-start}' +
+    '.av-lx b{display:block;font-size:15px;margin-bottom:2px}.av-lx a{color:#15161A;font-weight:700}.av-lx .i{flex:none;width:22px;height:22px;stroke:#A07E14;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;margin-top:2px}';
+  document.head.appendChild(st);
+  function poner(){ ['vistaInicio', 'vistaPts', 'vistaPtsGen'].forEach(function (id) { var v = document.getElementById(id); if (!v || v.querySelector('.av-lx')) return;
+    var d = document.createElement('div'); d.className = 'av-lx'; d.setAttribute('role', 'note');
+    d.innerHTML = '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.5"/></svg><div><b>Esta página empieza el 1 de noviembre</b>' +
+      'Desde el <b style="display:inline">1 de noviembre</b> los operadores de LUXEE entran aquí, con la misma clave de siempre. ' +
+      'Hasta el 31 de octubre tus puntos siguen en la página de <a href="../aml-luxee/">AML</a>.</div>';
+    var ref = v.querySelector('.volver-proy'); if (ref) ref.insertAdjacentElement('afterend', d); else v.insertBefore(d, v.firstChild); }); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', poner); else poner();
+})();</script>
 </body>
 </html>
-<!-- var HUELLA = 'f6dba94af0c5' -->
+<!-- var HUELLA = 'ad29ccc676d7' -->
