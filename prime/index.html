@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "83d9d5236590";
+ var HUELLA = "6dc1dff4b7b1";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -5562,10 +5562,15 @@ function personalSem(H, sem, q) {
   "CREADORES DE CONTENIDO": "Creadores",
   OTROS: "Otros"
  }, f = [];
+ const mon = v => {
+  const k = nrm(v);
+  return k === nrm("Mañana") || k === nrm("Tarde") || k === nrm("Noche") ? v + MON_SUF : v;
+ };
  P.b.forEach((b => {
   if (q && q === "mon" !== (b.c === "MONITORES" || b.c === "CREADORES DE CONTENIDO")) return;
   b.f.forEach((r => {
-   const d = b.c === "ENCARGADOS" || !r[2].length ? new Array(7).fill(r[1] || "") : r[2];
+   let d = b.c === "ENCARGADOS" || !r[2].length ? new Array(7).fill(r[1] || "") : r[2];
+   if (b.c === "MONITORES") d = d.map(mon);
    f.push([ nom[b.c] || titulo(b.c), r[0], d ]);
   }));
  }));
@@ -5575,9 +5580,18 @@ function personalSem(H, sem, q) {
  } : null;
 }
 
+const MON_SUF = " (monitores)";
+
+function horConMonitores(H) {
+ return Object.assign({}, H, {
+  tipos: (H.tipos || []).concat([ [ "Mañana" + MON_SUF, "06:00", "14:00" ], [ "Tarde" + MON_SUF, "14:00", "22:00" ], [ "Noche" + MON_SUF, "22:00", "06:00" ] ])
+ });
+}
+
 function personalDibujo(H, sem, dias, q) {
  const S = personalSem(H, sem, q);
  if (!S) return null;
+ H = horConMonitores(H);
  const hg = NOVUI.hg;
  NOVUI.hg = "";
  try {
@@ -16165,4 +16179,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = '83d9d5236590' -->
+<!-- var HUELLA = '6dc1dff4b7b1' -->
