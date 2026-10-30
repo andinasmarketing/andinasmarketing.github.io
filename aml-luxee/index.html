@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr0
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "c2572e4b3fda";
+ var HUELLA = "978736d7a196";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -2337,16 +2337,34 @@ function descargarCsv() {
 function calcularBono() {
  const porJ = [ {}, {}, {} ];
  const nk = o => String(o).toUpperCase().replace(/\s+/g, " ").trim();
- const jorOp = {};
+ const jorOp = {}, cuenta = {};
  DATA.filas.forEach((f => {
   if (f.ji < 0 || f.prestado || f.o === "(Sin operador)") return;
-  const k = f.m + "|" + nk(f.o), d1 = f.od || 1, d2 = f.oh || 99;
-  const cubre = F.dia && F.dia >= d1 && F.dia <= d2;
-  const a = jorOp[k];
-  if (!a || cubre && !a.cubre || !!cubre === !!a.cubre && d1 > a.d1) jorOp[k] = {
-   ji: f.ji,
-   d1: d1,
-   cubre: cubre
+  const k = f.m + "|" + nk(f.o), d1 = f.od || 1, d2 = Math.min(f.oh || 99, (f.v || []).length || 31);
+  const c = cuenta[k] = cuenta[k] || [ {}, {}, {} ], ini = c.ini = c.ini || [ 99, 99, 99 ];
+  for (let d = d1; d <= d2; d++) c[f.ji][d] = 1;
+  if (d1 < ini[f.ji]) ini[f.ji] = d1;
+  if (F.dia && F.dia >= d1 && F.dia <= d2) c.dia = f.ji;
+ }));
+ Object.keys(cuenta).forEach((k => {
+  const c = cuenta[k];
+  if (c.dia !== undefined) {
+   jorOp[k] = {
+    ji: c.dia
+   };
+   return;
+  }
+  let mejor = -1, nm = -1;
+  [ 0, 1, 2 ].forEach((ji => {
+   const n = Object.keys(c[ji]).length;
+   if (!n) return;
+   if (n > nm || n === nm && c.ini[ji] < c.ini[mejor]) {
+    mejor = ji;
+    nm = n;
+   }
+  }));
+  if (mejor >= 0) jorOp[k] = {
+   ji: mejor
   };
  }));
  DATA.filas.forEach((f => {
@@ -16124,4 +16142,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = 'c2572e4b3fda' -->
+<!-- var HUELLA = '978736d7a196' -->
