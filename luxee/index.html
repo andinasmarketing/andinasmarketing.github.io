@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycby3GwgzMEi7DcXUkfCtX9J
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "51bca4865aaf";
+ var HUELLA = "93ae85808fcd";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -6245,7 +6245,9 @@ function asistenciaHtmlBase(soloFilas, diasF) {
  (window.ES_PRIME === false ? DATA.fueraHorario || [] : []).forEach((k => {
   vistos[nrm(k)] = 1;
  }));
- H.semanas.forEach((sem => sem.f.forEach((r => {
+ const semsAsis = H.semanas.slice().sort(((x, y) => x.l < y.l ? 1 : -1)), GSEM = {};
+ semsAsis.forEach((sem => sem.f.forEach((r => {
+  GSEM[sem.l + "|" + nrm(r[1])] = r[0];
   if (!vistos[nrm(r[1])]) {
    vistos[nrm(r[1])] = 1;
    ops.push({
@@ -6254,6 +6256,7 @@ function asistenciaHtmlBase(soloFilas, diasF) {
    });
   }
  }))));
+ const grupoEnDia = (op, f) => GSEM[ymdMas(f, -((new Date(f + "T12:00:00").getDay() + 6) % 7)) + "|" + nrm(op)] || "";
  const kg = g => nrm(g).replace(/^GRUPO\s+/, "").replace(/\s+/g, ""), grupoDe = {};
  ops.forEach((o => {
   grupoDe[nrm(o.o)] = o.g;
@@ -6298,6 +6301,13 @@ function asistenciaHtmlBase(soloFilas, diasF) {
  for (let k = (diasF || NOVUI.adias) - 1; k >= 0; k--) {
   const f = ymdMas(hoy, -k);
   ops.forEach((o => {
+   {
+    const gd = grupoEnDia(o.o, f);
+    if (gd && gd !== o.g) o = {
+     g: gd,
+     o: o.o
+    };
+   }
    const x = horarioDia(o.o, f);
    if (x && x.desc) {
     const v = VD[kg(o.g) + "|" + f];
@@ -6408,7 +6418,7 @@ function asistenciaHtmlBase(soloFilas, diasF) {
    }
    filas.push({
     f: h[0],
-    g: grupoOp[nrm(h[2])],
+    g: grupoEnDia(h[2], h[0]) || grupoOp[nrm(h[2])],
     o: h[2],
     x: {
      n: "Fuera de horario",
@@ -16364,4 +16374,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = '51bca4865aaf' -->
+<!-- var HUELLA = '93ae85808fcd' -->
