@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "94ab8101c878";
+ var HUELLA = "52e11bf31de4";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -10061,7 +10061,7 @@ document.getElementById("navInicio").onclick = () => {
   caja.onclick = null;
   const linea = y => {
    const v = ahora > y.venceMs;
-   return "<b>" + (v ? "Se venció el plazo para digitar" : "Digita los clientes nuevos de la") + " " + JN(y.j) + " del " + fe(y.f) + "</b> (cerró a las " + y.cierre + "): faltan <b>" + y.faltan + "</b> de " + y.total + " casillas" + (y.grupos && y.grupos.length ? " en " + esc(y.grupos.slice(0, 6).join(", ")) + (y.grupos.length > 6 ? " y " + (y.grupos.length - 6) + " más" : "") : "") + ". " + (v ? "Tenía hasta las " + y.vence + ": ya quedó registrado como fuera de tiempo. Digítalo ya." : "Tienes hasta las <b>" + y.vence + "</b>.");
+   return "<b>" + (v ? "Se venció el plazo para digitar la" : "Digita los clientes nuevos de la") + " " + JN(y.j) + " del " + fe(y.f) + "</b> (cerró a las " + y.cierre + "): faltan <b>" + y.faltan + "</b> de " + y.total + " casillas" + (y.grupos && y.grupos.length ? " en " + esc(y.grupos.slice(0, 6).join(", ")) + (y.grupos.length > 6 ? " y " + (y.grupos.length - 6) + " más" : "") : "") + ". " + (v ? "Tenía hasta las " + y.vence + ": ya quedó registrado como fuera de tiempo. Digítalo ya." : "Tienes hasta las <b>" + y.vence + "</b>.");
   };
   caja.innerHTML = '<div class="ad-f"><span class="ad-i">' + (venc ? "!" : "✎") + '</span><span class="ad-t">' + xs.map(linea).join("<br>") + "</span>" + '<span class="ad-r">' + (venc ? "Vencido" : dur(quedan)) + "</span></div>" + '<div class="ad-f" style="margin-top:8px;justify-content:flex-end">' + (d.url ? '<a href="' + esc(d.url) + '" target="_blank" rel="noopener">Abrir la hoja del mes</a>' : "") + '<button type="button" class="ad-v">' + (D.abierto ? "Ocultar cuáles" : "Ver cuáles faltan") + '</button><button type="button" class="ad-m">Minimizar</button></div>' + (D.abierto ? '<div class="ad-l">' + xs.map((y => y.det.map((z => "<div>" + esc(z[0]) + " · " + esc(z[1]) + ' <span style="opacity:.7">(' + esc(z[2]) + ", " + JN(y.j) + " " + fe(y.f) + ")</span></div>")).join(""))).join("") + (xs.some((y => y.faltan > y.det.length)) ? "<div>…</div>" : "") + "</div>" : "");
   caja.querySelector(".ad-v").onclick = () => {
@@ -16478,4 +16478,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = '94ab8101c878' -->
+<!-- var HUELLA = '52e11bf31de4' -->
