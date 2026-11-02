@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "6ade51c22b1d";
+ var HUELLA = "94ab8101c878";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -9233,6 +9233,9 @@ function verVista(v) {
  SUBCERRADO[v] = false;
  document.getElementById("keyModal").style.display = "none";
  if (v === "dash" || v === "ptsgen" || v === "segmon" || v === "supinicio" || v === "nov" || v === "aud") ROL = "sup"; else if (v === "mon") ROL = "mon"; else if (v === "hor") ROL = ROL || "hor"; else if (v !== "inicio") ROL = "op";
+ try {
+  if (window.avisoDigitarVer) window.avisoDigitarVer();
+ } catch (e) {}
  document.body.classList.toggle("en-inicio", v === "inicio");
  document.body.classList.toggle("rol-op", ROL === "op");
  document.body.classList.toggle("rol-sup", ROL === "sup");
@@ -9975,6 +9978,110 @@ document.getElementById("navInicio").onclick = () => {
   }
  };
  window.avisoTurnoVer = ver;
+})();
+
+/* ---------- Monitores: plazo para digitar los clientes nuevos de la jornada que cerró (lo ven el monitor y supervisión) ---------- */
+(function() {
+ if (window.PROYECTO && window.PROYECTO.id !== "prime") return;
+ const D = {
+  d: null,
+  t: 0,
+  min: false,
+  abierto: false
+ };
+ const caja = document.createElement("div");
+ caja.id = "avisoDigitar";
+ caja.hidden = true;
+ caja.setAttribute("role", "alert");
+ document.body.appendChild(caja);
+ const st = document.createElement("style");
+ st.textContent = "#avisoDigitar{position:fixed;left:50%;transform:translateX(-50%);top:12px;z-index:61;width:min(760px,calc(100% - 32px));background:#15161A;color:#fff;border:1.5px solid #D4A82A;border-radius:16px;box-shadow:0 12px 32px rgba(0,0,0,.35);padding:12px 16px;font-size:14px;line-height:1.45}" + "#avisoDigitar[hidden]{display:none}#avisoDigitar.venc{border-color:#E5484D;background:#2A1213}#avisoDigitar b{color:#E7C35A}#avisoDigitar.venc b{color:#FF8A8D}" + "#avisoDigitar .ad-f{display:flex;gap:12px;align-items:center;flex-wrap:wrap}#avisoDigitar .ad-i{width:36px;height:36px;border-radius:50%;background:#D4A82A;color:#15161A;display:grid;place-items:center;font-weight:800;font-size:18px;flex:none}" + "#avisoDigitar.venc .ad-i{background:#E5484D;color:#fff}#avisoDigitar .ad-t{flex:1;min-width:220px}#avisoDigitar .ad-r{font-size:22px;font-weight:800;color:#E7C35A;white-space:nowrap}#avisoDigitar.venc .ad-r{color:#FF8A8D}" + "#avisoDigitar button,#avisoDigitar a{font:inherit;font-weight:700;border-radius:999px;padding:6px 12px;cursor:pointer;border:1px solid #D4A82A;background:transparent;color:#E7C35A;text-decoration:none}" + "#avisoDigitar .ad-l{margin-top:8px;max-height:180px;overflow:auto;font-size:12.5px;opacity:.9;columns:2;column-gap:18px}#avisoDigitar .ad-l div{break-inside:avoid}" + "#avisoDigitar.mini{width:auto;left:auto;right:16px;transform:none;padding:8px 12px;border-radius:999px;cursor:pointer}";
+ document.head.appendChild(st);
+ const JN = j => ({
+  "MAÑANA": "mañana",
+  TARDE: "tarde",
+  NOCHE: "noche"
+ }[j] || String(j || "").toLowerCase());
+ const fe = f => f.slice(8) + "/" + f.slice(5, 7);
+ const dur = m => m >= 60 ? Math.floor(m / 60) + " h " + m % 60 + " min" : m + " min";
+ const pedir = () => {
+  D.t = Date.now();
+  const listo = t => {
+   try {
+    D.d = JSON.parse(t);
+   } catch (e) {
+    D.d = null;
+   }
+   ver();
+  };
+  if (!esApps) {
+   const v = Date.now() + 32 * 6e4;
+   return listo(JSON.stringify({
+    ok: true,
+    plazo: 60,
+    url: "#",
+    items: [ {
+     f: "2026-11-02",
+     j: "TARDE",
+     cierre: "22:15",
+     vence: "23:15",
+     venceMs: v,
+     total: 38,
+     faltan: 14,
+     grupos: [ "Rio", "Tokyo", "Dubai" ],
+     det: [ [ "Tokyo", "Martin 61", "Edgar Orence" ], [ "Dubai", "Daniel 45", "Luis Medina" ] ],
+     estado: "Pendiente"
+    } ]
+   }));
+  }
+  google.script.run.withSuccessHandler(listo).withFailureHandler((() => {})).digitacionMonitores();
+ };
+ const ver = () => {
+  if (!(ROL === "mon" || ROL === "sup")) {
+   caja.hidden = true;
+   return;
+  }
+  const d = D.d, xs = d && d.ok ? (d.items || []).filter((x => x.faltan > 0)) : [];
+  if (!xs.length) {
+   caja.hidden = true;
+   return;
+  }
+  const ahora = Date.now(), x = xs[xs.length - 1], venc = xs.some((y => ahora > y.venceMs)), quedan = Math.max(0, Math.ceil((x.venceMs - ahora) / 6e4));
+  caja.className = venc ? "venc" : "";
+  caja.hidden = false;
+  if (D.min) {
+   caja.classList.add("mini");
+   caja.innerHTML = "<b>" + (venc ? "Plazo vencido" : "Por digitar") + ":</b> faltan " + xs.reduce(((s, y) => s + y.faltan), 0) + (venc ? "" : " · " + dur(quedan));
+   caja.onclick = () => {
+    D.min = false;
+    ver();
+   };
+   return;
+  }
+  caja.onclick = null;
+  const linea = y => {
+   const v = ahora > y.venceMs;
+   return "<b>" + (v ? "Se venció el plazo para digitar" : "Digita los clientes nuevos de la") + " " + JN(y.j) + " del " + fe(y.f) + "</b> (cerró a las " + y.cierre + "): faltan <b>" + y.faltan + "</b> de " + y.total + " casillas" + (y.grupos && y.grupos.length ? " en " + esc(y.grupos.slice(0, 6).join(", ")) + (y.grupos.length > 6 ? " y " + (y.grupos.length - 6) + " más" : "") : "") + ". " + (v ? "Tenía hasta las " + y.vence + ": ya quedó registrado como fuera de tiempo. Digítalo ya." : "Tienes hasta las <b>" + y.vence + "</b>.");
+  };
+  caja.innerHTML = '<div class="ad-f"><span class="ad-i">' + (venc ? "!" : "✎") + '</span><span class="ad-t">' + xs.map(linea).join("<br>") + "</span>" + '<span class="ad-r">' + (venc ? "Vencido" : dur(quedan)) + "</span></div>" + '<div class="ad-f" style="margin-top:8px;justify-content:flex-end">' + (d.url ? '<a href="' + esc(d.url) + '" target="_blank" rel="noopener">Abrir la hoja del mes</a>' : "") + '<button type="button" class="ad-v">' + (D.abierto ? "Ocultar cuáles" : "Ver cuáles faltan") + '</button><button type="button" class="ad-m">Minimizar</button></div>' + (D.abierto ? '<div class="ad-l">' + xs.map((y => y.det.map((z => "<div>" + esc(z[0]) + " · " + esc(z[1]) + ' <span style="opacity:.7">(' + esc(z[2]) + ", " + JN(y.j) + " " + fe(y.f) + ")</span></div>")).join(""))).join("") + (xs.some((y => y.faltan > y.det.length)) ? "<div>…</div>" : "") + "</div>" : "");
+  caja.querySelector(".ad-v").onclick = () => {
+   D.abierto = !D.abierto;
+   ver();
+  };
+  caja.querySelector(".ad-m").onclick = e => {
+   e.stopPropagation();
+   D.min = true;
+   ver();
+  };
+ };
+ setInterval((() => {
+  if (document.visibilityState !== "visible" || !(ROL === "mon" || ROL === "sup")) return;
+  if (!D.t || Date.now() - D.t > 2 * 6e4) pedir(); else ver();
+ }), 3e4);
+ window.avisoDigitarVer = () => {
+  if ((ROL === "mon" || ROL === "sup") && (!D.t || Date.now() - D.t > 6e4)) pedir(); else ver();
+ };
+ setTimeout(window.avisoDigitarVer, 3e3);
 })();
 
 function menuMovil(abrir) {
@@ -16371,4 +16478,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = '6ade51c22b1d' -->
+<!-- var HUELLA = '94ab8101c878' -->
