@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycby3GwgzMEi7DcXUkfCtX9J
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "8e86b39f7ff9";
+ var HUELLA = "48544e21644d";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -177,12 +177,14 @@ window.API_URL = "https://script.google.com/macros/s/AKfycby3GwgzMEi7DcXUkfCtX9J
 <button type="button" role="tab" id="navAsis" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/><path d="M16 11l2 2 4-4"/></svg>Asistencia</button>
 <button type="button" role="tab" id="navNov" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>Novedades</button>
 <button type="button" role="tab" id="navTar" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 9l1.5 1.5L12 8M8 15l1.5 1.5L12 14M14 9h3M14 15h3"/></svg>Tareas de LUXEE</button>
+<button type="button" role="tab" id="navCli" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="8" r="3.5"/><path d="M3.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 11l2 2 4-4"/></svg>Clientes nuevos</button>
 </div></div>
 <div class="lado-sec" data-sec="Monitores"><button type="button" class="lado-h" aria-expanded="true">Monitores<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><div class="lado-sub">
 <button type="button" role="tab" id="navMon" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11l2 2 4-4"/><rect x="4" y="4" width="16" height="16" rx="3"/></svg>Mis pendientes</button>
 <button type="button" role="tab" id="navMonAud" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6l1 2h3v14H5V6h3z"/><path d="M9 12l2 2 4-4"/></svg>Registro de auditoría</button>
 <button type="button" role="tab" id="navMonPts" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></svg>Revisión por puntos<i class="lado-n" id="navMonPtsN" hidden></i></button>
 <button type="button" role="tab" id="navMonTur" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>Turnos de operadores</button>
+<button type="button" role="tab" id="navMonExt" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="8" r="3.5"/><path d="M3.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 11l2 2 4-4"/></svg>Clientes LUXEE</button>
 <button type="button" role="tab" id="navMonHor" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16M8 14h3M13 14h3M8 17h3"/></svg>Mi horario</button>
 </div></div>
 <button type="button" class="lado-cambiar lado-hor" id="navHor" role="tab" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16M8 14h3M13 14h3M8 17h3"/></svg>Horarios de la semana</button>
@@ -7982,13 +7984,20 @@ function renderNovedades() {
  const caja = document.getElementById("novCuerpo");
  if (!caja || !DATA) return;
  if ((NOVUI.editando || caja.contains(document.activeElement) && /INPUT|SELECT/.test(document.activeElement.tagName)) && !renderNovedades.forzar) return;
- const soloAsis = typeof EN_ASIS !== "undefined" && EN_ASIS, soloTar = typeof EN_TAR !== "undefined" && EN_TAR && window.ES_PRIME === false;
- if (soloAsis) NOVUI.vista = "asis"; else if (soloTar) NOVUI.vista = "tar"; else if (NOVUI.vista === "asis" || NOVUI.vista === "tar") NOVUI.vista = "nov";
+ const soloAsis = typeof EN_ASIS !== "undefined" && EN_ASIS, soloTar = typeof EN_TAR !== "undefined" && EN_TAR && window.ES_PRIME === false, soloCli = !!window.EN_CLI && window.ES_PRIME === false;
+ if (soloAsis) NOVUI.vista = "asis"; else if (soloTar) NOVUI.vista = "tar"; else if (soloCli) NOVUI.vista = "cli"; else if (NOVUI.vista === "asis" || NOVUI.vista === "tar" || NOVUI.vista === "cli") NOVUI.vista = "nov";
  {
   const t = document.getElementById("novTit"), st = document.getElementById("novSub");
   const esAmon = soloAsis && NOVUI.asisQ === "mon";
-  if (t) t.textContent = soloAsis ? "Asistencia" : soloTar ? "Tareas de LUXEE" : "Novedades";
+  if (t) t.textContent = soloAsis ? "Asistencia" : soloTar ? "Tareas de LUXEE" : soloCli ? "Clientes nuevos" : "Novedades";
   if (st) st.textContent = esAmon ? "A qué hora entró y salió cada monitor, quién faltó y las horas que hizo frente a las de su turno." : soloAsis ? "Quién llegó a tiempo, quién llegó tarde y quién no vino, por día y por jornada." : soloTar ? "Las tareas que deben hacer los operadores de LUXEE en su turno, y quién las cumplió." : window.ES_PRIME !== false ? "Faltas, vacaciones, permisos y retiros de operadores y monitores; horarios y descansos, e histórico de turnos." : "Vacaciones, permisos y retiros, y horarios y días de descanso.";
+ }
+ if (soloCli) {
+  const st0 = document.getElementById("novSub");
+  if (st0) st0.textContent = "Los clientes nuevos que anotan los operadores en sus tablas, y su verificación.";
+  if (!document.getElementById("extHost")) caja.innerHTML = window.extSeccionHtml ? extSeccionHtml() : "";
+  if (window.extMontar) extMontar("sup");
+  return;
  }
  const barra = soloAsis || soloTar ? "" : '<div class="sub-barra" style="margin-bottom:14px">' + [ [ "nov", "Novedades" ], [ "hor", "Horarios y descansos" ], [ "tur", "Histórico de turnos" ] ].filter((v => window.ES_PRIME !== false || v[0] !== "tur")).map((v => '<button type="button" data-nv="' + v[0] + '" aria-selected="' + (NOVUI.vista === v[0]) + '">' + v[1] + "</button>")).join("") + "</div>";
  const cambiar = () => caja.querySelectorAll("[data-nv]").forEach((q => q.onclick = () => {
@@ -9397,17 +9406,18 @@ let EN_ASIS = false, EN_TAR = false, EN_AMON = false;
 
 function verVista(v) {
  if (v === true) v = "dash"; else if (v === false) v = "op";
- const amon = v === "asismon", asis = v === "asis" || amon, tar = v === "tar";
- if (asis || tar) v = "nov";
+ const amon = v === "asismon", asis = v === "asis" || amon, tar = v === "tar", cli = v === "cli";
+ if (asis || tar || cli) v = "nov";
  if (typeof NOVUI !== "undefined") {
   if (asis) {
    NOVUI.vista = "asis";
    NOVUI.asisQ = amon ? "mon" : NOVUI.asisQ || "op";
-  } else if (tar) NOVUI.vista = "tar"; else if (v === "nov" && (EN_ASIS || EN_TAR)) NOVUI.vista = "nov";
+  } else if (tar) NOVUI.vista = "tar"; else if (cli) NOVUI.vista = "cli"; else if (v === "nov" && (EN_ASIS || EN_TAR || window.EN_CLI)) NOVUI.vista = "nov";
  }
  EN_ASIS = asis;
  EN_TAR = tar;
  EN_AMON = amon;
+ window.EN_CLI = cli;
  if (v === VISTA_ACTUAL && v !== "op" && v !== "inicio" && v !== "mon" && v !== "segmon" && v !== "supinicio" && v !== "nov" && v !== "hor" && v !== "aud") {
   SUBCERRADO[v] = !SUBCERRADO[v];
   window.noCerrarMenu = true;
@@ -9431,7 +9441,8 @@ function verVista(v) {
  }));
  document.body.classList.toggle("seg-mon", v === "segmon");
  if (v === "segmon") document.getElementById("vistaDash").hidden = false;
- Object.keys(NAV).forEach((k => document.getElementById(NAV[k]).setAttribute("aria-selected", String(k === v && !((asis || tar) && k === "nov")))));
+ Object.keys(NAV).forEach((k => document.getElementById(NAV[k]).setAttribute("aria-selected", String(k === v && !((asis || tar || cli) && k === "nov")))));
+ document.getElementById("navCli").setAttribute("aria-selected", String(cli));
  document.getElementById("navTar").setAttribute("aria-selected", String(tar));
  document.getElementById("navAsis").setAttribute("aria-selected", String(asis));
  if (v !== "op") [ "op_tabClientes", "op_tabRanking", "op_tabTurnos" ].forEach((id => document.getElementById(id).setAttribute("aria-selected", "false")));
@@ -9468,6 +9479,8 @@ Object.keys(NAV).forEach((k => document.getElementById(NAV[k]).addEventListener(
 document.getElementById("navAsis").addEventListener("click", (() => verVista("asis")));
 
 document.getElementById("navTar").addEventListener("click", (() => verVista("tar")));
+
+document.getElementById("navCli").addEventListener("click", (() => verVista("cli")));
 
 [ "op_tabClientes", "op_tabRanking", "op_tabTurnos" ].forEach((id => document.getElementById(id).addEventListener("click", (() => verVista("op")))));
 
@@ -9710,6 +9723,12 @@ if (PROY.id !== "luxee") {
  document.head.appendChild(st0);
 }
 
+if (ES_PRIME) {
+ const st1 = document.createElement("style");
+ st1.textContent = "#navCli{display:none !important}";
+ document.head.appendChild(st1);
+}
+
 if (!ES_PRIME) {
  document.body.classList.add("proy-" + PROY.id);
  const pon = (sel, txt) => {
@@ -9815,8 +9834,14 @@ document.getElementById("navMonTur").addEventListener("click", (() => {
  window.scrollTo(0, 0);
 }));
 
+document.getElementById("navMonExt").addEventListener("click", (() => {
+ if (typeof MON !== "undefined") MON.tab = "ext";
+ verVista("mon");
+ window.scrollTo(0, 0);
+}));
+
 document.getElementById("navMon").addEventListener("click", (() => {
- if (typeof MON !== "undefined" && [ "tur", "aud", "eq", "pts" ].indexOf(MON.tab) >= 0) {
+ if (typeof MON !== "undefined" && [ "tur", "aud", "eq", "pts", "ext" ].indexOf(MON.tab) >= 0) {
   MON.tab = "ver";
   if (typeof monRender === "function") monRender();
  }
@@ -9852,6 +9877,12 @@ document.addEventListener("click", (() => setTimeout((() => {
  const enP = typeof VISTA_ACTUAL !== "undefined" && VISTA_ACTUAL === "mon" && typeof MON !== "undefined" && MON.tab === "pts", bp = document.getElementById("navMonPts");
  if (bp) bp.setAttribute("aria-selected", String(enP));
  if (enP) {
+  const m = document.getElementById("navMon");
+  if (m) m.setAttribute("aria-selected", "false");
+ }
+ const enX = typeof VISTA_ACTUAL !== "undefined" && VISTA_ACTUAL === "mon" && typeof MON !== "undefined" && MON.tab === "ext", bx = document.getElementById("navMonExt");
+ if (bx) bx.setAttribute("aria-selected", String(enX));
+ if (enX) {
   const m = document.getElementById("navMon");
   if (m) m.setAttribute("aria-selected", "false");
  }
@@ -13111,7 +13142,7 @@ function monRender() {
  const d = MON.datos, c = document.getElementById("monCuerpo");
  if (!d) return;
  const ae = document.activeElement;
- if ((ae && ae.matches && ae.matches(".vf-cli,.vf-otra,.vf-met,.vf-rep-f input,.vf-rep-f select") || window.audEnfocado && window.audEnfocado()) && !MON.forzarRender) {
+ if ((ae && ae.matches && ae.matches(".vf-cli,.vf-otra,.vf-met,.vf-rep-f input,.vf-rep-f select") || window.audEnfocado && window.audEnfocado() || window.extEnfocado && window.extEnfocado()) && !MON.forzarRender) {
   MON.renderPend = true;
   return;
  }
@@ -13241,10 +13272,10 @@ function monRender() {
   const chip = (x, fin) => '<span class="mn-chip"><b>' + esc(titulo(x.o)) + "</b><span>" + esc(titulo(x.g)) + "</span>" + fin + (x.otro ? '<em class="mn-otro">Vino en otro horario: ' + esc(x.otro) + "</em>" : "") + "</span>";
   html += '<div class="mn-ops">' + (listos.length ? '<div class="mn-ops-f ok"><div class="mn-ops-t">✅ Ya salieron: digita sus clientes ahora</div><div class="mn-chips">' + listos.map((x => chip(x, "<em>Columna del día " + x.col + "</em>"))).join("") + "</div></div>" : "") + (sinMarca.length ? '<div class="mn-ops-f mal"><div class="mn-ops-t">⚠ Ya les toca y NO han marcado «Estoy de turno» en su tabla</div><div class="mn-chips">' + sinMarca.map((x => chip(x, "<em>Entra a las <b>" + esc(x.e) + "</b></em>" + btnLl(x)))).join("") + "</div>" + (monEsSup() ? '<div class="sub" style="margin-top:6px">Si el operador sí está trabajando y se le olvidó marcar, toca «Llegó a tiempo»: queda confirmado y se le marca la casilla con la hora de su horario.</div>' : '<div class="sub" style="margin-top:6px">Avísale a supervisión si el operador sí está trabajando y se le olvidó marcar.</div>') + "</div>" : "") + (prox.length ? '<div class="mn-ops-f"><div class="mn-ops-t">⏳ Siguen trabajando: NO digites sus clientes todavía</div><div class="mn-chips">' + prox.slice(0, 8).map((x => chip(x, "<em>Sale a las <b>" + esc(x.sale) + "</b>" + (x.diez ? " · turno de 10 h" : "") + "</em>"))).join("") + "</div>" + '<button type="button" class="mn-ver" data-tab="tur">' + (prox.length > 8 ? "Ver los " + prox.length + " que siguen de turno" : "Ver la lista completa") + "</button></div>" : "") + "</div>";
  }
- const soloTur = MON.tab === "tur", soloAud = MON.tab === "aud" || MON.tab === "eq", soloPts = MON.tab === "pts", solo = soloTur || soloAud || soloPts;
+ const soloTur = MON.tab === "tur", soloAud = MON.tab === "aud" || MON.tab === "eq", soloPts = MON.tab === "pts", soloExt = MON.tab === "ext", solo = soloTur || soloAud || soloPts || soloExt;
  {
   const ti = document.getElementById("monTit");
-  if (ti) ti.textContent = soloTur ? "Monitores · turnos de operadores" : soloAud ? "Monitores · registro de auditoría" : soloPts ? "Monitores · revisión por puntos" : "Monitores · mis pendientes";
+  if (ti) ti.textContent = soloExt ? "Monitores · clientes LUXEE" : soloTur ? "Monitores · turnos de operadores" : soloAud ? "Monitores · registro de auditoría" : soloPts ? "Monitores · revisión por puntos" : "Monitores · mis pendientes";
  }
  document.body.classList.toggle("mon-tur", solo);
  if (solo) html = soloAud && tabsAud.length > 1 ? '<div class="mn-tabs" role="tablist">' + tabsAud.map((t => '<button type="button" role="tab" data-tab="' + t[0] + '" aria-selected="' + (MON.tab === t[0]) + '">' + monIco(t[0]) + t[1] + (t[2] === null || t[2] === undefined ? "" : "<i>" + fmt.format(t[2]) + "</i>") + "</button>")).join("") + "</div>" : ""; else html += '<div class="mn-tabs" role="tablist">' + tabs.map((t => '<button type="button" role="tab" data-tab="' + t[0] + '" aria-selected="' + (MON.tab === t[0]) + '">' + monIco(t[0]) + t[1] + (t[2] === null ? "" : "<i>" + fmt.format(t[2]) + "</i>") + "</button>")).join("") + "</div>";
@@ -13348,7 +13379,7 @@ function monRender() {
   };
   html += cab("reg", "Mis registros", "Lo último que se escribió, cambió o borró en la hoja del mes, con su hora.");
   html += !d.historial.length ? '<div class="vacio">Todavía no hay registros guardados.</div>' : '<div class="table-scroll" style="max-height:520px;overflow-y:auto"><table class="sr-t"><thead><tr><th>Hora</th><th>Día</th><th>Grupo</th><th>Operador</th><th>Perfil</th><th>Quién registró</th><th class="num">Antes</th><th class="num">Ahora</th><th>Qué se hizo</th></tr></thead><tbody>' + d.historial.map((r => "<tr><td><b>" + esc(String(r[0]).slice(11, 19)) + '</b> <small style="color:var(--faint)">' + esc(String(r[0]).slice(0, 5)) + "</small></td><td>" + r[2] + "</td><td>" + esc(titulo(r[3])) + "</td><td>" + esc(titulo(opDelDia(r[5], r[2]))) + "</td><td>" + esc(titulo(r[6])) + "</td><td>" + (r[10] ? /^Sin identificar/.test(r[10]) ? '<span class="rv-pill aviso">Sin identificar</span>' : esc(r[10]) : "—") + '</td><td class="num">' + (r[7] === "" ? "—" : esc(r[7])) + '</td><td class="num"><b>' + (r[8] === "" ? "—" : esc(r[8])) + '</b></td><td><span class="rv-pill ' + (r[9] === "Corrección" ? "aviso" : r[9] === "Borrado" ? "accion" : "") + '">' + esc(r[9]) + "</span></td></tr>")).join("") + "</tbody></table></div>";
- } else if (MON.tab === "aud" && window.audSeccionHtml) html += audSeccionHtml(); else if (MON.tab === "pts" && window.audPtsSeccionHtml) html += audPtsSeccionHtml(); else if (MON.tab === "eq" && window.audEqHtml) html += audEqHtml();
+ } else if (MON.tab === "aud" && window.audSeccionHtml) html += audSeccionHtml(); else if (MON.tab === "pts" && window.audPtsSeccionHtml) html += audPtsSeccionHtml(); else if (MON.tab === "eq" && window.audEqHtml) html += audEqHtml(); else if (MON.tab === "ext" && window.extSeccionHtml) html += extSeccionHtml();
  html += "</section>";
  const llaveDet = d => ((d.querySelector("summary") || d).textContent || "").replace(/^\s*[\d.,]+/, "").trim();
  const estDet = {};
@@ -13367,6 +13398,7 @@ function monRender() {
  }));
  c.innerHTML = html;
  if (window.audMontar) audMontar();
+ if (MON.tab === "ext" && window.extMontar) extMontar("mon");
  if (window.audEqMontar) audEqMontar();
  if (window.audPtsMontar) audPtsMontar();
  c.querySelectorAll("details").forEach((d => {
@@ -17021,7 +17053,319 @@ const AV = {
  addEventListener("scroll", (e => {
   if (P && !P.el.contains(e.target)) P.lugar();
  }), true);
-})();</script><script>(function(){
+})();</script><script>/* ================== Clientes nuevos de AML y LUXEE ==================
+   El conteo es automático: cada ID que el operador anota en su tabla (TABLAS GRUPOS LUXEE) cuenta. Los monitores de PRIME
+   los verifican en la plataforma (✓ retraído / ✕ no retraído, con el cliente y cómo lo retrajo) desde «Monitores › Clientes LUXEE»;
+   supervisión de AML/LUXEE lo ve todo en «Clientes nuevos» y corrige. Lo guarda el servidor en el panel de cada proyecto. */
+(function() {
+ const X = window.EXT = {
+  d: null,
+  t: 0,
+  cargando: false,
+  err: "",
+  p: "",
+  g: "",
+  est: "pend",
+  q: "",
+  nom: {},
+  met: {},
+  otra: {},
+  el: null,
+  modo: ""
+ };
+ const e = s => String(s === null || s === undefined ? "" : s).replace(/[&<>"']/g, (c => ({
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;"
+ }[c])));
+ const t = s => String(s || "").toLowerCase().replace(/(^|[\s(\/-])([a-záéíóúñü])/g, ((m, a, b) => a + b.toUpperCase()));
+ const N = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().replace(/\s+/g, " ").trim();
+ const MESES = [ "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre" ];
+ const mesTxt = m => MESES[Number(String(m).slice(5, 7)) - 1] + " " + String(m).slice(0, 4);
+ const esMon = () => X.modo === "mon";
+ const clave = () => esMon() ? typeof MON !== "undefined" ? MON.clave : "" : window.claveSup && window.claveSup() || "";
+ const quien = () => esMon() ? typeof MON !== "undefined" ? MON.nombre : "" : window.supNombre && window.supNombre() || "";
+ const METODOS0 = [ "Escuchó audio", "Respondió por carta", "Respondió por chat", "Cliente envió mensaje por chat", "Cliente responde a post", "Vio video de perfil" ];
+ const llamar = (fn, args) => new Promise(((ok, mal) => {
+  if (typeof esApps !== "undefined" && !esApps) return setTimeout((() => ok(demo(fn, args))), 200);
+  const r = google.script.run.withSuccessHandler((s => {
+   let d = null;
+   try {
+    d = JSON.parse(s);
+   } catch (er) {}
+   ok(d || {
+    ok: false,
+    error: "Respuesta no válida."
+   });
+  })).withFailureHandler((er => ok({
+   ok: false,
+   error: er && er.message || "No se pudo conectar."
+  })));
+  r[fn].apply(r, args);
+ }));
+ let DEMO = null;
+ function demo(fn, args) {
+  if (!DEMO) {
+   const it = [];
+   [ [ "LINUX TEAM", "MARIA COLINA", [ "ANGEL", "LUCIANO", "ELENA" ] ], [ "LINUX TEAM", "CASTOR", [ "ANGEL", "LUCIANO", "ELENA" ] ], [ "TIGERS TEAM", "VICTORIA", [ "OLIVIA", "JULIAN", "PAUL", "PATRICIA" ] ] ].forEach(((g, gi) => {
+    for (let d = 1; d <= 3; d++) g[2].forEach(((p, pi) => {
+     if ((d + pi + gi) % 3) it.push([ "2026-11", d, g[0], g[1], p, String(1959e5 + gi * 1e3 + d * 37 + pi * 7), d === 1 && pi < 2 ? pi ? "no" : "si" : "", d === 1 && pi < 2 ? "Jenny Villamizar" : "", d === 1 ? "2026-11-02 09:10" : "", d === 1 && !pi ? "Rosa, 61" : "", d === 1 && !pi ? "Escuchó audio" : "", 1, "2026-11-0" + d + " 08:00" ]);
+    }));
+   }));
+   DEMO = {
+    ok: true,
+    sup: !esMon(),
+    metodos: METODOS0,
+    proys: [ {
+     p: "aml",
+     nombre: "AML",
+     mes: "2026-11",
+     items: it,
+     act: "03/11 14:50"
+    }, {
+     p: "luxee",
+     nombre: "LUXEE",
+     mes: "2026-11",
+     items: [ [ "2026-11", 2, "RACETEAMS 1", "DANIEL COA", "ELEIDE", "196401234", "", "", "", "", "", 1, "" ] ],
+     act: "03/11 14:50"
+    } ]
+   };
+  }
+  if (fn === "extVerificar") {
+   const d = JSON.parse(args[2]), P = DEMO.proys.find((p => p.p === d.p)), x = P && P.items.find((r => r[5] === d.id && r[2] === d.g && r[3] === d.o && r[1] === d.dia));
+   if (d.res === "si" && !/^[^\d,]{2,}, \d{2}$/.test(d.cli || "") && esMon()) return {
+    ok: false,
+    error: "Escribe el cliente así: Nombre, edad (ejemplo: Charito, 73)."
+   };
+   if (x) {
+    x[6] = d.res;
+    x[7] = quien() || "Demo";
+    x[8] = "2026-11-03 15:00";
+    x[9] = d.cli || "";
+    x[10] = d.met || "";
+   }
+   return {
+    ok: true,
+    quien: quien() || "Demo",
+    hora: "03/11 15:00"
+   };
+  }
+  return JSON.parse(JSON.stringify(DEMO));
+ }
+ function cargar(forzar) {
+  if (X.cargando) return;
+  X.cargando = true;
+  X.err = "";
+  pintar();
+  llamar(forzar ? "extActualizar" : "extClientes", [ clave(), quien() ]).then((d => {
+   X.cargando = false;
+   if (!d || !d.ok) {
+    X.err = d && d.error || "No se pudieron leer los clientes.";
+    pintar();
+    return;
+   }
+   X.d = d;
+   X.t = Date.now();
+   if (!X.p || !d.proys.some((p => p.p === X.p))) X.p = (d.proys[0] || {}).p || "";
+   pintar();
+  }));
+ }
+ window.extSeccionHtml = () => '<div id="extHost"></div>';
+ window.extMontar = modo => {
+  const host = document.getElementById("extHost");
+  if (!host) return;
+  X.modo = modo || (typeof ROL !== "undefined" && ROL === "mon" ? "mon" : "sup");
+  if (!X.el) {
+   X.el = document.createElement("div");
+   X.el.className = "ex";
+  }
+  if (X.el.parentNode !== host) host.appendChild(X.el);
+  if (!X.d || Date.now() - X.t > 9e4) cargar(false); else if (!X.el.firstChild) pintar();
+ };
+ window.extEnfocado = () => !!(X.el && document.activeElement && X.el.contains(document.activeElement) && /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName));
+ const P = () => X.d && X.d.proys.find((p => p.p === X.p));
+ const est = r => r[6] === "si" ? "si" : r[6] === "no" ? "no" : "pend";
+ const k = r => [ r[0], r[2], r[3], r[4], r[1], r[5] ].join("|");
+ function pintar() {
+  const el = X.el;
+  if (!el) return;
+  const cab = '<div class="ex-h"><div>' + (esMon() ? "<h2>Clientes nuevos de AML y LUXEE</h2>" : "") + '<div class="sub">' + (esMon() ? "Verifica en la plataforma cada ID que anotaron los operadores. Si sí está retraído, escribe el cliente (Nombre, edad) y cómo lo retrajo." : "El conteo es automático (los IDs de las tablas de cada operador). Los monitores de PRIME los verifican; aquí lo ves todo y puedes corregir.") + "</div></div>" + '<button type="button" class="btn-sec ex-act" id="exAct"' + (X.cargando ? " disabled" : "") + ">" + (X.cargando ? "Leyendo las tablas…" : "Leer las tablas ya") + "</button></div>";
+  if (!X.d) {
+   el.innerHTML = cab + '<div class="state" style="padding:18px 0">' + (X.err ? e(X.err) + ' <button type="button" class="btn-sec" id="exRe">Reintentar</button>' : "Cargando…") + "</div>";
+   con();
+   return;
+  }
+  const Pr = P();
+  if (!Pr) {
+   el.innerHTML = cab + '<div class="state">No hay proyectos conectados.</div>';
+   con();
+   return;
+  }
+  const items = Pr.items, mes = Pr.mes;
+  const grupos = Array.from(new Set(items.map((r => r[2])))).sort();
+  const deMes = items.filter((r => r[0] === mes)), ant = items.filter((r => r[0] !== mes && est(r) === "pend"));
+  const cuenta = xs => ({
+   tot: xs.length,
+   si: xs.filter((r => est(r) === "si")).length,
+   no: xs.filter((r => est(r) === "no")).length,
+   pend: xs.filter((r => est(r) === "pend")).length
+  });
+  const C = cuenta(deMes);
+  const q = N(X.q);
+  let vis = items.filter((r => (!X.g || r[2] === X.g) && (X.est === "todos" || est(r) === X.est) && (!q || N(r[3] + " " + r[4] + " " + r[5] + " " + r[2]).indexOf(q) >= 0)));
+  vis.sort(((a, b) => a[0].localeCompare(b[0]) || a[2].localeCompare(b[2]) || a[3].localeCompare(b[3]) || a[1] - b[1] || a[4].localeCompare(b[4])));
+  const tabsP = X.d.proys.length > 1 ? '<div class="sub-barra ex-p">' + X.d.proys.map((p => {
+   const n = p.items.filter((r => est(r) === "pend")).length;
+   return '<button type="button" data-exp="' + p.p + '" aria-pressed="' + (p.p === X.p) + '">' + e(p.nombre) + (n ? " <i>" + n + "</i>" : "") + "</button>";
+  })).join("") + "</div>" : "";
+  const tiles = '<div class="ex-tiles"><div><b>' + C.tot + "</b><span>IDs de " + e(mesTxt(mes)) + '</span></div><div class="a"><b>' + C.pend + '</b><span>Por verificar</span></div><div class="v"><b>' + C.si + '</b><span>✓ Retraídos</span></div><div class="r"><b>' + C.no + "</b><span>✕ No retraídos</span></div></div>" + (ant.length ? '<div class="ex-av">Quedan <b>' + ant.length + "</b> por verificar de " + e(mesTxt(ant[0][0])) + " (las tablas ya pasaron al mes nuevo).</div>" : "") + '<div class="sub" style="margin:2px 0 10px">Tablas leídas: ' + e(Pr.act || "—") + " · se leen solas cada 10 minutos.</div>";
+  const porOp = {};
+  deMes.forEach((r => {
+   const kk = r[2] + "|" + r[3];
+   (porOp[kk] = porOp[kk] || []).push(r);
+  }));
+  const resumen = '<details class="ex-res"' + (X.resAb ? " open" : "") + "><summary>Conteo por operador (" + e(mesTxt(mes)) + ')</summary><div class="table-scroll"><table><thead><tr><th>Grupo</th><th>Operador</th><th class="num">Clientes nuevos</th><th class="num">✓</th><th class="num">✕</th><th class="num">Por verificar</th></tr></thead><tbody>' + Object.keys(porOp).sort().map((kk => {
+   const c = cuenta(porOp[kk]), [g, o] = kk.split("|");
+   return "<tr><td>" + e(t(g)) + '</td><td class="name">' + e(t(o)) + '</td><td class="num"><b>' + c.tot + '</b></td><td class="num">' + c.si + '</td><td class="num">' + c.no + '</td><td class="num">' + (c.pend ? '<span class="rv-pill aviso">' + c.pend + "</span>" : "0") + "</td></tr>";
+  })).join("") + (Object.keys(porOp).length ? "" : '<tr><td colspan="6">Todavía no hay IDs en las tablas de este mes.</td></tr>') + "</tbody></table></div></details>";
+  const filtros = '<div class="ex-f"><select id="exG" aria-label="Grupo"><option value="">Todos los grupos</option>' + grupos.map((g => '<option value="' + e(g) + '"' + (g === X.g ? " selected" : "") + ">" + e(t(g)) + "</option>")).join("") + "</select>" + '<div class="seg-ctrl" id="exE">' + [ [ "pend", "Por verificar" ], [ "si", "✓ Retraídos" ], [ "no", "✕ No retraídos" ], [ "todos", "Todos" ] ].map((x => '<button type="button" data-exe="' + x[0] + '" aria-pressed="' + (X.est === x[0]) + '">' + x[1] + "</button>")).join("") + "</div>" + '<input type="search" id="exQ" placeholder="Buscar operador, perfil o ID" value="' + e(X.q) + '" autocomplete="off"></div>';
+  const mets = X.d.metodos || METODOS0;
+  const fila = r => {
+   const kk = k(r), s = est(r), mio = esMon();
+   const acc = s === "pend" ? '<input type="text" class="ex-cli" data-k="' + e(kk) + '" value="' + e(X.nom[kk] || "") + '" placeholder="' + (mio ? "Nombre, edad · ej: Charito, 73" : "Nombre, edad (opcional)") + '" maxlength="60" autocomplete="off" aria-label="Cliente">' + '<select class="ex-met" data-k="' + e(kk) + '" aria-label="Cómo lo retrajo"><option value="">' + (mio ? "¿Cómo lo retrajo?" : "¿Cómo lo retrajo? (opcional)") + "</option>" + mets.concat([ "Otra" ]).map((m => "<option" + (X.met[kk] === m ? " selected" : "") + ">" + e(m) + "</option>")).join("") + "</select>" + (X.met[kk] === "Otra" ? '<input type="text" class="ex-otra" data-k="' + e(kk) + '" value="' + e(X.otra[kk] || "") + '" placeholder="¿Cuál?" maxlength="100">' : "") + '<button type="button" class="ex-si" data-v="si" data-k="' + e(kk) + '">✓ Sí está retraído</button><button type="button" class="ex-no" data-v="no" data-k="' + e(kk) + '">✕ No está</button>' : '<span class="rv-pill ' + (s === "si" ? "ok" : "accion") + '">' + (s === "si" ? "✓ Retraído" : "✕ No retraído") + "</span>" + (r[9] ? ' <span class="ex-m">Cliente: ' + e(r[9]) + "</span>" : "") + (r[10] ? ' <span class="ex-m">· ' + e(r[10]) + "</span>" : "") + ' <span class="ex-m">· ' + e(r[7]) + (r[8] ? " " + e(String(r[8]).slice(8, 10) + "/" + String(r[8]).slice(5, 7) + " " + String(r[8]).slice(11, 16)) : "") + "</span>" + (!mio ? ' <button type="button" class="ex-cam" data-v="' + (s === "si" ? "no" : "si") + '" data-k="' + e(kk) + '">' + (s === "si" ? "Cambiar a ✕" : "Cambiar a ✓") + '</button> <button type="button" class="ex-cam" data-v="" data-k="' + e(kk) + '">Deshacer</button>' : "");
+   return '<div class="ex-i' + (r[11] ? "" : " ex-borr") + '"><div class="ex-id"><button type="button" class="sg-cp" data-sgcp="' + e(r[5]) + '" title="Copiar el ID"><b>' + e(r[5]) + "</b><i>Copiar</i></button><small>Día " + r[1] + (r[0] !== mes ? " de " + e(mesTxt(r[0])) : "") + (r[11] ? "" : " · el operador lo borró de su tabla") + "</small></div>" + '<div class="ex-q"><b>' + e(t(r[4])) + "</b><small>" + e(t(r[3])) + " · " + e(t(r[2])) + '</small></div><div class="ex-a">' + acc + "</div></div>";
+  };
+  const lista = vis.length ? vis.slice(0, 400).map(fila).join("") + (vis.length > 400 ? '<div class="sub">Se muestran los primeros 400. Usa los filtros.</div>' : "") : '<div class="mon-ok"><b>Nada por aquí</b>' + (X.est === "pend" ? "No hay IDs por verificar con estos filtros." : "No hay IDs con estos filtros.") + "</div>";
+  el.innerHTML = cab + tabsP + tiles + resumen + filtros + '<div class="ex-msg" id="exMsg" role="status"></div><div class="ex-l">' + lista + "</div>";
+  con();
+ }
+ const msg = (txt, mal) => {
+  const m = X.el && X.el.querySelector("#exMsg");
+  if (m) {
+   m.textContent = txt;
+   m.className = "ex-msg" + (mal ? " mal" : " ok");
+  }
+ };
+ function con() {
+  const el = X.el, $ = s => el.querySelector(s);
+  if ($("#exAct")) $("#exAct").onclick = () => cargar(true);
+  if ($("#exRe")) $("#exRe").onclick = () => cargar(false);
+  el.querySelectorAll("[data-exp]").forEach((b => b.onclick = () => {
+   X.p = b.dataset.exp;
+   X.g = "";
+   pintar();
+  }));
+  el.querySelectorAll("[data-exe]").forEach((b => b.onclick = () => {
+   X.est = b.dataset.exe;
+   pintar();
+  }));
+  const det = $(".ex-res");
+  if (det) det.ontoggle = () => {
+   X.resAb = det.open;
+  };
+  if ($("#exG")) $("#exG").onchange = ev => {
+   X.g = ev.target.value;
+   pintar();
+  };
+  const qi = $("#exQ");
+  if (qi) qi.oninput = () => {
+   X.q = qi.value;
+   pintar();
+   const n = X.el.querySelector("#exQ");
+   if (n) {
+    n.focus();
+    n.setSelectionRange(n.value.length, n.value.length);
+   }
+  };
+  el.querySelectorAll(".ex-cli").forEach((i => {
+   i.oninput = () => {
+    X.nom[i.dataset.k] = i.value;
+    i.classList.remove("mal");
+   };
+   i.onblur = () => {
+    const v = i.value.replace(/\s+/g, " ").trim().replace(/\s*,\s*/g, ", ");
+    if (v !== i.value) {
+     i.value = v;
+     X.nom[i.dataset.k] = v;
+    }
+   };
+  }));
+  el.querySelectorAll(".ex-met").forEach((s => s.onchange = () => {
+   X.met[s.dataset.k] = s.value;
+   pintar();
+   if (s.value === "Otra") {
+    const o = X.el.querySelector('.ex-otra[data-k="' + CSS.escape(s.dataset.k) + '"]');
+    if (o) o.focus();
+   }
+  }));
+  el.querySelectorAll(".ex-otra").forEach((i => i.oninput = () => {
+   X.otra[i.dataset.k] = i.value;
+  }));
+  el.querySelectorAll(".ex-si,.ex-no,.ex-cam").forEach((b => b.onclick = () => guardar(b)));
+ }
+ function guardar(b) {
+  const kk = b.dataset.k, res = b.dataset.v, Pr = P(), r = Pr && Pr.items.find((x => k(x) === kk));
+  if (!r) return;
+  let cli = "", met = "";
+  if (res === "si" && est(r) === "pend") {
+   cli = String(X.nom[kk] || "").replace(/\s+/g, " ").trim().replace(/\s*,\s*/g, ", ");
+   met = X.met[kk] || "";
+   if (met === "Otra") met = "Otra: " + String(X.otra[kk] || "").trim();
+   if (esMon() && !/^[^\d,]{2,}, \d{2}$/.test(cli)) {
+    const i = X.el.querySelector('.ex-cli[data-k="' + CSS.escape(kk) + '"]');
+    if (i) {
+     i.classList.add("mal");
+     i.focus();
+    }
+    return msg("Escribe el cliente así: Nombre, edad (ejemplo: Charito, 73).", true);
+   }
+   if (esMon() && (!met || met === "Otra: ")) return msg("Elige cómo retrajo el operador a ese cliente.", true);
+  }
+  if (res === "" && !confirm("¿Deshacer la verificación del ID " + r[5] + "? Vuelve a quedar por verificar.")) return;
+  b.disabled = true;
+  const t0 = b.textContent;
+  b.textContent = "Guardando…";
+  llamar("extVerificar", [ clave(), quien(), JSON.stringify({
+   p: Pr.p,
+   mes: r[0],
+   dia: r[1],
+   g: r[2],
+   o: r[3],
+   perfil: r[4],
+   id: r[5],
+   res: res,
+   cli: cli,
+   met: met
+  }) ]).then((d => {
+   if (!d || !d.ok) {
+    b.disabled = false;
+    b.textContent = t0;
+    msg(d && d.error || "No se pudo guardar.", true);
+    return;
+   }
+   r[6] = res;
+   r[7] = d.quien || quien();
+   r[8] = d.hora ? (new Date).getFullYear() + "-" + d.hora.slice(3, 5) + "-" + d.hora.slice(0, 2) + " " + d.hora.slice(6) : "";
+   r[9] = res === "si" ? cli : "";
+   r[10] = res === "si" ? met : "";
+   delete X.nom[kk];
+   delete X.met[kk];
+   delete X.otra[kk];
+   pintar();
+   msg("Listo: el ID " + r[5] + (res === "si" ? " quedó como retraído." : res === "no" ? " quedó como NO retraído." : " volvió a quedar por verificar."));
+  }));
+ }
+ setInterval((() => {
+  if (!X.el || !document.body.contains(X.el) || document.hidden || window.extEnfocado()) return;
+  if (Date.now() - X.t > 12e4) cargar(false);
+ }), 3e4);
+ const st = document.createElement("style");
+ st.textContent = ".ex-h{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:10px}.ex-h h2{margin:0 0 4px}.ex .btn-sec{font:inherit;font-weight:700;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:8px 16px;cursor:pointer}" + ".ex-p{margin:0 0 12px}.ex-p button i{font-style:normal;background:#E2A63B;color:#15161A;border-radius:99px;padding:0 7px;font-size:12px;margin-left:4px}" + ".ex-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:4px 0 10px}.ex-tiles div{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--surface)}.ex-tiles b{display:block;font-size:26px;line-height:1.1}.ex-tiles span{font-size:12.5px;color:var(--muted)}" + ".ex-tiles .a b{color:#B7791F}.ex-tiles .v b{color:#1E8A5A}.ex-tiles .r b{color:var(--down)}.ex-av{background:rgba(226,166,59,.12);border-radius:10px;padding:8px 12px;font-size:13.5px;margin:0 0 8px}" + ".ex-res{margin:6px 0 12px}.ex-res summary{cursor:pointer;font-weight:700;font-size:14px;padding:6px 0}.ex-f{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0 10px}" + ".ex-f select,.ex-f input{font:inherit;font-size:14px;padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink)}.ex-f input{flex:1 1 220px}" + ".ex-msg{min-height:18px;font-size:13.5px;margin:0 0 6px}.ex-msg.mal{color:var(--down)}.ex-msg.ok{color:#1E8A5A}" + ".ex-l{display:flex;flex-direction:column;gap:8px}.ex-i{display:grid;grid-template-columns:170px 200px 1fr;gap:10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface)}.ex-i.ex-borr{opacity:.7}" + ".ex-id small,.ex-q small{display:block;font-size:12px;color:var(--muted)}.ex-q b{font-size:14.5px}.ex-a{display:flex;flex-wrap:wrap;gap:6px;align-items:center}" + ".ex-a input,.ex-a select{font:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink)}.ex-a .ex-cli{flex:1 1 170px;min-width:150px}.ex-a input.mal{border-color:var(--down)}" + ".ex-a button{font:inherit;font-size:13px;font-weight:700;border-radius:999px;padding:7px 12px;cursor:pointer}.ex-si{border:0;background:#1E8A5A;color:#fff}.ex-no{border:1px solid var(--down);background:transparent;color:var(--down)}.ex-cam{border:1px solid var(--line);background:transparent;color:var(--ink);padding:4px 10px!important}" + ".ex-m{font-size:12.5px;color:var(--muted)}@media (max-width:760px){.ex-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.ex-i{grid-template-columns:1fr}}";
+ document.head.appendChild(st);
+})();</script>
+<script>(function(){
   var hoy = new Date(Date.now() - 5 * 3600000).toISOString().slice(0, 10);      // hora de Colombia
   if (hoy >= '2026-11-01') return;
   var st = document.createElement('style');
@@ -17038,4 +17382,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = '8e86b39f7ff9' -->
+<!-- var HUELLA = '48544e21644d' -->
