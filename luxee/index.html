@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycby3GwgzMEi7DcXUkfCtX9J
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "91c1e2e128b3";
+ var HUELLA = "4368fadd52f7";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -12358,10 +12358,30 @@ document.addEventListener("click", (e => {
  const b = e.target.closest && e.target.closest("[data-mpausa]");
  if (!b) return;
  const que = b.dataset.mpausa, err = document.getElementById("monTurnoErr");
- b.disabled = true;
+ if (MON.pausaEnv && Date.now() - MON.pausaEnv < 2e4) return;
+ if (/fin$/.test(que)) {
+  const T = MON.turno || {}, L = /^Break/.test(que) ? T.breaks || [] : T.largos || [], x = L.find((y => y.abierto));
+  if (x && x.ini) {
+   const [h, m] = x.ini.split(":").map(Number), d0 = new Date;
+   let mm = d0.getHours() * 60 + d0.getMinutes() - (h * 60 + m);
+   if (mm < 0) mm += 1440;
+   if (mm < 2 && !confirm("Saliste " + (mm < 1 ? "hace menos de un minuto" : "hace 1 minuto") + ". ¿Ya volviste? Si tocaste por error, toca «Cancelar» y sigue en tu break.")) return;
+  }
+ }
+ MON.pausaEnv = Date.now();
+ document.querySelectorAll("[data-mpausa]").forEach((x => {
+  x.disabled = true;
+ }));
+ const txt0 = b.textContent;
+ b.textContent = "Guardando…";
  if (err) err.textContent = "";
  const fin = d => {
-  b.disabled = false;
+  MON.pausaEnv = 0;
+  document.querySelectorAll("[data-mpausa]").forEach((x => {
+   x.disabled = false;
+  }));
+  b.textContent = txt0;
+  if (d && d.anulado && window.toast) toast("No se contó: tocaste «Ya volví» enseguida. Tu break sigue disponible.");
   if (!d || !d.ok) {
    if (err) err.textContent = d && d.error || "No se pudo guardar. Intenta de nuevo.";
    return;
@@ -16957,4 +16977,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = '91c1e2e128b3' -->
+<!-- var HUELLA = '4368fadd52f7' -->
