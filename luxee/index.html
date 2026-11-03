@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycby3GwgzMEi7DcXUkfCtX9J
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "379712d2f262";
+ var HUELLA = "9220e4b93874";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -4537,6 +4537,164 @@ document.addEventListener("click", (ev => {
  document.head.appendChild(st);
 })();
 
+function sgCorregirDlg(r, si) {
+ const ya = document.getElementById("sgCorr");
+ if (ya) ya.remove();
+ const fotos = [], ov = document.createElement("div");
+ ov.id = "sgCorr";
+ ov.className = "sgc-ov";
+ const mets = typeof METODOS_SUP !== "undefined" ? METODOS_SUP : [ "Escuchó audio", "Respondió por carta", "Respondió por chat", "Cliente envió mensaje por chat", "Cliente responde a post" ];
+ ov.innerHTML = '<div class="sgc" role="dialog" aria-modal="true" aria-labelledby="sgcT"><h3 id="sgcT">' + (si ? "✅ Sí está retraído" : "❌ No está retraído") + "</h3>" + '<div class="sgc-f"><div><small>ID</small>' + sgIdHtml({
+  id: r[5],
+  mail: r[13] || ""
+ }) + "</div><div><small>Operador</small><b>" + esc(titulo(r[3])) + "</b></div><div><small>Perfil</small><b>" + esc(titulo(r[4])) + "</b></div><div><small>Día</small><b>" + esc(r[0]) + "</b></div></div>" + '<p class="sgc-ay">' + (si ? "Revisaste en la plataforma y el cliente sí está retraído: vuelve a contar para " + esc(titulo(r[3])) + " y queda a tu nombre." : "Revisaste en la plataforma y el cliente NO está retraído: deja de contar para " + esc(titulo(r[3])) + ", le sale el aviso para corregirlo y queda a tu nombre." + (r[7] ? " " + esc(r[7]) + " lo había marcado como retraído." : "")) + "</p>" + (si ? '<div class="sgc-g"><label><span>Cliente <em>(Nombre, edad)</em></span><input type="text" id="sgcCli" maxlength="60" placeholder="ej: Charito, 73" autocomplete="off" value="' + esc(r[18] || "") + '"></label>' + '<label><span>¿Cómo lo retrajo?</span><select id="sgcMet"><option value="">Elegir</option>' + mets.map((m => "<option" + (r[19] === m ? " selected" : "") + ">" + esc(m) + "</option>")).join("") + '<option value="otra">Otra…</option></select></label>' + '<label id="sgcOtraL" hidden class="sgc-w"><span>¿Cuál?</span><input type="text" id="sgcOtra" maxlength="100" placeholder="Escribe cómo lo retrajo"></label></div>' : "") + '<div class="sgc-ev"><span>Pantallazo <em>(opcional, hasta 4)</em></span><div class="sgc-fotos" id="sgcFotos"></div>' + '<label class="sgc-drop" id="sgcDrop" tabindex="0"><input type="file" accept="image/*" multiple hidden id="sgcFile"><b>+ Agregar pantallazo</b><small>Toca para elegir, arrástralo aquí o pégalo con Ctrl+V</small></label></div>' + '<div class="sgc-msg" id="sgcMsg" role="status"></div>' + '<div class="sgc-acc"><button type="button" class="btn-sec" id="sgcNo">Cancelar</button><button type="button" class="btn" id="sgcOk">Guardar</button></div></div>';
+ document.body.appendChild(ov);
+ const $c = id => ov.querySelector("#" + id), msg = (t, mal) => {
+  const m = $c("sgcMsg");
+  m.textContent = t;
+  m.className = "sgc-msg" + (mal ? " mal" : "");
+ };
+ const pintarF = () => {
+  $c("sgcFotos").innerHTML = fotos.map(((f, i) => '<span class="sgc-pf"><img src="' + f.url + '" alt="Pantallazo ' + (i + 1) + '"><button type="button" data-qf="' + i + '" aria-label="Quitar">×</button></span>')).join("");
+  $c("sgcFotos").querySelectorAll("[data-qf]").forEach((x => x.onclick = () => {
+   fotos.splice(Number(x.dataset.qf), 1);
+   pintarF();
+  }));
+  $c("sgcDrop").hidden = fotos.length >= 4;
+ };
+ const agregar = files => {
+  Array.prototype.slice.call(files || []).filter((f => /^image\//.test(f.type))).slice(0, 4 - fotos.length).forEach((f => hallComprimir(f).then((x => {
+   if (fotos.length < 4) {
+    fotos.push(x);
+    pintarF();
+   }
+  }), (e => msg(e.message, true)))));
+ };
+ $c("sgcFile").onchange = e => {
+  agregar(e.target.files);
+  e.target.value = "";
+ };
+ const dz = $c("sgcDrop");
+ dz.ondragover = e => {
+  e.preventDefault();
+  dz.classList.add("on");
+ };
+ dz.ondragleave = () => dz.classList.remove("on");
+ dz.ondrop = e => {
+  e.preventDefault();
+  dz.classList.remove("on");
+  agregar(e.dataTransfer.files);
+ };
+ const pegar = e => {
+  const it = (e.clipboardData || {}).items || [];
+  const fs = [];
+  for (let i = 0; i < it.length; i++) if (it[i].kind === "file") fs.push(it[i].getAsFile());
+  if (fs.length) {
+   e.preventDefault();
+   agregar(fs);
+  }
+ };
+ document.addEventListener("paste", pegar);
+ const cerrar = () => {
+  document.removeEventListener("paste", pegar);
+  document.removeEventListener("keydown", tecla);
+  ov.remove();
+ };
+ const tecla = e => {
+  if (e.key === "Escape") cerrar();
+ };
+ document.addEventListener("keydown", tecla);
+ ov.onclick = e => {
+  if (e.target === ov) cerrar();
+ };
+ $c("sgcNo").onclick = cerrar;
+ if (si) {
+  $c("sgcMet").onchange = () => {
+   $c("sgcOtraL").hidden = $c("sgcMet").value !== "otra";
+   if (!$c("sgcOtraL").hidden) $c("sgcOtra").focus();
+  };
+  $c("sgcCli").onblur = () => {
+   if (typeof cliFormato === "function") $c("sgcCli").value = cliFormato($c("sgcCli").value);
+  };
+  setTimeout((() => $c("sgcCli").focus()), 30);
+ }
+ $c("sgcOk").onclick = () => {
+  let cli = "", met = "";
+  if (si) {
+   cli = $c("sgcCli").value.replace(/\s+/g, " ").trim().replace(/\s*,\s*/g, ", ");
+   if (cli && !/^[^\d,]{2,}, \d{2}$/.test(cli)) return msg("Escribe el cliente así: Nombre, edad (ejemplo: Charito, 73), o déjalo vacío.", true);
+   met = $c("sgcMet").value;
+   if (met === "otra") {
+    const o = $c("sgcOtra").value.trim();
+    if (o.replace(/[^a-záéíóúñü]/gi, "").length < 3) return msg("Escribe cómo lo retrajo.", true);
+    met = "Otra: " + o;
+   }
+  }
+  const ok = $c("sgcOk");
+  ok.disabled = true;
+  ok.textContent = fotos.length ? "Subiendo…" : "Guardando…";
+  msg("");
+  const fin = d => {
+   if (!d || !d.ok) {
+    ok.disabled = false;
+    ok.textContent = "Guardar";
+    msg(d && d.error || "No se pudo guardar.", true);
+    return;
+   }
+   cerrar();
+   r[6] = si ? "si" : "no";
+   r[7] = d.quien || "Supervisión";
+   r[8] = d.hora || "";
+   r[12] = "Corrigió supervisión";
+   r[18] = si ? cli : "";
+   r[19] = si ? met : "";
+   segMonVerRender();
+   if (window.toast) toast("Listo: el ID " + r[5] + (si ? " quedó como retraído" : " quedó como NO retraído") + (fotos.length ? " con " + (fotos.length === 1 ? "el pantallazo" : fotos.length + " pantallazos") : "") + ".");
+   if (esApps) google.script.run.withSuccessHandler((t => {
+    try {
+     SEGMON.err = JSON.parse(t);
+    } catch (e) {}
+    segMonVerRender();
+   })).erroresMonitores(clave);
+  };
+  const datos = {
+   mes: DATA && DATA.claveActual || "",
+   g: r[1],
+   id: r[5],
+   res: si ? "si" : "no",
+   cli: cli,
+   met: met,
+   fotos: fotos.map((f => ({
+    m: f.m,
+    b: f.b
+   })))
+  };
+  if (!esApps) return setTimeout((() => fin({
+   ok: true,
+   quien: window.supNombre && window.supNombre() || "Supervisión",
+   hora: "03/11 08:55"
+  })), 300);
+  google.script.run.withFailureHandler((e => fin({
+   ok: false,
+   error: e && e.message
+  }))).withSuccessHandler((t => {
+   let d;
+   try {
+    d = JSON.parse(t);
+   } catch (e) {
+    d = null;
+   }
+   fin(d);
+  })).corregirVerifSup(clave, JSON.stringify(datos), window.supNombre && window.supNombre() || "");
+ };
+}
+
+(() => {
+ const st = document.createElement("style");
+ st.textContent = ".sgc-ov{position:fixed;inset:0;z-index:9000;background:rgba(10,10,12,.55);display:flex;align-items:center;justify-content:center;padding:16px}" + ".sgc{background:var(--surface,#fff);color:var(--ink);border-radius:18px;box-shadow:0 20px 50px rgba(0,0,0,.35);width:min(560px,100%);max-height:calc(100vh - 32px);overflow:auto;padding:20px 22px}" + ".sgc h3{margin:0 0 12px;font-size:19px}.sgc-f{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;padding:12px;border-radius:12px;background:rgba(201,162,39,.08);margin-bottom:10px}" + ".sgc-f small,.sgc-g span,.sgc-ev>span{display:block;font-size:11.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}.sgc-f .sg-cps{gap:1px}.sgc-f>div:first-child{grid-column:1/-1}" + ".sgc em{font-style:normal;text-transform:none;letter-spacing:0;font-weight:500}.sgc-ay{font-size:13.5px;color:var(--muted);line-height:1.5;margin:0 0 12px}" + ".sgc-g{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}.sgc-g label{display:flex;flex-direction:column}.sgc-g .sgc-w{grid-column:1/-1}.sgc-g label[hidden]{display:none}" + ".sgc-g input,.sgc-g select{font:inherit;font-size:14px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)}" + ".sgc-fotos{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}.sgc-fotos:empty{display:none}.sgc-pf{position:relative}.sgc-pf img{width:120px;height:86px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}" + ".sgc-pf button{position:absolute;top:-7px;right:-7px;width:24px;height:24px;border-radius:50%;border:0;background:#15161A;color:#fff;font-size:16px;line-height:1;cursor:pointer}" + ".sgc-drop{display:flex;flex-direction:column;align-items:center;gap:2px;border:2px dashed var(--line);border-radius:12px;padding:14px;cursor:pointer;text-align:center}.sgc-drop[hidden]{display:none}" + ".sgc-drop b{color:var(--oro-tinta,#7A5D00)}.sgc-drop small{color:var(--muted);font-size:12px}.sgc-drop.on,.sgc-drop:hover{border-color:#C9A227;background:rgba(201,162,39,.06)}" + ".sgc-msg{min-height:18px;font-size:13px;margin:10px 0 0}.sgc-msg.mal{color:var(--down)}.sgc-acc{display:flex;justify-content:flex-end;gap:10px;margin-top:10px}" + ".sgc .btn-sec{font:inherit;font-weight:700;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:9px 18px;cursor:pointer}" + ".sgc-f .sg-cpm span{max-width:none}@media (max-width:520px){.sgc-g{grid-template-columns:1fr}}";
+ document.head.appendChild(st);
+})();
+
 function segMonVerRender() {
  const c = document.getElementById("segMonVer");
  if (!c) return;
@@ -4657,52 +4815,9 @@ function segMonVerRender() {
   }));
  }
  document.querySelectorAll(".sg-p [data-corr], .sg-p [data-corrno]").forEach((b => b.onclick = () => {
-  const si = b.hasAttribute("data-corr"), r = SEGMON.ver[Number(si ? b.dataset.corr : b.dataset.corrno)], txt = b.textContent;
+  const si = b.hasAttribute("data-corr"), r = SEGMON.ver[Number(si ? b.dataset.corr : b.dataset.corrno)];
   if (!r) return;
-  if (!confirm(si ? "¿Revisaste en la plataforma y el cliente " + r[5] + " SÍ está retraído? Vuelve a contar para " + titulo(r[3]) + " y queda a tu nombre." : "¿Revisaste en la plataforma y el cliente " + r[5] + " NO está retraído? Deja de contar para " + titulo(r[3]) + ", le sale el aviso para corregirlo y queda a tu nombre. " + (r[7] ? r[7] + " lo había marcado como retraído." : ""))) return;
-  b.disabled = true;
-  b.textContent = "Guardando…";
-  const fin = d => {
-   if (!d || !d.ok) {
-    b.disabled = false;
-    b.textContent = txt;
-    alert(d && d.error || "No se pudo guardar.");
-    return;
-   }
-   r[6] = si ? "si" : "no";
-   r[7] = d.quien || "Supervisión";
-   r[8] = d.hora || "";
-   r[12] = "Corrigió supervisión";
-   if (!si) {
-    r[18] = "";
-    r[19] = "";
-   }
-   segMonVerRender();
-   if (window.toast) toast("Listo: el ID " + r[5] + (si ? " quedó como retraído." : " quedó como NO retraído."));
-   if (esApps) google.script.run.withSuccessHandler((t => {
-    try {
-     SEGMON.err = JSON.parse(t);
-    } catch (e) {}
-    segMonVerRender();
-   })).erroresMonitores(clave);
-  };
-  if (!esApps) return setTimeout((() => fin({
-   ok: true,
-   quien: window.supNombre && window.supNombre() || "Supervisión",
-   hora: "17/10 08:00"
-  })), 200);
-  google.script.run.withFailureHandler((e => fin({
-   ok: false,
-   error: e && e.message
-  }))).withSuccessHandler((t => {
-   let d;
-   try {
-    d = JSON.parse(t);
-   } catch (e) {
-    d = null;
-   }
-   fin(d);
-  })).verificarIds(clave, JSON.stringify([ [ DATA.claveActual, r[1], r[5] ] ]), si ? "si" : "no", window.supNombre && window.supNombre() || "");
+  sgCorregirDlg(r, si);
  }));
  const qi = document.getElementById("segVerQ");
  if (qi) {
@@ -16825,4 +16940,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = '379712d2f262' -->
+<!-- var HUELLA = '9220e4b93874' -->
