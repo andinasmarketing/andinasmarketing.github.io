@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "8da82431f658";
+ var HUELLA = "c834a000fcf0";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -16592,7 +16592,170 @@ const AV = {
  }
  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", conectarSup); else conectarSup();
  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", conectarNavAud); else conectarNavAud();
-})();</script>
-</body>
+})();
+
+/* ================== Listas con buscador ==================
+   Cualquier lista desplegable de la página con 7 opciones o más se abre con una casilla para buscar escribiendo
+   (sin tildes ni mayúsculas). La lista original sigue ahí: se cambia su valor y avisa del cambio, así todo lo demás funciona igual.
+   Para que una lista no lo tenga: data-nobusca. */ (function() {
+ const MIN = 7, N = x => String(x || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().replace(/\s+/g, " ").trim();
+ const st = document.createElement("style");
+ st.textContent = ".lb-p{position:fixed;z-index:9999;background:var(--surface,#fff);color:var(--ink,#15161A);border:1px solid var(--line,#ddd);border-radius:12px;box-shadow:0 14px 36px rgba(0,0,0,.22);display:flex;flex-direction:column;overflow:hidden;font-size:14px}" + ".lb-p input{font:inherit;margin:8px;padding:8px 10px 8px 32px;border:1px solid var(--line,#ddd);border-radius:999px;background:var(--surface,#fff) url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E\") no-repeat 10px center/16px;color:inherit;outline:none}" + ".lb-p input:focus{border-color:#C9A227;box-shadow:0 0 0 3px rgba(201,162,39,.2)}.lb-l{overflow:auto;padding:0 6px 6px}.lb-o{padding:7px 10px;border-radius:8px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" + ".lb-o.sel{font-weight:700}.lb-o.act{background:#C9A227;color:#15161A}.lb-g{padding:8px 10px 3px;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#A8841C}.lb-0{padding:10px;color:var(--muted,#777)}";
+ document.head.appendChild(st);
+ let P = null;
+ const cerrar = foco => {
+  if (!P) return;
+  const s = P.sel;
+  P.el.remove();
+  P = null;
+  if (foco && s) try {
+   s.focus({
+    preventScroll: true
+   });
+  } catch (e) {
+   s.focus();
+  }
+ };
+ const sirve = s => s && s.tagName === "SELECT" && !s.multiple && !s.disabled && !s.hasAttribute("data-nobusca") && s.options.length >= MIN;
+ function abrir(sel, txt) {
+  cerrar();
+  const el = document.createElement("div");
+  el.className = "lb-p";
+  el.setAttribute("role", "dialog");
+  el.innerHTML = '<input type="search" autocomplete="off" placeholder="Escribe para buscar…" aria-label="Buscar en la lista"><div class="lb-l" role="listbox"></div>';
+  document.body.appendChild(el);
+  const inp = el.querySelector("input"), lista = el.querySelector(".lb-l");
+  P = {
+   el: el,
+   sel: sel,
+   act: -1,
+   items: []
+  };
+  const lugar = () => {
+   if (!P) return;
+   const r = sel.getBoundingClientRect(), w = Math.max(r.width, 240), abajo = innerHeight - r.bottom - 12, arriba = r.top - 12;
+   const h = Math.min(380, Math.max(abajo, arriba));
+   el.style.width = Math.min(w, innerWidth - 16) + "px";
+   el.style.left = Math.max(8, Math.min(r.left, innerWidth - w - 8)) + "px";
+   el.style.maxHeight = h + "px";
+   if (abajo >= 220 || abajo >= arriba) {
+    el.style.top = r.bottom + 4 + "px";
+    el.style.bottom = "";
+   } else {
+    el.style.top = "";
+    el.style.bottom = innerHeight - r.top + 4 + "px";
+   }
+  };
+  P.lugar = lugar;
+  const pintar = () => {
+   const v = N(inp.value);
+   let h = "", g = null;
+   P.items = [];
+   Array.prototype.forEach.call(sel.options, ((o, i) => {
+    if (o.disabled && !o.value) return;
+    const gr = o.parentNode && o.parentNode.tagName === "OPTGROUP" ? o.parentNode.label : "";
+    if (v && N(o.text).indexOf(v) < 0 && N(gr).indexOf(v) < 0) return;
+    if (gr !== g) {
+     g = gr;
+     if (gr) h += '<div class="lb-g">' + gr.replace(/</g, "&lt;") + "</div>";
+    }
+    h += '<div class="lb-o' + (i === sel.selectedIndex ? " sel" : "") + '" role="option" data-i="' + i + '">' + o.text.replace(/</g, "&lt;") + "</div>";
+    P.items.push(i);
+   }));
+   lista.innerHTML = h || '<div class="lb-0">No hay nada con ese nombre.</div>';
+   P.act = v ? P.items.length ? 0 : -1 : P.items.indexOf(sel.selectedIndex);
+   marcar();
+  };
+  const marcar = () => {
+   lista.querySelectorAll(".lb-o").forEach((d => d.classList.toggle("act", Number(d.dataset.i) === P.items[P.act])));
+   const a = lista.querySelector(".lb-o.act");
+   if (a) a.scrollIntoView({
+    block: "nearest"
+   });
+  };
+  const elegir = i => {
+   const cambio = sel.selectedIndex !== i;
+   sel.selectedIndex = i;
+   cerrar(true);
+   if (cambio) {
+    sel.dispatchEvent(new Event("input", {
+     bubbles: true
+    }));
+    sel.dispatchEvent(new Event("change", {
+     bubbles: true
+    }));
+   }
+  };
+  lista.addEventListener("mousedown", (e => e.preventDefault()));
+  lista.addEventListener("click", (e => {
+   const d = e.target.closest(".lb-o");
+   if (d) elegir(Number(d.dataset.i));
+  }));
+  inp.addEventListener("input", pintar);
+  inp.addEventListener("keydown", (e => {
+   if (e.key === "ArrowDown") {
+    e.preventDefault();
+    if (P.act < P.items.length - 1) P.act++;
+    marcar();
+   } else if (e.key === "ArrowUp") {
+    e.preventDefault();
+    if (P.act > 0) P.act--;
+    marcar();
+   } else if (e.key === "Enter") {
+    e.preventDefault();
+    if (P.act >= 0) elegir(P.items[P.act]);
+   } else if (e.key === "Escape" || e.key === "Tab") {
+    e.preventDefault();
+    cerrar(true);
+   }
+  }));
+  inp.value = txt || "";
+  pintar();
+  lugar();
+  setTimeout((() => {
+   if (P && P.el === el) inp.focus({
+    preventScroll: true
+   });
+  }), 0);
+ }
+ document.addEventListener("mousedown", (e => {
+  if (P && !P.el.contains(e.target) && e.target !== P.sel) cerrar();
+  const s = e.target.closest && e.target.closest("select");
+  if (!sirve(s) || e.button !== 0) return;
+  e.preventDefault();
+  if (P && P.sel === s) {
+   cerrar(true);
+   return;
+  }
+  s.focus({
+   preventScroll: true
+  });
+  abrir(s);
+ }), true);
+ document.addEventListener("touchend", (e => {
+  const s = e.target.closest && e.target.closest("select");
+  if (!sirve(s)) return;
+  e.preventDefault();
+  abrir(s);
+ }), {
+  capture: true,
+  passive: false
+ });
+ document.addEventListener("keydown", (e => {
+  const s = e.target;
+  if (!sirve(s) || P || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown" && e.altKey) {
+   e.preventDefault();
+   abrir(s);
+  } else if (e.key.length === 1) {
+   e.preventDefault();
+   abrir(s, e.key);
+  }
+ }), true);
+ addEventListener("resize", (() => cerrar()));
+ addEventListener("scroll", (e => {
+  if (P && !P.el.contains(e.target)) P.lugar();
+ }), true);
+})();</script></body>
 </html>
-<!-- var HUELLA = '8da82431f658' -->
+<!-- var HUELLA = 'c834a000fcf0' -->
