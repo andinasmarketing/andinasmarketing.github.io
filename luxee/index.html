@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycby3GwgzMEi7DcXUkfCtX9J
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "9220e4b93874";
+ var HUELLA = "91c1e2e128b3";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -4674,10 +4674,7 @@ function sgCorregirDlg(r, si) {
    quien: window.supNombre && window.supNombre() || "Supervisión",
    hora: "03/11 08:55"
   })), 300);
-  google.script.run.withFailureHandler((e => fin({
-   ok: false,
-   error: e && e.message
-  }))).withSuccessHandler((t => {
+  const lee = t => {
    let d;
    try {
     d = JSON.parse(t);
@@ -4685,6 +4682,26 @@ function sgCorregirDlg(r, si) {
     d = null;
    }
    fin(d);
+  };
+  const viejo = () => {
+   if (fotos.length) msg("El pantallazo no se pudo subir: falta instalar el código nuevo («2 - Registro de IDs»). Se guarda sin pantallazo.", true);
+   google.script.run.withFailureHandler((e => fin({
+    ok: false,
+    error: e && e.message
+   }))).withSuccessHandler(lee).verificarIds(clave, JSON.stringify([ [ datos.mes, datos.g, datos.id, cli, met ] ]), datos.res, window.supNombre && window.supNombre() || "");
+  };
+  google.script.run.withFailureHandler((e => {
+   const t = String(e && e.message || "");
+   if (/corregirVerifSup|no se encontr|not found|unknown|desconocid/i.test(t)) viejo(); else fin({
+    ok: false,
+    error: t
+   });
+  })).withSuccessHandler((t => {
+   let d = null;
+   try {
+    d = JSON.parse(t);
+   } catch (e) {}
+   if (d && !d.ok && /corregirVerifSup|no se encontr|not found/i.test(String(d.error || ""))) viejo(); else lee(t);
   })).corregirVerifSup(clave, JSON.stringify(datos), window.supNombre && window.supNombre() || "");
  };
 }
@@ -16940,4 +16957,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = '9220e4b93874' -->
+<!-- var HUELLA = '91c1e2e128b3' -->
