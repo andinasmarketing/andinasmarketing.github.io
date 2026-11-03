@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr0
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "9cc57e6bebb7";
+ var HUELLA = "199561a49610";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -184,7 +184,6 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr0
 <button type="button" role="tab" id="navMonAud" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6l1 2h3v14H5V6h3z"/><path d="M9 12l2 2 4-4"/></svg>Registro de auditoría</button>
 <button type="button" role="tab" id="navMonPts" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></svg>Revisión por puntos<i class="lado-n" id="navMonPtsN" hidden></i></button>
 <button type="button" role="tab" id="navMonTur" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>Turnos de operadores</button>
-<button type="button" role="tab" id="navMonExt" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="8" r="3.5"/><path d="M3.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 11l2 2 4-4"/></svg>Clientes AML</button>
 <button type="button" role="tab" id="navMonHor" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16M8 14h3M13 14h3M8 17h3"/></svg>Mi horario</button>
 </div></div>
 <button type="button" class="lado-cambiar lado-hor" id="navHor" role="tab" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16M8 14h3M13 14h3M8 17h3"/></svg>Horarios de la semana</button>
@@ -9834,12 +9833,6 @@ document.getElementById("navMonTur").addEventListener("click", (() => {
  window.scrollTo(0, 0);
 }));
 
-document.getElementById("navMonExt").addEventListener("click", (() => {
- if (typeof MON !== "undefined") MON.tab = "ext";
- verVista("mon");
- window.scrollTo(0, 0);
-}));
-
 document.getElementById("navMon").addEventListener("click", (() => {
  if (typeof MON !== "undefined" && [ "tur", "aud", "eq", "pts", "ext" ].indexOf(MON.tab) >= 0) {
   MON.tab = "ver";
@@ -17191,7 +17184,7 @@ const AV = {
  function pintar() {
   const el = X.el;
   if (!el) return;
-  const cab = '<div class="ex-h"><div>' + (esMon() ? "<h2>Clientes nuevos de AML y LUXEE</h2>" : "") + '<div class="sub">' + (esMon() ? "Verifica en la plataforma cada ID que anotaron los operadores. Si sí está retraído, escribe el cliente (Nombre, edad) y cómo lo retrajo." : "El conteo es automático (los IDs de las tablas de cada operador). Los monitores de PRIME los verifican; aquí lo ves todo y puedes corregir.") + "</div></div>" + '<button type="button" class="btn-sec ex-act" id="exAct"' + (X.cargando ? " disabled" : "") + ">" + (X.cargando ? "Leyendo las tablas…" : "Leer las tablas ya") + "</button></div>";
+  const cab = '<div class="ex-h"><div>' + (esMon() ? "<h2>Clientes nuevos de AML y LUXEE</h2>" : "") + '<div class="sub">' + (esMon() ? "Verifica en la plataforma cada ID que anotaron los operadores. Si sí está retraído, escribe el cliente (Nombre, edad) y cómo lo retrajo." : "El conteo es automático: cada ID que el operador anota en su tabla. Verifica cada uno en la plataforma (✓ / ✕); si sí está retraído, puedes anotar el cliente y cómo lo retrajo.") + "</div></div>" + '<button type="button" class="btn-sec ex-act" id="exAct"' + (X.cargando ? " disabled" : "") + ">" + (X.cargando ? "Leyendo las tablas…" : "Leer las tablas ya") + "</button></div>";
   if (!X.d) {
    el.innerHTML = cab + '<div class="state" style="padding:18px 0">' + (X.err ? e(X.err) + ' <button type="button" class="btn-sec" id="exRe">Reintentar</button>' : "Cargando…") + "</div>";
    con();
@@ -17220,7 +17213,7 @@ const AV = {
    const n = p.items.filter((r => est(r) === "pend")).length;
    return '<button type="button" data-exp="' + p.p + '" aria-pressed="' + (p.p === X.p) + '">' + e(p.nombre) + (n ? " <i>" + n + "</i>" : "") + "</button>";
   })).join("") + "</div>" : "";
-  const tiles = '<div class="ex-tiles"><div><b>' + C.tot + "</b><span>IDs de " + e(mesTxt(mes)) + '</span></div><div class="a"><b>' + C.pend + '</b><span>Por verificar</span></div><div class="v"><b>' + C.si + '</b><span>✓ Retraídos</span></div><div class="r"><b>' + C.no + "</b><span>✕ No retraídos</span></div></div>" + (ant.length ? '<div class="ex-av">Quedan <b>' + ant.length + "</b> por verificar de " + e(mesTxt(ant[0][0])) + " (las tablas ya pasaron al mes nuevo).</div>" : "") + '<div class="sub" style="margin:2px 0 10px">Tablas leídas: ' + e(Pr.act || "—") + " · se leen solas cada 10 minutos.</div>";
+  const tiles = '<div class="ex-tiles"><div><b>' + C.tot + "</b><span>IDs de " + e(mesTxt(mes)) + '</span></div><div class="a"><b>' + C.pend + '</b><span>Por verificar</span></div><div class="v"><b>' + C.si + '</b><span>✓ Retraídos</span></div><div class="r"><b>' + C.no + "</b><span>✕ No retraídos</span></div></div>" + (ant.length ? '<div class="ex-av">Quedan <b>' + ant.length + "</b> por verificar de " + e(mesTxt(ant[0][0])) + " (las tablas ya pasaron al mes nuevo).</div>" : "") + '<div class="sub" style="margin:2px 0 10px">Tablas leídas: ' + e(Pr.act || "—") + " · se leen solas cada hora.</div>";
   const porOp = {};
   deMes.forEach((r => {
    const kk = r[2] + "|" + r[3];
@@ -17367,4 +17360,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = '9cc57e6bebb7' -->
+<!-- var HUELLA = '199561a49610' -->
