@@ -17,7 +17,7 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr03m5tH4HrrssdWXzoGtKFAqbvOnPPA7tRjsFSRsE16hLkv-w/exec";
 
 (function() {
- var n = 0, VER = "web 198", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 199", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
@@ -10776,10 +10776,6 @@ const ACL = {
  cargando: false
 };
 
-function amlCliCaja() {
- return '<section class="panel" id="amlCli"><h2>Clientes nuevos y ranking</h2><div id="amlCliIn">' + amlCliHtml() + "</div></section>";
-}
-
 const aclQuien = () => typeof PT !== "undefined" && PT.yo === "ok" ? PT.op : "";
 
 function amlCliTopPintar() {
@@ -10789,17 +10785,37 @@ function amlCliTopPintar() {
  amlCliPintar();
 }
 
+function amlCliCaja() {
+ amlCliCss();
+ return '<section class="panel cn" id="amlCli"><div id="amlCliIn">' + amlCliHtml() + "</div></section>";
+}
+
+function amlCliCss() {
+ if (document.getElementById("cnCss")) return;
+ const st = document.createElement("style");
+ st.id = "cnCss";
+ st.textContent = ".cn{padding:22px 24px}.cn h2{margin:0}.cn-h{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:18px}.cn-s{margin:4px 0 0;color:var(--muted);font-size:13.5px;line-height:1.45}.cn-act{font-size:12px;color:var(--faint);background:var(--line-2);padding:5px 11px;border-radius:99px;white-space:nowrap}" + ".cn-vacio{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:30px 16px;border:1px dashed var(--line);border-radius:var(--r-lg);color:var(--muted);font-size:13.5px}.cn-vi{width:46px;height:46px;border-radius:50%;background:var(--oro-suave);color:var(--oro-tinta);display:grid;place-items:center;margin-bottom:4px}.cn-vi svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.cn-vacio b{color:var(--ink);font-size:15px}" + ".cn-podio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:end;margin-bottom:16px}.cn-tup{position:absolute;top:8px;right:8px;margin:0}.cn-pd{position:relative;border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 10px 14px;text-align:center;background:var(--surface);min-width:0}.cn-pd.p1{background:linear-gradient(180deg,var(--oro-suave),var(--surface) 75%);border-color:var(--oro);padding-top:24px}.cn-pd.vacio{visibility:hidden}.cn-md{width:36px;height:36px;border-radius:50%;margin:0 auto 8px;display:grid;place-items:center;font-weight:800;font-size:15px;color:#fff;background:#9499A6}.p1 .cn-md{background:var(--oro);width:46px;height:46px;font-size:19px;color:#15161A}.p3 .cn-md{background:#B07A45}.cn-pd .n{font-weight:800;font-size:14.5px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cn-pd .g{font-size:12px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cn-pd .c{font-size:30px;font-weight:900;margin-top:10px;line-height:1;font-variant-numeric:tabular-nums}.p1 .c{font-size:36px}.cn-pd .c small{display:block;font-size:11px;font-weight:600;color:var(--faint);margin-top:4px}.cn-pd.yo{box-shadow:inset 0 0 0 2px var(--oro)}" + ".cn-rank{list-style:none;margin:0;padding:0}.cn-rank li{display:grid;grid-template-columns:30px minmax(0,1fr) minmax(70px,32%) 40px;gap:12px;align-items:center;padding:10px 8px;border-top:1px solid var(--line-2)}.cn-rank .p{font-weight:800;color:var(--faint);text-align:center;font-variant-numeric:tabular-nums}.cn-rank .q{min-width:0}.cn-rank .q b{display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cn-rank .q small{color:var(--muted);font-size:12px}.cn-bar{height:8px;border-radius:99px;background:var(--line-2);overflow:hidden}.cn-bar i{display:block;height:100%;background:var(--oro);border-radius:99px}.cn-rank .v{text-align:right;font-weight:800;font-variant-numeric:tabular-nums}.cn-rank li.yo{background:var(--oro-suave);border-radius:10px;border-top-color:transparent}.cn-tu{font-size:10.5px;font-weight:800;background:var(--oro);color:#15161A;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:1px}" + ".cn-mio{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}.cn-mio-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:12px}.cn-mio-h b{font-size:15px}.cn-mio-h span{color:var(--muted);font-size:13px}.cn-ids{display:flex;flex-wrap:wrap;gap:8px}.cn-id{font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:2px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:7px 12px;text-align:left}.cn-id b{font-variant-numeric:tabular-nums;font-size:14px}.cn-id small{font-size:11.5px;color:var(--muted)}.cn-id:hover{border-color:var(--oro)}.cn-nada{color:var(--muted);font-size:13.5px}.cn-lock{margin-top:16px;display:flex;gap:10px;align-items:center;padding:12px 14px;border-radius:12px;background:var(--line-2);color:var(--muted);font-size:13.5px;line-height:1.4}.cn-lock svg{flex:none;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.cn-cargando{color:var(--muted);padding:6px 0 2px}" + "@media (max-width:600px){.cn{padding:18px 16px}.cn-podio{gap:8px}.cn-pd{padding:12px 6px}.cn-pd .c{font-size:22px}.p1 .c{font-size:26px}.cn-rank li{grid-template-columns:26px minmax(0,1fr) 36px;gap:10px}.cn-bar{display:none}}";
+ document.head.appendChild(st);
+}
+
 function amlCliHtml() {
  const d = ACL.op === aclQuien() ? ACL.d : null;
- if (!d) return '<div class="state" style="padding:14px 0">Cargando tus clientes…</div>';
- if (!d.ok) return '<div class="state" style="padding:14px 0">' + esc(d.clave ? "Entra con tu clave para ver tus clientes." : d.error || "No se pudieron leer los clientes.") + "</div>";
- const MES = [ "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre" ][Number(String(d.mes).slice(5, 7)) - 1] || "";
- const R = d.ranking || [], yo = R.findIndex((x => x.yo)), mios = d.mios || [], conMios = Array.isArray(d.mios);
- let h = '<div class="sub">Cada ID que anotas en tu tabla del mes cuenta como cliente nuevo. Se actualiza solo cada hora' + (d.act ? " · tablas leídas: " + esc(d.act) : "") + ".</div>";
- h += '<section class="stats c4" style="margin:10px 0">' + (conMios ? ptStat(ICO_P.estrella, "Mis clientes nuevos de " + MES, String(mios.length), yo >= 0 ? "Vas de <b>" + (yo + 1) + "</b> de " + R.length : "Todavía no tienes clientes este mes") : ptStat(ICO_P.estrella, "Clientes nuevos de " + MES, String(R.reduce(((s, x) => s + x.n), 0)), "Entre " + R.length + " operadores")) + ptStat(ICO_P.grupo, "Primero del ranking", R[0] ? String(R[0].n) : "0", R[0] ? esc(R[0].o) : "—") + "</section>";
- h += '<div class="grid"><section class="panel" style="margin:0"><h3 style="margin:0 0 8px">Ranking de ' + esc(MES) + '</h3><div class="table-scroll"><table><thead><tr><th class="num">#</th><th>Operador</th><th>Grupo</th><th class="num">Clientes nuevos</th></tr></thead><tbody>' + (R.length ? R.map(((x, i) => "<tr" + (x.yo ? ' class="sel"' : "") + '><td class="num">' + (i + 1) + (i < 3 ? " " + [ "🥇", "🥈", "🥉" ][i] : "") + '</td><td class="name"><b>' + esc(x.o) + "</b>" + (x.yo ? " (tú)" : "") + "</td><td>" + esc(x.g) + '</td><td class="num"><b>' + x.n + "</b></td></tr>")).join("") : '<tr><td colspan="4">Todavía no hay clientes nuevos este mes.</td></tr>') + "</tbody></table></div></section>";
- if (!conMios) return h + '<section class="panel" style="margin:0"><h3 style="margin:0 0 8px">Mis clientes nuevos</h3><div class="sub">Elige arriba tu grupo y tu nombre y entra con tu clave para ver la lista de tus clientes.</div></section></div>';
- h += '<section class="panel" style="margin:0"><h3 style="margin:0 0 8px">Mis clientes nuevos (' + mios.length + ')</h3><div class="table-scroll"><table><thead><tr><th class="num">Día</th><th>Perfil</th><th>ID</th></tr></thead><tbody>' + (mios.length ? mios.map((x => '<tr><td class="num">' + x.d + "</td><td>" + esc(x.p) + '</td><td><button type="button" class="sg-cp" data-sgcp="' + esc(x.id) + '" title="Copiar el ID"><b>' + esc(x.id) + "</b><i>Copiar</i></button></td></tr>")).join("") : '<tr><td colspan="3">Todavía no has anotado clientes nuevos este mes.</td></tr>') + "</tbody></table></div></section></div>";
+ const MES = d && d.mes ? [ "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre" ][Number(String(d.mes).slice(5, 7)) - 1] || "" : "";
+ const cab = sub => '<div class="cn-h"><div><h2>Clientes nuevos' + (MES ? " de " + MES : "") + '</h2><p class="cn-s">' + sub + "</p></div>" + (d && d.act ? '<span class="cn-act">Actualizado ' + esc(d.act) + "</span>" : "") + "</div>";
+ if (!d) return cab("Quién retrajo más clientes este mes.") + '<div class="cn-cargando">Cargando el ranking…</div>';
+ if (!d.ok) return cab("Quién retrajo más clientes este mes.") + '<div class="cn-vacio"><b>No se pudo cargar el ranking</b><span>' + esc(d.error || "Intenta de nuevo en un momento.") + "</span></div>";
+ const R = d.ranking || [], conMios = Array.isArray(d.mios), mios = d.mios || [], yo = R.findIndex((x => x.yo)), max = R.length ? R[0].n : 1;
+ const ico = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></svg>';
+ const candado = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+ const cli = n => n === 1 ? "cliente" : "clientes";
+ let h = cab("Cada ID que un operador anota en su tabla cuenta como cliente nuevo. Así va el mes.");
+ if (!R.length) h += '<div class="cn-vacio"><div class="cn-vi">' + ico + "</div><b>Todavía no hay clientes nuevos este mes</b><span>Cuando los operadores anoten IDs en su tabla, aquí aparece quién va adelante.</span></div>"; else {
+  const pd = (x, i) => x ? '<div class="cn-pd p' + (i + 1) + (x.yo ? " yo" : "") + '"><div class="cn-md">' + (i + 1) + '</div>' + (x.yo ? '<span class="cn-tu cn-tup">Tú</span>' : "") + '<div class="n" title="' + esc(x.o) + '">' + esc(x.o) + '</div><div class="g">' + esc(x.g) + '</div><div class="c">' + x.n + "<small>" + cli(x.n) + "</small></div></div>" : '<div class="cn-pd vacio"></div>';
+  h += '<div class="cn-podio">' + pd(R[1], 1) + pd(R[0], 0) + pd(R[2], 2) + "</div>";
+  if (R.length > 3) h += '<ol class="cn-rank">' + R.slice(3).map(((x, i) => '<li class="' + (x.yo ? "yo" : "") + '"><span class="p">' + (i + 4) + '</span><span class="q"><b>' + esc(x.o) + (x.yo ? '<span class="cn-tu">Tú</span>' : "") + "</b><small>" + esc(x.g) + '</small></span><span class="cn-bar"><i style="width:' + Math.max(4, Math.round(x.n / max * 100)) + '%"></i></span><span class="v">' + x.n + "</span></li>")).join("") + "</ol>";
+ }
+ if (!conMios) return h + '<div class="cn-lock">' + candado + "<span>Elige arriba tu grupo y tu nombre, y entra con tu clave para ver tus clientes y en qué puesto vas.</span></div>";
+ h += '<div class="cn-mio"><div class="cn-mio-h"><b>Tus clientes nuevos</b><span>' + (mios.length ? mios.length + " " + cli(mios.length) + (yo >= 0 ? " · vas de " + (yo + 1) + " de " + R.length : "") : "Aún no tienes este mes") + "</span></div>" + (mios.length ? '<div class="cn-ids">' + mios.map((x => '<button type="button" class="cn-id" data-sgcp="' + esc(x.id) + '" title="Copiar el ID"><b>' + esc(x.id) + "</b><small>Día " + x.d + " · " + esc(x.p) + "</small></button>")).join("") + "</div>" : '<div class="cn-nada">Cuando anotes un ID en tu tabla, aparece aquí. Toca cualquiera para copiarlo.</div>') + "</div>";
  return h;
 }
 
