@@ -17,7 +17,7 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr03m5tH4HrrssdWXzoGtKFAqbvOnPPA7tRjsFSRsE16hLkv-w/exec";
 
 (function() {
- var n = 0, VER = "web 197", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 198", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
@@ -537,7 +537,7 @@ const SUPP = {
 };
 
 function supPausasCargar() {
- if (!clave || typeof ROL !== "undefined" && ROL !== "sup" || SUPP.cargando || document.hidden) return supPausasPintar();
+ if (window.ES_PRIME === false || !clave || typeof ROL !== "undefined" && ROL !== "sup" || SUPP.cargando || document.hidden) return supPausasPintar();
  SUPP.cargando = true;
  const fin = t => {
   SUPP.cargando = false;
@@ -560,7 +560,8 @@ function supPausasCargar() {
 
 function supPausasPintar() {
  let bar = document.getElementById("supPausaBar");
- const ver = !!clave && (typeof ROL === "undefined" || ROL === "sup") && SUPP.d && Date.now() - SUPP.t < 5 * 6e4;
+ // El control de break es de los monitores de PRIME: en AML/LUXEE no sale
+ const ver = window.ES_PRIME !== false && !!clave && (typeof ROL === "undefined" || ROL === "sup") && SUPP.d && Date.now() - SUPP.t < 5 * 6e4;
  const lim = SUPP.d && SUPP.d.breakMin || 20;
  const L = ver ? (SUPP.d.mons || []).filter((m => m.alerta === "toca" || m.alerta === "sinact" || m.enBreak && m.min >= lim)) : [];
  document.body.classList.toggle("con-pausabar", L.length > 0 || !!document.getElementById("monPausaBar"));
