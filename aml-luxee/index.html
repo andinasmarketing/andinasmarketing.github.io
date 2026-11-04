@@ -561,7 +561,7 @@ function supPausasPintar() {
  let bar = document.getElementById("supPausaBar");
  const ver = !!clave && (typeof ROL === "undefined" || ROL === "sup") && SUPP.d && Date.now() - SUPP.t < 5 * 6e4;
  const lim = SUPP.d && SUPP.d.breakMin || 20;
- const L = ver ? (SUPP.d.mons || []).filter((m => m.alerta === "toca" || m.enBreak && m.min >= lim)) : [];
+ const L = ver ? (SUPP.d.mons || []).filter((m => m.alerta === "toca" || m.alerta === "sinact" || m.enBreak && m.min >= lim)) : [];
  document.body.classList.toggle("con-pausabar", L.length > 0 || !!document.getElementById("monPausaBar"));
  if (!L.length) {
   if (bar) bar.remove();
@@ -576,6 +576,7 @@ function supPausasPintar() {
  bar.className = L.some((m => m.enBreak)) ? "pb-pasado" : "pb-toca";
  bar.innerHTML = L.map((m => {
   const n1 = esc(titulo(m.n));
+  if (m.alerta === "sinact") return '<div class="spb-it"><div><b>🕵️ ' + n1 + " marcó que volvió del break a las " + esc(typeof hora12M === "function" ? hora12M(m.volvio) : m.volvio) + " y lleva " + m.sinAct + " min sin ninguna actividad</b><span>Puede que siga en break. Con eso su break va en " + m.breakReal + " min (máximo " + lim + "). Si se confirma, queda en su historial de asistencia.</span></div></div>";
   return m.enBreak ? '<div class="spb-it"><div><b>⏰ ' + n1 + " lleva " + m.min + " min en break (máximo " + lim + ")</b><span>Salió a las " + esc(m.desde) + '. Si ya volvió y no lo marcó, márcalo tú.</span></div><button type="button" class="btn" data-spb="Break fin" data-m="' + esc(m.n) + '">Marcar que volvió</button></div>' : '<div class="spb-it"><div><b>☕ A ' + n1 + " le toca el break (" + esc(typeof hora12M === "function" ? hora12M(m.breakHora) : m.breakHora) + ') y no lo ha marcado</b><span>El break es obligatorio. Si ya salió, márcalo tú: queda a tu nombre.</span></div><button type="button" class="btn" data-spb="Break inicio" data-m="' + esc(m.n) + '">Marcar su break</button></div>';
  })).join("");
  bar.querySelectorAll("[data-spb]").forEach((b => b.onclick = () => {
