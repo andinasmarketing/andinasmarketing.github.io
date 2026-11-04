@@ -17,7 +17,7 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycby3GwgzMEi7DcXUkfCtX9JroODoaJalAv6MN_1D_zrn5TJoOm3msQFiM3v3iIOXPYl-/exec";
 
 (function() {
- var n = 0, VER = "web 202", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 203", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
@@ -168,6 +168,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycby3GwgzMEi7DcXUkfCtX9J
 <button type="button" role="tab" id="op_tabTurnos" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></svg>Ranking por turno</button>
 <button type="button" role="tab" id="navPts" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></svg>Mis puntos y mi grupo</button>
 <button type="button" role="tab" id="navCliRk" aria-selected="false" hidden><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M9 20h6"/></svg>Clientes y ranking</button>
+<button type="button" role="tab" id="navNtOp" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></svg>Novedades de mi turno<span class="nt-n"></span></button>
 </div></div>
 <div class="lado-sec" data-sec="Supervisión"><button type="button" class="lado-h" aria-expanded="true">Supervisión<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><div class="lado-sub">
 <button type="button" role="tab" id="navSupIni" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7M6 10v9h12v-9"/></svg>Inicio de supervisión</button>
@@ -290,6 +291,12 @@ window.API_URL = "https://script.google.com/macros/s/AKfycby3GwgzMEi7DcXUkfCtX9J
 <div class="field"><label for="ptOp">Mi nombre</label><select id="ptOp"></select></div>
 </div>
 <div id="ptCuerpo"></div>
+</div>
+<div id="vistaNtOp" class="pt" hidden>
+<div class="pt-cab pt-cab-f"><div><h2 class="vt">Novedades de mi turno</h2>
+<p class="pt-est">Lo que el monitor anotó de tu turno, con su pantallazo. Respóndelas aquí.</p></div>
+<button class="btn" type="button" onclick="ntOpCargar(true)"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.3-4M4 4v3.5h3.5M4 13a8 8 0 0 0 14.3 4M20 20v-3.5h-3.5"/></svg>Actualizar</button></div>
+<div id="ntOpCuerpo"></div>
 </div>
 <div id="vistaCliRk" class="pt" hidden>
 <div class="pt-cab pt-cab-f"><div><h2 class="vt">Clientes y ranking</h2>
@@ -9395,6 +9402,7 @@ const VISTAS = {
  dash: "vistaDash",
  pts: "vistaPts",
  clirk: "vistaCliRk",
+ ntop: "vistaNtOp",
  ptsgen: "vistaPtsGen",
  aud: "vistaAud"
 };
@@ -9404,6 +9412,7 @@ const NAV = {
  dash: "navPanel",
  pts: "navPts",
  clirk: "navCliRk",
+ ntop: "navNtOp",
  ptsgen: "navPtsGen",
  mon: "navMon",
  segmon: "navSegMon",
@@ -9478,7 +9487,7 @@ function verVista(v) {
    }
    render();
   } else cargar(false);
- } else if (v === "pts") ptAbrirOp(); else if (v === "clirk") amlCliTopPintar(); else if (v === "ptsgen") ptAbrirGen(); else if (v === "mon") monAbrir(); else if (v === "hor") horAbrir(); else if (v === "aud") {
+ } else if (v === "pts") ptAbrirOp(); else if (v === "clirk") amlCliTopPintar(); else if (v === "ntop") ntOpAbrir(); else if (v === "ptsgen") ptAbrirGen(); else if (v === "mon") monAbrir(); else if (v === "hor") horAbrir(); else if (v === "aud") {
   if (window.audAbrirSup) audAbrirSup();
  } else if (window.opMostrar) window.opMostrar();
  window.scrollTo(0, 0);
@@ -10776,6 +10785,299 @@ function amlEnlazar(c) {
  }));
 }
 
+/* ---------- PRIME: «Novedades de mi turno» (el monitor anota con pantallazo; el operador responde) ---------- */
+const NTX = {
+ m: {
+  d: null,
+  t: 0,
+  cargando: false,
+  fotos: [],
+  el: null,
+  guardando: false
+ },
+ o: {
+  d: null,
+  t: 0,
+  op: "",
+  cargando: false,
+  com: {}
+ }
+};
+
+function ntLlamar(fn, args, ok) {
+ if (!esApps) return setTimeout((() => ok(JSON.stringify({
+  ok: false,
+  error: "Sin conexión con los datos (vista de prueba)."
+ }))), 200);
+ const r = google.script.run.withSuccessHandler(ok).withFailureHandler((e => ok(JSON.stringify({
+  ok: false,
+  error: e && e.message || "No se pudo conectar."
+ }))));
+ r[fn].apply(r, args);
+}
+
+function ntJson(t) {
+ try {
+  return JSON.parse(t);
+ } catch (e) {
+  return {
+   ok: false,
+   error: "La respuesta no se pudo leer."
+  };
+ }
+}
+
+function ntCss() {
+ if (document.getElementById("ntCss")) return;
+ const st = document.createElement("style");
+ st.id = "ntCss";
+ st.textContent = ".nt{padding:22px 24px;margin-top:16px}.nt h2{margin:0}.nt-s{margin:4px 0 16px;color:var(--muted);font-size:13.5px;line-height:1.45}.nt-f{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.nt-f .field{min-width:0}.nt-f label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:5px}.nt-f input,.nt-f select,.nt-f textarea{width:100%;font:inherit;font-size:14px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--surface);color:var(--ink)}.nt-f textarea{min-height:92px;resize:vertical}.nt-w{grid-column:1/-1}.nt-req{color:var(--down)}" + ".nt-up{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.nt-add{display:inline-flex;align-items:center;gap:8px;border:1.5px dashed var(--oro);color:var(--oro-tinta);background:var(--oro-suave);border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer;font-size:13.5px}.nt-add input{display:none}.nt-th{position:relative;width:86px;height:64px;border-radius:10px;overflow:hidden;border:1px solid var(--line)}.nt-th img{width:100%;height:100%;object-fit:cover}.nt-th button{position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;cursor:pointer;font-size:12px;line-height:22px;padding:0}" + ".nt-acc{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px}.nt-msg{font-size:13.5px}.nt-msg.mal{color:var(--down)}.nt-msg.ok{color:var(--up)}.nt-l{margin-top:22px;border-top:1px solid var(--line);padding-top:16px}.nt-l h3{margin:0 0 10px;font-size:15px}" + ".nt-c{border:1px solid var(--line-2);border-radius:12px;padding:14px 16px;margin-bottom:10px;background:var(--surface)}.nt-c.pend{border-color:var(--oro);box-shadow:inset 3px 0 0 var(--oro)}.nt-ch{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline}.nt-ch b{font-size:14.5px}.nt-ch small{color:var(--muted);font-size:12.5px}.nt-t{display:inline-block;font-size:12px;font-weight:700;color:var(--ink-2);background:var(--line-2);border-radius:99px;padding:3px 10px;margin:8px 0 6px}.nt-x{font-size:14px;line-height:1.5;margin:0 0 8px;white-space:pre-wrap}.nt-pill{font-size:12px;font-weight:800;border-radius:99px;padding:4px 10px;white-space:nowrap}.nt-pill.p{background:var(--oro-suave);color:var(--oro-tinta)}.nt-pill.e{background:#E3F2EA;color:var(--up)}.nt-pill.n{background:#E8EEF8;color:#2F5597}.nt-com{font-size:13px;color:var(--muted);margin-top:6px}" + ".nt-r{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center}.nt-r input{flex:1 1 220px;font:inherit;font-size:13.5px;border:1px solid var(--line);border-radius:10px;padding:8px 11px;background:var(--surface);color:var(--ink)}.nt-vacio{color:var(--muted);font-size:13.5px;padding:6px 0}.nt-lock{display:flex;gap:10px;align-items:center;padding:14px 16px;border-radius:12px;background:var(--line-2);color:var(--muted);font-size:13.5px}.nt-lock .btn{margin-left:auto}.nt-av{display:flex;gap:12px;align-items:center;padding:12px 16px;border-radius:12px;background:var(--oro-suave);border:1px solid var(--oro);margin:0 0 14px;font-size:14px}.nt-av .btn{margin-left:auto}" + "@media (max-width:760px){.nt{padding:18px 16px}.nt-f{grid-template-columns:1fr 1fr}}@media (max-width:460px){.nt-f{grid-template-columns:1fr}}";
+ document.head.appendChild(st);
+}
+
+const ntPill = x => x.resp ? '<span class="nt-pill ' + (/notific/i.test(x.resp) ? "n" : "e") + '">' + esc(x.resp) + "</span>" : '<span class="nt-pill p">Pendiente de respuesta</span>';
+
+const ntFotos = (x, quien) => x.fotos && x.fotos.length ? '<div class="hl-fotos">' + x.fotos.map((f => '<button type="button" class="hl-foto" data-ntf="' + esc(x.id) + "|" + esc(f) + '" data-ntq="' + esc(quien || "") + '" title="Ver el pantallazo">' + (HALL_IMG[f] ? '<img src="' + HALL_IMG[f] + '" alt="Pantallazo">' : "…") + "</button>")).join("") + "</div>" : "";
+
+function ntFotosEnlazar(caja, clv) {
+ caja.querySelectorAll("[data-ntf]").forEach((b => {
+  const [id, f] = b.dataset.ntf.split("|"), pon = () => {
+   b.innerHTML = '<img src="' + HALL_IMG[f] + '" alt="Pantallazo">';
+  };
+  b.onclick = () => {
+   if (!HALL_IMG[f]) return;
+   const ov = document.createElement("div");
+   ov.className = "hl-ver";
+   ov.innerHTML = '<img src="' + HALL_IMG[f] + '" alt="Pantallazo"><button type="button">Cerrar ✕</button>';
+   ov.onclick = () => ov.remove();
+   document.body.appendChild(ov);
+  };
+  if (HALL_IMG[f]) return pon();
+  ntLlamar("ntEvidencia", [ clv, b.dataset.ntq, id, f ], (t => {
+   const d = ntJson(t);
+   if (d.ok) {
+    HALL_IMG[f] = "data:" + d.m + ";base64," + d.b;
+    pon();
+   } else b.innerHTML = '<span title="' + esc(d.error || "") + '">⚠</span>';
+  }));
+ }));
+}
+
+/* ----- Monitor ----- */
+window.ntMonCaja = () => window.ES_PRIME === false ? "" : '<div id="ntMonHost"></div>';
+
+window.ntMonMontar = () => {
+ const host = document.getElementById("ntMonHost");
+ if (!host) return;
+ ntCss();
+ const M = NTX.m;
+ if (!M.el) {
+  M.el = document.createElement("section");
+  M.el.className = "panel nt";
+ }
+ if (M.el.parentNode !== host) host.appendChild(M.el);
+ if (!M.el.firstChild) ntMonPintar();
+ if (!M.d || Date.now() - M.t > 3 * 6e4) ntMonCargar();
+};
+
+function ntMonCargar() {
+ const M = NTX.m;
+ if (M.cargando) return;
+ M.cargando = true;
+ ntLlamar("ntCatalogo", [ MON.clave, MON.nombre ], (t => {
+  M.cargando = false;
+  M.d = ntJson(t);
+  M.t = Date.now();
+  ntMonPintar();
+ }));
+}
+
+function ntMonPintar() {
+ const M = NTX.m, el = M.el;
+ if (!el) return;
+ const d = M.d, act = document.activeElement && el.contains(document.activeElement);
+ if (act && el.firstChild) {
+  ntMonLista();
+  return;
+ }
+ const prev = {};
+ el.querySelectorAll("[data-ntk]").forEach((i => prev[i.dataset.ntk] = i.value));
+ const hoy = d && d.hoy || new Date(Date.now() - 5 * 36e5).toISOString().slice(0, 10);
+ const ops = d && d.ops || [], tipos = d && d.tipos || [];
+ const h0 = new Date(Date.now() - 5 * 36e5).getUTCHours(), jor = h0 >= 6 && h0 < 14 ? "Mañana" : h0 >= 14 && h0 < 22 ? "Tarde" : "Noche";
+ el.innerHTML = '<h2>Novedades de mi turno</h2><p class="nt-s">Anota aquí las situaciones puntuales que tuviste que abordar con un operador durante tu turno. <b>El pantallazo es obligatorio.</b> El operador la ve en su página y responde si quedó entendido o si se lo notificaste en el momento.</p>' + '<div class="nt-f"><div class="field"><label for="ntFecha">Fecha del turno</label><input type="date" id="ntFecha" data-ntk="fecha" value="' + esc(prev.fecha || hoy) + '"></div>' + '<div class="field"><label for="ntTurno">Turno</label><select id="ntTurno" data-ntk="turno">' + [ "Mañana", "Tarde", "Noche" ].map((j => "<option" + ((prev.turno || jor) === j ? " selected" : "") + ">" + j + "</option>")).join("") + "</select></div>" + '<div class="field" style="grid-column:span 2"><label for="ntOp">Operador <span class="nt-req">*</span></label><select id="ntOp" data-ntk="op"><option value="">' + (d ? "Elige el operador…" : "Cargando operadores…") + "</option>" + ops.map((x => '<option value="' + esc(x.o + "|" + x.g) + '"' + (prev.op === x.o + "|" + x.g ? " selected" : "") + ">" + esc(x.o) + " · " + esc(x.g) + "</option>")).join("") + "</select></div>" + '<div class="field nt-w"><label for="ntTipo">Tipo de situación <span class="nt-req">*</span></label><select id="ntTipo" data-ntk="tipo"><option value="">Elige…</option>' + tipos.map((x => "<option" + (prev.tipo === x ? " selected" : "") + ">" + esc(x) + "</option>")).join("") + "</select></div>" + '<div class="field nt-w"><label for="ntTxt">Qué pasó y qué hiciste <span class="nt-req">*</span></label><textarea id="ntTxt" data-ntk="txt" maxlength="1500" placeholder="Ej.: El perfil ILIDIO tuvo 3 chats sin responder por más de 20 minutos; le escribí por Teams a las 10:40 y respondió a las 10:55.">' + esc(prev.txt || "") + "</textarea></div>" + '<div class="field nt-w"><label>Pantallazo <span class="nt-req">* obligatorio</span></label><div class="nt-up" id="ntUp"></div></div></div>' + '<div class="nt-acc"><button type="button" class="btn" id="ntGuardar">Guardar novedad</button><span class="nt-msg" id="ntMsg" role="status"></span></div><div class="nt-l" id="ntLista"></div>';
+ ntMonFotos();
+ el.querySelector("#ntGuardar").onclick = ntMonGuardar;
+ ntMonLista();
+}
+
+function ntMonFotos() {
+ const M = NTX.m, up = M.el && M.el.querySelector("#ntUp");
+ if (!up) return;
+ up.innerHTML = M.fotos.map(((f, i) => '<div class="nt-th"><img src="' + f.url + '" alt="Pantallazo ' + (i + 1) + '"><button type="button" data-ntq="' + i + '" aria-label="Quitar">✕</button></div>')).join("") + (M.fotos.length < 4 ? '<label class="nt-add"><input type="file" accept="image/*" multiple id="ntFile">＋ ' + (M.fotos.length ? "Agregar otro" : "Adjuntar pantallazo") + "</label>" : "");
+ up.querySelectorAll("[data-ntq]").forEach((b => b.onclick = () => {
+  M.fotos.splice(Number(b.dataset.ntq), 1);
+  ntMonFotos();
+ }));
+ const fi = up.querySelector("#ntFile");
+ if (fi) fi.onchange = () => {
+  const L = Array.from(fi.files || []).slice(0, 4 - M.fotos.length);
+  Promise.all(L.map(hallComprimir)).then((xs => {
+   M.fotos = M.fotos.concat(xs).slice(0, 4);
+   ntMonFotos();
+  })).catch((e => ntMonMsg(e.message, true)));
+ };
+}
+
+function ntMonMsg(t, mal) {
+ const m = NTX.m.el && NTX.m.el.querySelector("#ntMsg");
+ if (m) {
+  m.textContent = t;
+  m.className = "nt-msg" + (mal ? " mal" : " ok");
+ }
+}
+
+function ntMonGuardar() {
+ const M = NTX.m, el = M.el, v = id => (el.querySelector(id) || {}).value || "";
+ if (M.guardando) return;
+ const [o, g] = v("#ntOp").split("|");
+ if (!o) return ntMonMsg("Elige el operador.", true);
+ if (!v("#ntTipo")) return ntMonMsg("Elige el tipo de situación.", true);
+ if (v("#ntTxt").trim().length < 10) return ntMonMsg("Describe la situación: qué pasó y qué hiciste.", true);
+ if (!M.fotos.length) return ntMonMsg("El pantallazo es obligatorio: adjunta al menos uno.", true);
+ M.guardando = true;
+ const b = el.querySelector("#ntGuardar");
+ b.disabled = true;
+ b.textContent = "Guardando…";
+ ntLlamar("ntRegistrar", [ MON.clave, MON.nombre, JSON.stringify({
+  fecha: v("#ntFecha"),
+  turno: v("#ntTurno"),
+  o: o,
+  g: g || "",
+  tipo: v("#ntTipo"),
+  txt: v("#ntTxt"),
+  fotos: M.fotos.map((f => ({
+   m: f.m,
+   b: f.b
+  })))
+ }) ], (t => {
+  M.guardando = false;
+  b.disabled = false;
+  b.textContent = "Guardar novedad";
+  const d = ntJson(t);
+  if (!d.ok) return ntMonMsg(d.error || "No se pudo guardar.", true);
+  M.fotos = [];
+  [ "#ntTxt", "#ntTipo", "#ntOp" ].forEach((s => {
+   const x = el.querySelector(s);
+   if (x) x.value = "";
+  }));
+  ntMonFotos();
+  ntMonMsg("Listo: la novedad quedó registrada y el operador ya la puede ver.");
+  M.t = 0;
+  ntMonCargar();
+ }));
+}
+
+function ntMonLista() {
+ const M = NTX.m, c = M.el && M.el.querySelector("#ntLista");
+ if (!c) return;
+ const d = M.d;
+ if (!d) return void (c.innerHTML = '<div class="nt-vacio">Cargando tus registros…</div>');
+ if (!d.ok) return void (c.innerHTML = '<div class="nt-vacio">' + esc(d.error || "No se pudieron leer tus registros.") + "</div>");
+ const L = d.mios || [];
+ c.innerHTML = "<h3>Lo que registraste (últimos 15 días)</h3>" + (L.length ? L.map((x => '<div class="nt-c' + (x.resp ? "" : " pend") + '"><div class="nt-ch"><b>' + esc(x.o) + (x.g ? " · " + esc(x.g) : "") + "</b>" + ntPill(x) + "</div><small>" + esc(x.fecha.slice(8) + "/" + x.fecha.slice(5, 7)) + " · " + esc(x.turno) + (x.visto ? " · lo vio el " + esc(x.visto) : " · todavía no lo ha visto") + '</small><div><span class="nt-t">' + esc(x.tipo) + '</span></div><p class="nt-x">' + esc(x.txt) + "</p>" + ntFotos(x, MON.nombre) + (x.com ? '<div class="nt-com">💬 ' + esc(x.com) + "</div>" : "") + "</div>")).join("") : '<div class="nt-vacio">Todavía no has registrado novedades.</div>');
+ ntFotosEnlazar(c, MON.clave);
+}
+
+/* ----- Operador ----- */
+const ntQuien = () => typeof PT !== "undefined" && PT.yo === "ok" ? PT.op : "";
+
+function ntOpCargar(forzar) {
+ const O = NTX.o, op = ntQuien();
+ if (!op) return;
+ if (O.cargando || !forzar && O.op === op && O.d && Date.now() - O.t < 2 * 6e4) return;
+ O.cargando = true;
+ ntLlamar("ntOperador", [ op, PT.pin ], (t => {
+  O.cargando = false;
+  O.d = ntJson(t);
+  O.t = Date.now();
+  O.op = op;
+  ntOpNav();
+  ntOpPintar();
+  const av = document.getElementById("ntAviso");
+  if (av) av.outerHTML = ntAvisoHtml();
+ }));
+}
+
+function ntOpNav() {
+ const b = document.getElementById("navNtOp"), n = NTX.o.d && NTX.o.d.ok ? NTX.o.d.pend || 0 : 0;
+ if (b) {
+  const s = b.querySelector(".nt-n");
+  if (s) s.textContent = n ? " (" + n + ")" : "";
+ }
+}
+
+window.ntAvisoHtml = () => {
+ const d = NTX.o.op === ntQuien() ? NTX.o.d : null, n = d && d.ok ? d.pend || 0 : 0;
+ return n ? '<div class="nt-av" id="ntAviso">📝 <span>Tienes <b>' + n + "</b> " + (n === 1 ? "novedad de tu turno" : "novedades de tu turno") + ' por responder.</span><button type="button" class="btn" onclick="verVista(&quot;ntop&quot;)">Ver y responder</button></div>' : '<div id="ntAviso"></div>';
+};
+
+function ntOpAbrir() {
+ ntCss();
+ ntOpPintar();
+ ntOpCargar(true);
+}
+
+function ntOpPintar() {
+ const c = document.getElementById("ntOpCuerpo");
+ if (!c) return;
+ const op = ntQuien(), O = NTX.o;
+ if (!op) return void (c.innerHTML = '<section class="panel nt"><div class="nt-lock">🔒 <span>Para ver las novedades de tu turno, entra en «Mis puntos y mi grupo» con tu nombre y tu clave, y vuelve aquí.</span><button type="button" class="btn ghost" onclick="verVista(&quot;pts&quot;)">Entrar</button></div></section>');
+ const d = O.op === op ? O.d : null;
+ if (!d) return void (c.innerHTML = '<section class="panel nt"><div class="nt-vacio">Cargando tus novedades…</div></section>');
+ if (!d.ok) return void (c.innerHTML = '<section class="panel nt"><div class="nt-vacio">' + esc(d.clave ? "Tu clave ya no es válida: vuelve a entrar en «Mis puntos y mi grupo»." : d.error || "No se pudieron leer tus novedades.") + "</div></section>");
+ const L = d.lista || [], pend = L.filter((x => !x.resp)), resp = L.filter((x => x.resp));
+ const card = x => '<div class="nt-c' + (x.resp ? "" : " pend") + '"><div class="nt-ch"><b>' + esc(x.fecha.slice(8) + "/" + x.fecha.slice(5, 7)) + " · " + esc(x.turno) + "</b>" + ntPill(x) + "</div><small>La anotó " + esc(x.mon) + " · " + esc(x.reg) + '</small><div><span class="nt-t">' + esc(x.tipo) + '</span></div><p class="nt-x">' + esc(x.txt) + "</p>" + ntFotos(x, op) + (x.resp ? (x.com ? '<div class="nt-com">💬 Tu comentario: ' + esc(x.com) + "</div>" : "") + '<div class="nt-com">Respondiste el ' + esc(x.respT) + "</div>" : '<div class="nt-r"><input type="text" maxlength="600" placeholder="Comentario (opcional)" data-ntc="' + esc(x.id) + '" value="' + esc(O.com[x.id] || "") + '"><button type="button" class="btn" data-ntr="entendido" data-id="' + esc(x.id) + '">✓ Entendido</button><button type="button" class="btn ghost" data-ntr="notificado" data-id="' + esc(x.id) + '">El monitor me lo notificó en el momento</button></div>') + "</div>";
+ c.innerHTML = '<section class="panel nt"><h2>' + (pend.length ? "Por responder (" + pend.length + ")" : "Todo respondido") + '</h2><p class="nt-s">Son las situaciones que el monitor tuvo que abordar contigo en tu turno, con su pantallazo. Léelas y responde: <b>Entendido</b>, o si <b>el monitor te lo notificó en el momento</b>.</p>' + (pend.length ? pend.map(card).join("") : '<div class="nt-vacio">No tienes novedades pendientes. 👍</div>') + "</section>" + (resp.length ? '<section class="panel nt"><h2>Ya respondidas</h2><p class="nt-s">Las de los últimos 45 días.</p>' + resp.map(card).join("") + "</section>" : "");
+ c.querySelectorAll("[data-ntc]").forEach((i => i.oninput = () => O.com[i.dataset.ntc] = i.value));
+ c.querySelectorAll("[data-ntr]").forEach((b => b.onclick = () => {
+  const id = b.dataset.id;
+  c.querySelectorAll('[data-id="' + CSS.escape(id) + '"]').forEach((x => x.disabled = true));
+  b.textContent = "Guardando…";
+  ntLlamar("ntResponder", [ op, PT.pin, id, b.dataset.ntr, O.com[id] || "" ], (t => {
+   const r = ntJson(t);
+   if (!r.ok) {
+    alertaSuave(r.error || "No se pudo guardar.");
+    ntOpPintar();
+    return;
+   }
+   const x = L.find((y => y.id === id));
+   if (x) {
+    x.resp = r.resp;
+    x.com = O.com[id] || "";
+    x.respT = "ahora";
+   }
+   d.pend = L.filter((y => !y.resp)).length;
+   delete O.com[id];
+   ntOpNav();
+   ntOpPintar();
+  }));
+ }));
+ ntFotosEnlazar(c, PT.pin);
+}
+
+function alertaSuave(t) {
+ if (window.toast) toast(t); else alert(t);
+}
+
+setTimeout((() => {
+ const b = document.getElementById("navNtOp");
+ if (b) {
+  b.hidden = window.ES_PRIME === false;
+  b.style.display = window.ES_PRIME === false ? "none" : "";
+ }
+}), 0);
+
 /* ---------- AML/LUXEE: mis clientes nuevos y el ranking del proyecto (vista del operador) ---------- */
 const ACL = {
  d: null,
@@ -11343,6 +11645,10 @@ function ptRenderOp() {
   const a = ptDias(x, n), t = ptTotal(a), ps = ptPorSemana(a, sem);
   return "<tr" + (!x.resto ? ' class="sel"' : "") + "><td>" + (x.resto ? "—" : '<span class="dot" style="background:' + colJ(x.j) + '"></span> ' + JL[idxJ(x.j)]) + '</td><td class="name"><b>' + esc(x.n) + "</b></td>" + '<td class="num">' + fmtP.format(ptTotal(x.p)) + '</td><td class="num">' + fmtP.format(ptTotal(x.l)) + '</td><td class="num"><b>' + fmtP.format(t) + "</b></td>" + '<td class="num">' + (totG ? fmt1.format(t / totG * 100) + "%" : "—") + "</td>" + sem.filter((s => s[0] <= Math.max(1, n))).map(((s, i) => '<td class="num">' + fmtP.format(ps[i]) + "</td>")).join("") + "</tr>";
  })).join("") + "</tbody></table></div></section>" + "</div>";
+ if (o && window.ES_PRIME !== false) {
+  h = ntAvisoHtml() + h;
+  setTimeout((() => ntOpCargar(false)), 0);
+ }
  c.innerHTML = h;
  if (o && window.ES_PRIME === false) amlTurnoPintar();
  c.querySelectorAll("[data-proy]").forEach((b => b.onclick = () => {
@@ -13505,7 +13811,7 @@ function monRender() {
   };
   html += cab("reg", "Mis registros", "Lo último que se escribió, cambió o borró en la hoja del mes, con su hora.");
   html += !d.historial.length ? '<div class="vacio">Todavía no hay registros guardados.</div>' : '<div class="table-scroll" style="max-height:520px;overflow-y:auto"><table class="sr-t"><thead><tr><th>Hora</th><th>Día</th><th>Grupo</th><th>Operador</th><th>Perfil</th><th>Quién registró</th><th class="num">Antes</th><th class="num">Ahora</th><th>Qué se hizo</th></tr></thead><tbody>' + d.historial.map((r => "<tr><td><b>" + esc(String(r[0]).slice(11, 19)) + '</b> <small style="color:var(--faint)">' + esc(String(r[0]).slice(0, 5)) + "</small></td><td>" + r[2] + "</td><td>" + esc(titulo(r[3])) + "</td><td>" + esc(titulo(opDelDia(r[5], r[2]))) + "</td><td>" + esc(titulo(r[6])) + "</td><td>" + (r[10] ? /^Sin identificar/.test(r[10]) ? '<span class="rv-pill aviso">Sin identificar</span>' : esc(r[10]) : "—") + '</td><td class="num">' + (r[7] === "" ? "—" : esc(r[7])) + '</td><td class="num"><b>' + (r[8] === "" ? "—" : esc(r[8])) + '</b></td><td><span class="rv-pill ' + (r[9] === "Corrección" ? "aviso" : r[9] === "Borrado" ? "accion" : "") + '">' + esc(r[9]) + "</span></td></tr>")).join("") + "</tbody></table></div>";
- } else if (MON.tab === "aud" && window.audSeccionHtml) html += audSeccionHtml(); else if (MON.tab === "pts" && window.audPtsSeccionHtml) html += audPtsSeccionHtml(); else if (MON.tab === "eq" && window.audEqHtml) html += audEqHtml(); else if (MON.tab === "ext" && window.extSeccionHtml) html += extSeccionHtml();
+ } else if (MON.tab === "aud" && window.audSeccionHtml) html += audSeccionHtml() + (window.ntMonCaja ? ntMonCaja() : ""); else if (MON.tab === "pts" && window.audPtsSeccionHtml) html += audPtsSeccionHtml(); else if (MON.tab === "eq" && window.audEqHtml) html += audEqHtml(); else if (MON.tab === "ext" && window.extSeccionHtml) html += extSeccionHtml();
  html += "</section>";
  const llaveDet = d => ((d.querySelector("summary") || d).textContent || "").replace(/^\s*[\d.,]+/, "").trim();
  const estDet = {};
@@ -13524,6 +13830,7 @@ function monRender() {
  }));
  c.innerHTML = html;
  if (window.audMontar) audMontar();
+ if (MON.tab === "aud" && window.ntMonMontar) ntMonMontar();
  if (MON.tab === "ext" && window.extMontar) extMontar("mon");
  if (window.audEqMontar) audEqMontar();
  if (window.audPtsMontar) audPtsMontar();
