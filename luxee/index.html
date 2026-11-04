@@ -17,7 +17,7 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycby3GwgzMEi7DcXUkfCtX9JroODoaJalAv6MN_1D_zrn5TJoOm3msQFiM3v3iIOXPYl-/exec";
 
 (function() {
- var n = 0, VER = "web 200", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 201", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
@@ -14024,7 +14024,8 @@ function filtrados() {
   const caja = document.getElementById("op_alertasPerfil");
   const xs = ALERTAS.filter((a => a.est !== "Corregido" && (!SEL.operador || a.o.toUpperCase() === SEL.operador.toUpperCase())));
   const no = filtrados().filter((x => x.v === "no"));
-  const avisoNo = no.length ? '<div class="alerta-p"><h3>❌ El monitor dice que ' + (no.length === 1 ? "este cliente NO está retraído" : "estos " + no.length + " clientes NO están retraídos") + "</h3>" + "<p>No te cuentan. Revisa cada uno: si te equivocaste de ID, corrígelo o bórralo de tu tabla. Si sí lo retrajiste, avísale al monitor para que lo revise otra vez.</p><ul>" + no.slice().sort(((a, b) => b.d - a.d)).map((x => "<li><b>Día " + x.d + "</b>, " + esc(titulo(x.o)) + ", " + esc(titulo(x.p)) + ": <b>" + esc(x.id) + "</b> <span>Revisado por el monitor" + "</span></li>")).join("") + "</ul></div>" : "";
+  const avisoNo = "";      // aviso de «el monitor dice que NO están retraídos»: quitado a pedido
+  const avisoNoViejo = no.length ? '<div class="alerta-p"><h3>❌ El monitor dice que ' + (no.length === 1 ? "este cliente NO está retraído" : "estos " + no.length + " clientes NO están retraídos") + "</h3>" + "<p>No te cuentan. Revisa cada uno: si te equivocaste de ID, corrígelo o bórralo de tu tabla. Si sí lo retrajiste, avísale al monitor para que lo revise otra vez.</p><ul>" + no.slice().sort(((a, b) => b.d - a.d)).map((x => "<li><b>Día " + x.d + "</b>, " + esc(titulo(x.o)) + ", " + esc(titulo(x.p)) + ": <b>" + esc(x.id) + "</b> <span>Revisado por el monitor" + "</span></li>")).join("") + "</ul></div>" : "";
   if (!xs.length) {
    caja.innerHTML = avisoNo;
    return;
