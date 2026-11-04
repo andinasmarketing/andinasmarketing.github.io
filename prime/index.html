@@ -289,6 +289,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
 <div class="field"><label for="ptOp">Mi nombre</label><select id="ptOp"></select></div>
 </div>
 <div id="ptCuerpo"></div>
+<div id="amlCliTop"></div>
 </div>
 <div id="vistaMon" class="pt" hidden>
 <div class="pt-cab">
@@ -10778,15 +10779,25 @@ function amlCliCaja() {
  return '<section class="panel" id="amlCli"><h2>Clientes nuevos y ranking</h2><div id="amlCliIn">' + amlCliHtml() + "</div></section>";
 }
 
+const aclQuien = () => typeof PT !== "undefined" && PT.yo === "ok" ? PT.op : "";
+
+function amlCliTopPintar() {
+ const c = document.getElementById("amlCliTop");
+ if (!c) return;
+ if (!c.firstChild) c.innerHTML = amlCliCaja();
+ amlCliPintar();
+}
+
 function amlCliHtml() {
- const d = ACL.op === PT.op ? ACL.d : null;
+ const d = ACL.op === aclQuien() ? ACL.d : null;
  if (!d) return '<div class="state" style="padding:14px 0">Cargando tus clientes…</div>';
  if (!d.ok) return '<div class="state" style="padding:14px 0">' + esc(d.clave ? "Entra con tu clave para ver tus clientes." : d.error || "No se pudieron leer los clientes.") + "</div>";
  const MES = [ "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre" ][Number(String(d.mes).slice(5, 7)) - 1] || "";
- const R = d.ranking || [], yo = R.findIndex((x => x.yo)), mios = d.mios || [];
+ const R = d.ranking || [], yo = R.findIndex((x => x.yo)), mios = d.mios || [], conMios = Array.isArray(d.mios);
  let h = '<div class="sub">Cada ID que anotas en tu tabla del mes cuenta como cliente nuevo. Se actualiza solo cada hora' + (d.act ? " · tablas leídas: " + esc(d.act) : "") + ".</div>";
- h += '<section class="stats c4" style="margin:10px 0">' + ptStat(ICO_P.estrella, "Mis clientes nuevos de " + MES, String(mios.length), yo >= 0 ? "Vas de <b>" + (yo + 1) + "</b> de " + R.length : "Todavía no tienes clientes este mes") + ptStat(ICO_P.grupo, "Primero del ranking", R[0] ? String(R[0].n) : "0", R[0] ? esc(R[0].o) : "—") + "</section>";
+ h += '<section class="stats c4" style="margin:10px 0">' + (conMios ? ptStat(ICO_P.estrella, "Mis clientes nuevos de " + MES, String(mios.length), yo >= 0 ? "Vas de <b>" + (yo + 1) + "</b> de " + R.length : "Todavía no tienes clientes este mes") : ptStat(ICO_P.estrella, "Clientes nuevos de " + MES, String(R.reduce(((s, x) => s + x.n), 0)), "Entre " + R.length + " operadores")) + ptStat(ICO_P.grupo, "Primero del ranking", R[0] ? String(R[0].n) : "0", R[0] ? esc(R[0].o) : "—") + "</section>";
  h += '<div class="grid"><section class="panel" style="margin:0"><h3 style="margin:0 0 8px">Ranking de ' + esc(MES) + '</h3><div class="table-scroll"><table><thead><tr><th class="num">#</th><th>Operador</th><th>Grupo</th><th class="num">Clientes nuevos</th></tr></thead><tbody>' + (R.length ? R.map(((x, i) => "<tr" + (x.yo ? ' class="sel"' : "") + '><td class="num">' + (i + 1) + (i < 3 ? " " + [ "🥇", "🥈", "🥉" ][i] : "") + '</td><td class="name"><b>' + esc(x.o) + "</b>" + (x.yo ? " (tú)" : "") + "</td><td>" + esc(x.g) + '</td><td class="num"><b>' + x.n + "</b></td></tr>")).join("") : '<tr><td colspan="4">Todavía no hay clientes nuevos este mes.</td></tr>') + "</tbody></table></div></section>";
+ if (!conMios) return h + '<section class="panel" style="margin:0"><h3 style="margin:0 0 8px">Mis clientes nuevos</h3><div class="sub">Elige arriba tu grupo y tu nombre y entra con tu clave para ver la lista de tus clientes.</div></section></div>';
  h += '<section class="panel" style="margin:0"><h3 style="margin:0 0 8px">Mis clientes nuevos (' + mios.length + ')</h3><div class="table-scroll"><table><thead><tr><th class="num">Día</th><th>Perfil</th><th>ID</th></tr></thead><tbody>' + (mios.length ? mios.map((x => '<tr><td class="num">' + x.d + "</td><td>" + esc(x.p) + '</td><td><button type="button" class="sg-cp" data-sgcp="' + esc(x.id) + '" title="Copiar el ID"><b>' + esc(x.id) + "</b><i>Copiar</i></button></td></tr>")).join("") : '<tr><td colspan="3">Todavía no has anotado clientes nuevos este mes.</td></tr>') + "</tbody></table></div></section></div>";
  return h;
 }
@@ -10795,13 +10806,13 @@ function amlCliPintar() {
  const c = document.getElementById("amlCliIn");
  if (!c) return;
  c.innerHTML = amlCliHtml();
- if (ACL.op !== PT.op || Date.now() - ACL.t > 5 * 6e4) amlCliCargar();
+ if (ACL.op !== aclQuien() || Date.now() - ACL.t > 5 * 6e4) amlCliCargar();
 }
 
 function amlCliCargar() {
  if (ACL.cargando) return;
  ACL.cargando = true;
- const op = PT.op;
+ const op = aclQuien();
  const ok = t => {
   ACL.cargando = false;
   let d;
@@ -10817,7 +10828,7 @@ function amlCliCargar() {
   ACL.t = Date.now();
   ACL.op = op;
   const c = document.getElementById("amlCliIn");
-  if (c && PT.op === op) c.innerHTML = amlCliHtml();
+  if (c && aclQuien() === op) c.innerHTML = amlCliHtml();
  };
  if (esApps) google.script.run.withSuccessHandler(ok).withFailureHandler((e => ok(JSON.stringify({
   ok: false,
@@ -11247,6 +11258,7 @@ function ptDualHtml(o, d, g, A, modo, totG) {
 
 function ptRenderOp() {
  const c = document.getElementById("ptCuerpo"), d = PT.datos;
+ if (window.ES_PRIME === false) amlCliTopPintar();
  if (!d) return;
  const g = d.grupos[0];
  if (!PT.grupo || !g) {
@@ -11306,12 +11318,8 @@ function ptRenderOp() {
   const a = ptDias(x, n), t = ptTotal(a), ps = ptPorSemana(a, sem);
   return "<tr" + (!x.resto ? ' class="sel"' : "") + "><td>" + (x.resto ? "—" : '<span class="dot" style="background:' + colJ(x.j) + '"></span> ' + JL[idxJ(x.j)]) + '</td><td class="name"><b>' + esc(x.n) + "</b></td>" + '<td class="num">' + fmtP.format(ptTotal(x.p)) + '</td><td class="num">' + fmtP.format(ptTotal(x.l)) + '</td><td class="num"><b>' + fmtP.format(t) + "</b></td>" + '<td class="num">' + (totG ? fmt1.format(t / totG * 100) + "%" : "—") + "</td>" + sem.filter((s => s[0] <= Math.max(1, n))).map(((s, i) => '<td class="num">' + fmtP.format(ps[i]) + "</td>")).join("") + "</tr>";
  })).join("") + "</tbody></table></div></section>" + "</div>";
- if (o && window.ES_PRIME === false) h += amlCliCaja();
  c.innerHTML = h;
- if (o && window.ES_PRIME === false) {
-  amlTurnoPintar();
-  amlCliPintar();
- }
+ if (o && window.ES_PRIME === false) amlTurnoPintar();
  c.querySelectorAll("[data-proy]").forEach((b => b.onclick = () => {
   PT.proy = b.dataset.proy;
   const y = window.scrollY;
