@@ -17,7 +17,7 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr03m5tH4HrrssdWXzoGtKFAqbvOnPPA7tRjsFSRsE16hLkv-w/exec";
 
 (function() {
- var n = 0, VER = "web 199", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 200", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
@@ -167,6 +167,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr0
 <button type="button" role="tab" id="op_tabRanking" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M9 20h6"/></svg>Ranking del bono</button>
 <button type="button" role="tab" id="op_tabTurnos" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></svg>Ranking por turno</button>
 <button type="button" role="tab" id="navPts" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></svg>Mis puntos y mi grupo</button>
+<button type="button" role="tab" id="navCliRk" aria-selected="false" hidden><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M9 20h6"/></svg>Clientes y ranking</button>
 </div></div>
 <div class="lado-sec" data-sec="Supervisión"><button type="button" class="lado-h" aria-expanded="true">Supervisión<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><div class="lado-sub">
 <button type="button" role="tab" id="navSupIni" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7M6 10v9h12v-9"/></svg>Inicio de supervisión</button>
@@ -289,6 +290,11 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr0
 <div class="field"><label for="ptOp">Mi nombre</label><select id="ptOp"></select></div>
 </div>
 <div id="ptCuerpo"></div>
+</div>
+<div id="vistaCliRk" class="pt" hidden>
+<div class="pt-cab pt-cab-f"><div><h2 class="vt">Clientes y ranking</h2>
+<p class="pt-est">Los clientes nuevos que retrajo cada operador este mes y quién va adelante.</p></div>
+<button class="btn" type="button" onclick="amlCliCargar(true)"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.3-4M4 4v3.5h3.5M4 13a8 8 0 0 0 14.3 4M20 20v-3.5h-3.5"/></svg>Actualizar</button></div>
 <div id="amlCliTop"></div>
 </div>
 <div id="vistaMon" class="pt" hidden>
@@ -9388,6 +9394,7 @@ const VISTAS = {
  op: "vistaOp",
  dash: "vistaDash",
  pts: "vistaPts",
+ clirk: "vistaCliRk",
  ptsgen: "vistaPtsGen",
  aud: "vistaAud"
 };
@@ -9396,6 +9403,7 @@ const NAV = {
  supinicio: "navSupIni",
  dash: "navPanel",
  pts: "navPts",
+ clirk: "navCliRk",
  ptsgen: "navPtsGen",
  mon: "navMon",
  segmon: "navSegMon",
@@ -9470,7 +9478,7 @@ function verVista(v) {
    }
    render();
   } else cargar(false);
- } else if (v === "pts") ptAbrirOp(); else if (v === "ptsgen") ptAbrirGen(); else if (v === "mon") monAbrir(); else if (v === "hor") horAbrir(); else if (v === "aud") {
+ } else if (v === "pts") ptAbrirOp(); else if (v === "clirk") amlCliTopPintar(); else if (v === "ptsgen") ptAbrirGen(); else if (v === "mon") monAbrir(); else if (v === "hor") horAbrir(); else if (v === "aud") {
   if (window.audAbrirSup) audAbrirSup();
  } else if (window.opMostrar) window.opMostrar();
  window.scrollTo(0, 0);
@@ -10778,6 +10786,14 @@ const ACL = {
 
 const aclQuien = () => typeof PT !== "undefined" && PT.yo === "ok" ? PT.op : "";
 
+setTimeout((() => {
+ const b = document.getElementById("navCliRk");
+ if (b) {
+  b.hidden = window.ES_PRIME !== false;
+  b.style.display = window.ES_PRIME !== false ? "none" : "";
+ }
+}), 0);
+
 function amlCliTopPintar() {
  const c = document.getElementById("amlCliTop");
  if (!c) return;
@@ -10794,7 +10810,7 @@ function amlCliCss() {
  if (document.getElementById("cnCss")) return;
  const st = document.createElement("style");
  st.id = "cnCss";
- st.textContent = ".cn{padding:22px 24px}.cn h2{margin:0}.cn-h{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:18px}.cn-s{margin:4px 0 0;color:var(--muted);font-size:13.5px;line-height:1.45}.cn-act{font-size:12px;color:var(--faint);background:var(--line-2);padding:5px 11px;border-radius:99px;white-space:nowrap}" + ".cn-vacio{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:30px 16px;border:1px dashed var(--line);border-radius:var(--r-lg);color:var(--muted);font-size:13.5px}.cn-vi{width:46px;height:46px;border-radius:50%;background:var(--oro-suave);color:var(--oro-tinta);display:grid;place-items:center;margin-bottom:4px}.cn-vi svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.cn-vacio b{color:var(--ink);font-size:15px}" + ".cn-podio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:end;margin-bottom:16px}.cn-tup{position:absolute;top:8px;right:8px;margin:0}.cn-pd{position:relative;border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 10px 14px;text-align:center;background:var(--surface);min-width:0}.cn-pd.p1{background:linear-gradient(180deg,var(--oro-suave),var(--surface) 75%);border-color:var(--oro);padding-top:24px}.cn-pd.vacio{visibility:hidden}.cn-md{width:36px;height:36px;border-radius:50%;margin:0 auto 8px;display:grid;place-items:center;font-weight:800;font-size:15px;color:#fff;background:#9499A6}.p1 .cn-md{background:var(--oro);width:46px;height:46px;font-size:19px;color:#15161A}.p3 .cn-md{background:#B07A45}.cn-pd .n{font-weight:800;font-size:14.5px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cn-pd .g{font-size:12px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cn-pd .c{font-size:30px;font-weight:900;margin-top:10px;line-height:1;font-variant-numeric:tabular-nums}.p1 .c{font-size:36px}.cn-pd .c small{display:block;font-size:11px;font-weight:600;color:var(--faint);margin-top:4px}.cn-pd.yo{box-shadow:inset 0 0 0 2px var(--oro)}" + ".cn-rank{list-style:none;margin:0;padding:0}.cn-rank li{display:grid;grid-template-columns:30px minmax(0,1fr) minmax(70px,32%) 40px;gap:12px;align-items:center;padding:10px 8px;border-top:1px solid var(--line-2)}.cn-rank .p{font-weight:800;color:var(--faint);text-align:center;font-variant-numeric:tabular-nums}.cn-rank .q{min-width:0}.cn-rank .q b{display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cn-rank .q small{color:var(--muted);font-size:12px}.cn-bar{height:8px;border-radius:99px;background:var(--line-2);overflow:hidden}.cn-bar i{display:block;height:100%;background:var(--oro);border-radius:99px}.cn-rank .v{text-align:right;font-weight:800;font-variant-numeric:tabular-nums}.cn-rank li.yo{background:var(--oro-suave);border-radius:10px;border-top-color:transparent}.cn-tu{font-size:10.5px;font-weight:800;background:var(--oro);color:#15161A;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:1px}" + ".cn-mio{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}.cn-mio-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:12px}.cn-mio-h b{font-size:15px}.cn-mio-h span{color:var(--muted);font-size:13px}.cn-ids{display:flex;flex-wrap:wrap;gap:8px}.cn-id{font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:2px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:7px 12px;text-align:left}.cn-id b{font-variant-numeric:tabular-nums;font-size:14px}.cn-id small{font-size:11.5px;color:var(--muted)}.cn-id:hover{border-color:var(--oro)}.cn-nada{color:var(--muted);font-size:13.5px}.cn-lock{margin-top:16px;display:flex;gap:10px;align-items:center;padding:12px 14px;border-radius:12px;background:var(--line-2);color:var(--muted);font-size:13.5px;line-height:1.4}.cn-lock svg{flex:none;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.cn-cargando{color:var(--muted);padding:6px 0 2px}" + "@media (max-width:600px){.cn{padding:18px 16px}.cn-podio{gap:8px}.cn-pd{padding:12px 6px}.cn-pd .c{font-size:22px}.p1 .c{font-size:26px}.cn-rank li{grid-template-columns:26px minmax(0,1fr) 36px;gap:10px}.cn-bar{display:none}}";
+ st.textContent = ".cn{padding:22px 24px}.cn h2{margin:0}.cn-h{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:18px}.cn-s{margin:4px 0 0;color:var(--muted);font-size:13.5px;line-height:1.45}.cn-act{font-size:12px;color:var(--faint);background:var(--line-2);padding:5px 11px;border-radius:99px;white-space:nowrap}" + ".cn-vacio{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:30px 16px;border:1px dashed var(--line);border-radius:var(--r-lg);color:var(--muted);font-size:13.5px}.cn-vi{width:46px;height:46px;border-radius:50%;background:var(--oro-suave);color:var(--oro-tinta);display:grid;place-items:center;margin-bottom:4px}.cn-vi svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.cn-vacio b{color:var(--ink);font-size:15px}" + ".cn-podio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:end;margin-bottom:16px}.cn-tup{position:absolute;top:8px;right:8px;margin:0}.cn-pd{position:relative;border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 10px 14px;text-align:center;background:var(--surface);min-width:0}.cn-pd.p1{background:linear-gradient(180deg,var(--oro-suave),var(--surface) 75%);border-color:var(--oro);padding-top:24px}.cn-pd.vacio{visibility:hidden}.cn-md{width:36px;height:36px;border-radius:50%;margin:0 auto 8px;display:grid;place-items:center;font-weight:800;font-size:15px;color:#fff;background:#9499A6}.p1 .cn-md{background:var(--oro);width:46px;height:46px;font-size:19px;color:#15161A}.p3 .cn-md{background:#B07A45}.cn-pd .n{font-weight:800;font-size:14.5px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cn-pd .g{font-size:12px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cn-pd .c{font-size:30px;font-weight:900;margin-top:10px;line-height:1;font-variant-numeric:tabular-nums}.p1 .c{font-size:36px}.cn-pd .c small{display:block;font-size:11px;font-weight:600;color:var(--faint);margin-top:4px}.cn-pd.yo{box-shadow:inset 0 0 0 2px var(--oro)}" + ".cn-rank{list-style:none;margin:0;padding:0}.cn-rank li{display:grid;grid-template-columns:30px minmax(0,1fr) minmax(70px,32%) 40px;gap:12px;align-items:center;padding:10px 8px;border-top:1px solid var(--line-2)}.cn-rank .p{font-weight:800;color:var(--faint);text-align:center;font-variant-numeric:tabular-nums}.cn-rank .q{min-width:0}.cn-rank .q b{display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cn-rank .q small{color:var(--muted);font-size:12px}.cn-bar{height:8px;border-radius:99px;background:var(--line-2);overflow:hidden}.cn-bar i{display:block;height:100%;background:var(--oro);border-radius:99px}.cn-rank .v{text-align:right;font-weight:800;font-variant-numeric:tabular-nums}.cn-rank li.yo{background:var(--oro-suave);border-radius:10px;border-top-color:transparent}.cn-tu{font-size:10.5px;font-weight:800;background:var(--oro);color:#15161A;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:1px}" + ".cn-mio{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}.cn-mio-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:12px}.cn-mio-h b{font-size:15px}.cn-mio-h span{color:var(--muted);font-size:13px}.cn-ids{display:flex;flex-wrap:wrap;gap:8px}.cn-id{font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:2px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:7px 12px;text-align:left}.cn-id b{font-variant-numeric:tabular-nums;font-size:14px}.cn-id small{font-size:11.5px;color:var(--muted)}.cn-id:hover{border-color:var(--oro)}.cn-nada{color:var(--muted);font-size:13.5px}.cn-lock{margin-top:16px;display:flex;gap:10px;align-items:center;padding:12px 14px;border-radius:12px;background:var(--line-2);color:var(--muted);font-size:13.5px;line-height:1.4}.cn-ir{margin-left:auto;flex:none}.cn-lock svg{flex:none;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.cn-cargando{color:var(--muted);padding:6px 0 2px}" + "@media (max-width:600px){.cn{padding:18px 16px}.cn-podio{gap:8px}.cn-pd{padding:12px 6px}.cn-pd .c{font-size:22px}.p1 .c{font-size:26px}.cn-rank li{grid-template-columns:26px minmax(0,1fr) 36px;gap:10px}.cn-bar{display:none}}";
  document.head.appendChild(st);
 }
 
@@ -10814,7 +10830,7 @@ function amlCliHtml() {
   h += '<div class="cn-podio">' + pd(R[1], 1) + pd(R[0], 0) + pd(R[2], 2) + "</div>";
   if (R.length > 3) h += '<ol class="cn-rank">' + R.slice(3).map(((x, i) => '<li class="' + (x.yo ? "yo" : "") + '"><span class="p">' + (i + 4) + '</span><span class="q"><b>' + esc(x.o) + (x.yo ? '<span class="cn-tu">Tú</span>' : "") + "</b><small>" + esc(x.g) + '</small></span><span class="cn-bar"><i style="width:' + Math.max(4, Math.round(x.n / max * 100)) + '%"></i></span><span class="v">' + x.n + "</span></li>")).join("") + "</ol>";
  }
- if (!conMios) return h + '<div class="cn-lock">' + candado + "<span>Elige arriba tu grupo y tu nombre, y entra con tu clave para ver tus clientes y en qué puesto vas.</span></div>";
+ if (!conMios) return h + '<div class="cn-lock">' + candado + "<span>Para ver tus clientes y en qué puesto vas, entra en «Mis puntos y mi grupo» con tu nombre y tu clave, y vuelve aquí.</span><button type=\"button\" class=\"btn ghost cn-ir\" onclick=\"verVista(&quot;pts&quot;)\">Entrar</button></div>";
  h += '<div class="cn-mio"><div class="cn-mio-h"><b>Tus clientes nuevos</b><span>' + (mios.length ? mios.length + " " + cli(mios.length) + (yo >= 0 ? " · vas de " + (yo + 1) + " de " + R.length : "") : "Aún no tienes este mes") + "</span></div>" + (mios.length ? '<div class="cn-ids">' + mios.map((x => '<button type="button" class="cn-id" data-sgcp="' + esc(x.id) + '" title="Copiar el ID"><b>' + esc(x.id) + "</b><small>Día " + x.d + " · " + esc(x.p) + "</small></button>")).join("") + "</div>" : '<div class="cn-nada">Cuando anotes un ID en tu tabla, aparece aquí. Toca cualquiera para copiarlo.</div>') + "</div>";
  return h;
 }
@@ -10826,7 +10842,8 @@ function amlCliPintar() {
  if (ACL.op !== aclQuien() || Date.now() - ACL.t > 5 * 6e4) amlCliCargar();
 }
 
-function amlCliCargar() {
+function amlCliCargar(forzar) {
+ if (forzar === true) ACL.t = 0;
  if (ACL.cargando) return;
  ACL.cargando = true;
  const op = aclQuien();
@@ -11275,7 +11292,6 @@ function ptDualHtml(o, d, g, A, modo, totG) {
 
 function ptRenderOp() {
  const c = document.getElementById("ptCuerpo"), d = PT.datos;
- if (window.ES_PRIME === false) amlCliTopPintar();
  if (!d) return;
  const g = d.grupos[0];
  if (!PT.grupo || !g) {
