@@ -11308,10 +11308,19 @@ function ptRenderOp() {
  const verGrupo = !(o && dual && PT.proy === "aml");
  if (verGrupo) h += '<h3 class="pt-t">' + ICO_P.grupo + esc(g.g) + (o && dual ? ' <span class="pt-proy-tag">PRIME</span>' : "") + "</h3>" + '<div class="grid">' + (() => {
   const MI = d.metasI || {}, con = g.ops.filter((x => MI[x.n]));
+  // En la vista del operador solo vienen sus puntos: los compañeros salen con su meta (sin sus puntos)
+  Object.keys(MI).forEach((k => {
+   if (!con.some((x => x.n === k))) con.push({
+    n: k,
+    sinPts: true
+   });
+  }));
   if (!con.length) return "";
   const sum = con.reduce(((s, x) => s + MI[x.n]), 0);
   return '<section class="panel"><h2>Metas individuales del grupo</h2><div class="sub">Supervisión repartió la meta según la producción de cada uno. Juntas suman ' + fmt0.format(sum) + " puntos: lo que hace cada uno cuenta para su meta y para la del grupo.</div>" + '<div class="table-scroll"><table><thead><tr><th>Operador</th><th class="num">Puntos</th><th class="num">Meta individual</th><th class="num">Avance</th><th>Va</th></tr></thead><tbody>' + con.map((x => {
-   const t = ptTotal(ptDias(x, n)), m = MI[x.n];
+   const m = MI[x.n];
+   if (x.sinPts) return '<tr><td class="name"><b>' + esc(x.n) + '</b></td><td class="num">—</td><td class="num">' + fmt0.format(m) + '</td><td class="num">—</td><td></td></tr>';
+   const t = ptTotal(ptDias(x, n));
    return "<tr" + (o && x.n === o.n ? ' class="sel"' : "") + '><td class="name"><b>' + esc(x.n) + '</b></td><td class="num">' + fmtP.format(t) + '</td><td class="num">' + fmt0.format(m) + '</td><td class="num"><b>' + fmt1.format(t / m * 100) + "%</b></td><td>" + ptPill(ptSemaforo(t, ptProyOps([ x ], d), m)) + "</td></tr>";
   })).join("") + "</tbody></table></div></section>";
  })() + (g.meta ? '<section class="panel"><h2>Meta del grupo: ' + fmt0.format(g.meta) + ' puntos</h2><div class="sub">Suma de los puntos de todos los operadores del grupo, con los días libres.</div>' + ptMetaHtml(aG, g.meta, d, "Este grupo", false, typeof g.proy === "number" ? g.proy : ptProyOps(g.ops, d)) + "</section>" : (o && (d.metasJ || {})[o.j] ? '<section class="panel"><h2>Meta de mi turno (' + JL[idxJ(o.j)] + "): " + fmt0.format(d.metasJ[o.j]) + ' puntos</h2><div class="sub">Producción de todo el turno contra su meta.</div>' + ptMetaHtml(ptTurno(d, o.j), d.metasJ[o.j], d, "Este turno") + "</section>" : "") + '<section class="panel"><h2>Seguimiento de las metas por turno</h2><div class="sub">Producción de cada turno contra su meta, con la proyección de cierre y los puntos por día que necesita.</div>' + '<div class="jr-cards">' + ptTurnoCards(d, o ? o.j : "", false) + "</div></section>" + '<section class="panel"><h2>Tendencia de los turnos</h2><div class="sub">Producción por turno, por ' + (PT.modo === "semana" ? "semana" : "día") + '.</div><div class="chart-box"><canvas id="cPtTurno"></canvas></div></section>') + '<section class="panel"><div class="panel-head"><div><h2>Tendencia del grupo</h2><div class="sub">Puntos del grupo por ' + (PT.modo === "semana" ? "semana" : "día") + (o ? ": los tuyos y los del resto del grupo." : ".") + "</div></div>" + (o ? "" : ptCtrl("ptModo", PT.modo)) + "</div>" + '<div class="gana-res">' + ptDelta(ptTend(aG, d, sem)) + "</div>" + '<div class="chart-box"><canvas id="cPtGrupo"></canvas></div></section>' + '<section class="panel"><h2>Puntos del grupo</h2><div class="sub">' + (o ? "Tus puntos y la suma del resto del grupo (" + (nOps - 1) + (nOps - 1 === 1 ? " compañero" : " compañeros") + "). Los puntos de cada compañero solo los ve él." : "La suma de los " + nOps + " operadores del grupo. Para ver los tuyos, elige tu nombre arriba.") + '</div><div class="table-scroll"><table><thead><tr><th>Jornada</th><th>Operador</th>' + '<th class="num">Puntos</th><th class="num">Día libre</th><th class="num">Total</th><th class="num">Aporte</th>' + sem.filter((s => s[0] <= Math.max(1, n))).map(((s, i) => '<th class="num">Sem. ' + (i + 1) + "</th>")).join("") + "</tr></thead><tbody>" + g.ops.map((x => {
