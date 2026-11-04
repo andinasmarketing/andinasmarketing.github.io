@@ -17185,7 +17185,7 @@ const AV = {
  function pintar() {
   const el = X.el;
   if (!el) return;
-  const cab = '<div class="ex-h"><div>' + (esMon() ? "<h2>Clientes nuevos de AML y LUXEE</h2>" : "") + '<div class="sub">' + (esMon() ? "Verifica en la plataforma cada ID que anotaron los operadores. Si sí está retraído, escribe el cliente (Nombre, edad) y cómo lo retrajo." : "El conteo es automático: cada ID que el operador anota en su tabla. Verifica cada uno en la plataforma (✓ / ✕); si sí está retraído, puedes anotar el cliente y cómo lo retrajo.") + "</div></div>" + '<button type="button" class="btn-sec ex-act" id="exAct"' + (X.cargando ? " disabled" : "") + ">" + (X.cargando ? "Leyendo las tablas…" : "Leer las tablas ya") + "</button></div>";
+  const cab = '<div class="ex-h"><div>' + (esMon() ? "<h2>Clientes nuevos de AML y LUXEE</h2>" : "") + '<div class="sub">' + "El conteo es automático: cada ID que el operador anota en su tabla cuenta como cliente nuevo suyo. En AML y LUXEE no se verifican." + "</div></div>" + '<button type="button" class="btn-sec ex-act" id="exAct"' + (X.cargando ? " disabled" : "") + ">" + (X.cargando ? "Leyendo las tablas…" : "Leer las tablas ya") + "</button></div>";
   if (!X.d) {
    el.innerHTML = cab + '<div class="state" style="padding:18px 0">' + (X.err ? e(X.err) + ' <button type="button" class="btn-sec" id="exRe">Reintentar</button>' : "Cargando…") + "</div>";
    con();
@@ -17199,7 +17199,7 @@ const AV = {
   }
   const items = Pr.items, mes = Pr.mes;
   const grupos = Array.from(new Set(items.map((r => r[2])))).sort();
-  const deMes = items.filter((r => r[0] === mes)), ant = items.filter((r => r[0] !== mes && est(r) === "pend"));
+  const deMes = items.filter((r => r[0] === mes && r[11])), ant = [];
   const cuenta = xs => ({
    tot: xs.length,
    si: xs.filter((r => est(r) === "si")).length,
@@ -17208,27 +17208,27 @@ const AV = {
   });
   const C = cuenta(deMes);
   const q = N(X.q);
-  let vis = items.filter((r => (!X.g || r[2] === X.g) && (X.est === "todos" || est(r) === X.est) && (!q || N(r[3] + " " + r[4] + " " + r[5] + " " + r[2]).indexOf(q) >= 0)));
+  let vis = items.filter((r => r[0] === mes && r[11] && (!X.g || r[2] === X.g) && (!q || N(r[3] + " " + r[4] + " " + r[5] + " " + r[2]).indexOf(q) >= 0)));
   vis.sort(((a, b) => a[0].localeCompare(b[0]) || a[2].localeCompare(b[2]) || a[3].localeCompare(b[3]) || a[1] - b[1] || a[4].localeCompare(b[4])));
   const tabsP = X.d.proys.length > 1 ? '<div class="sub-barra ex-p">' + X.d.proys.map((p => {
-   const n = p.items.filter((r => est(r) === "pend")).length;
+   const n = 0;
    return '<button type="button" data-exp="' + p.p + '" aria-pressed="' + (p.p === X.p) + '">' + e(p.nombre) + (n ? " <i>" + n + "</i>" : "") + "</button>";
   })).join("") + "</div>" : "";
-  const tiles = '<div class="ex-tiles"><div><b>' + C.tot + "</b><span>IDs de " + e(mesTxt(mes)) + '</span></div><div class="a"><b>' + C.pend + '</b><span>Por verificar</span></div><div class="v"><b>' + C.si + '</b><span>✓ Retraídos</span></div><div class="r"><b>' + C.no + "</b><span>✕ No retraídos</span></div></div>" + (ant.length ? '<div class="ex-av">Quedan <b>' + ant.length + "</b> por verificar de " + e(mesTxt(ant[0][0])) + " (las tablas ya pasaron al mes nuevo).</div>" : "") + '<div class="sub" style="margin:2px 0 10px">Tablas leídas: ' + e(Pr.act || "—") + " · se leen solas cada hora.</div>";
+  const tiles = '<div class="ex-tiles"><div><b>' + C.tot + "</b><span>Clientes nuevos de " + e(mesTxt(mes)) + '</span></div><div class="v"><b>' + new Set(deMes.map((r => r[2] + "|" + r[3]))).size + "</b><span>Operadores con clientes</span></div></div>" + '<div class="sub" style="margin:2px 0 10px">Tablas leídas: ' + e(Pr.act || "—") + " · se leen solas cada hora.</div>";
   const porOp = {};
   deMes.forEach((r => {
    const kk = r[2] + "|" + r[3];
    (porOp[kk] = porOp[kk] || []).push(r);
   }));
-  const resumen = '<details class="ex-res"' + (X.resAb ? " open" : "") + "><summary>Conteo por operador (" + e(mesTxt(mes)) + ')</summary><div class="table-scroll"><table><thead><tr><th>Grupo</th><th>Operador</th><th class="num">Clientes nuevos</th><th class="num">✓</th><th class="num">✕</th><th class="num">Por verificar</th></tr></thead><tbody>' + Object.keys(porOp).sort().map((kk => {
+  const resumen = '<details class="ex-res"' + (X.resAb ? " open" : "") + "><summary>Conteo por operador (" + e(mesTxt(mes)) + ')</summary><div class="table-scroll"><table><thead><tr><th>Grupo</th><th>Operador</th><th class="num">Clientes nuevos</th></tr></thead><tbody>' + Object.keys(porOp).sort().map((kk => {
    const c = cuenta(porOp[kk]), [g, o] = kk.split("|");
-   return "<tr><td>" + e(t(g)) + '</td><td class="name">' + e(t(o)) + '</td><td class="num"><b>' + c.tot + '</b></td><td class="num">' + c.si + '</td><td class="num">' + c.no + '</td><td class="num">' + (c.pend ? '<span class="rv-pill aviso">' + c.pend + "</span>" : "0") + "</td></tr>";
-  })).join("") + (Object.keys(porOp).length ? "" : '<tr><td colspan="6">Todavía no hay IDs en las tablas de este mes.</td></tr>') + "</tbody></table></div></details>";
-  const filtros = '<div class="ex-f"><select id="exG" aria-label="Grupo"><option value="">Todos los grupos</option>' + grupos.map((g => '<option value="' + e(g) + '"' + (g === X.g ? " selected" : "") + ">" + e(t(g)) + "</option>")).join("") + "</select>" + '<div class="seg-ctrl" id="exE">' + [ [ "pend", "Por verificar" ], [ "si", "✓ Retraídos" ], [ "no", "✕ No retraídos" ], [ "todos", "Todos" ] ].map((x => '<button type="button" data-exe="' + x[0] + '" aria-pressed="' + (X.est === x[0]) + '">' + x[1] + "</button>")).join("") + "</div>" + '<input type="search" id="exQ" placeholder="Buscar operador, perfil o ID" value="' + e(X.q) + '" autocomplete="off"></div>';
+   return "<tr><td>" + e(t(g)) + '</td><td class="name">' + e(t(o)) + '</td><td class="num"><b>' + c.tot + "</b></td></tr>";
+  })).join("") + (Object.keys(porOp).length ? "" : '<tr><td colspan="3">Todavía no hay IDs en las tablas de este mes.</td></tr>') + "</tbody></table></div></details>";
+  const filtros = '<div class="ex-f"><select id="exG" aria-label="Grupo"><option value="">Todos los grupos</option>' + grupos.map((g => '<option value="' + e(g) + '"' + (g === X.g ? " selected" : "") + ">" + e(t(g)) + "</option>")).join("") + "</select>" + '<input type="search" id="exQ" placeholder="Buscar operador, perfil o ID" value="' + e(X.q) + '" autocomplete="off"></div>';
   const mets = X.d.metodos || METODOS0;
   const fila = r => {
    const kk = k(r), s = est(r), mio = esMon();
-   const acc = s === "pend" ? '<input type="text" class="ex-cli" data-k="' + e(kk) + '" value="' + e(X.nom[kk] || "") + '" placeholder="' + (mio ? "Nombre, edad · ej: Charito, 73" : "Nombre, edad (opcional)") + '" maxlength="60" autocomplete="off" aria-label="Cliente">' + '<select class="ex-met" data-k="' + e(kk) + '" aria-label="Cómo lo retrajo"><option value="">' + (mio ? "¿Cómo lo retrajo?" : "¿Cómo lo retrajo? (opcional)") + "</option>" + mets.concat([ "Otra" ]).map((m => "<option" + (X.met[kk] === m ? " selected" : "") + ">" + e(m) + "</option>")).join("") + "</select>" + (X.met[kk] === "Otra" ? '<input type="text" class="ex-otra" data-k="' + e(kk) + '" value="' + e(X.otra[kk] || "") + '" placeholder="¿Cuál?" maxlength="100">' : "") + '<button type="button" class="ex-si" data-v="si" data-k="' + e(kk) + '">✓ Sí está retraído</button><button type="button" class="ex-no" data-v="no" data-k="' + e(kk) + '">✕ No está</button>' : '<span class="rv-pill ' + (s === "si" ? "ok" : "accion") + '">' + (s === "si" ? "✓ Retraído" : "✕ No retraído") + "</span>" + (r[9] ? ' <span class="ex-m">Cliente: ' + e(r[9]) + "</span>" : "") + (r[10] ? ' <span class="ex-m">· ' + e(r[10]) + "</span>" : "") + ' <span class="ex-m">· ' + e(r[7]) + (r[8] ? " " + e(String(r[8]).slice(8, 10) + "/" + String(r[8]).slice(5, 7) + " " + String(r[8]).slice(11, 16)) : "") + "</span>" + (!mio ? ' <button type="button" class="ex-cam" data-v="' + (s === "si" ? "no" : "si") + '" data-k="' + e(kk) + '">' + (s === "si" ? "Cambiar a ✕" : "Cambiar a ✓") + '</button> <button type="button" class="ex-cam" data-v="" data-k="' + e(kk) + '">Deshacer</button>' : "");
+   const acc = "";      // en AML y LUXEE no se verifica: solo se muestra el ID
    return '<div class="ex-i' + (r[11] ? "" : " ex-borr") + '"><div class="ex-id"><button type="button" class="sg-cp" data-sgcp="' + e(r[5]) + '" title="Copiar el ID"><b>' + e(r[5]) + "</b><i>Copiar</i></button><small>Día " + r[1] + (r[0] !== mes ? " de " + e(mesTxt(r[0])) : "") + (r[11] ? "" : " · el operador lo borró de su tabla") + "</small></div>" + '<div class="ex-q"><b>' + e(t(r[4])) + "</b><small>" + e(t(r[3])) + " · " + e(t(r[2])) + '</small></div><div class="ex-a">' + acc + "</div></div>";
   };
   const lista = vis.length ? vis.slice(0, 400).map(fila).join("") + (vis.length > 400 ? '<div class="sub">Se muestran los primeros 400. Usa los filtros.</div>' : "") : '<div class="mon-ok"><b>Nada por aquí</b>' + (X.est === "pend" ? "No hay IDs por verificar con estos filtros." : "No hay IDs con estos filtros.") + "</div>";
