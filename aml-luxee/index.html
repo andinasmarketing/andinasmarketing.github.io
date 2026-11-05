@@ -17,7 +17,7 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr03m5tH4HrrssdWXzoGtKFAqbvOnPPA7tRjsFSRsE16hLkv-w/exec";
 
 (function() {
- var n = 0, VER = "web 206", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 207", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
@@ -3549,7 +3549,7 @@ function sgNovRender() {
     auditor: nrm(t.n).split(" ")[0],
     hora: g[0],
     dig: g,
-    sk: t.f.replace(/-/g, "") + g[0].replace(":", "")
+    sk: (Number(String(g[0]).slice(0, 2)) < 12 && Number(String(t.ini || "").slice(0, 2)) >= 18 ? new Date(new Date(t.f + "T12:00:00").getTime() + 864e5).toISOString().slice(0, 10) : t.f).replace(/-/g, "") + g[0].replace(":", "")
    };
    if (q && nrm([ t.n, "digitacion clientes nuevos" ].join(" ")).indexOf(q) < 0) return;
    items.push(it);
