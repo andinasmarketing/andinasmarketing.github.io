@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 215", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 216", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "ad70792656a9";
+ var HUELLA = "9ab3aa771f6e";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -15319,7 +15319,11 @@ if (typeof MON_ICO !== "undefined") MON_ICO.aud = '<path d="M9 4h6l1 2h3v14H5V6h
      EXTRA.forEach((n => {
       if (!L.some((x => String(x).trim().toUpperCase() === n))) L.push(n);
      }));
-     c.cubren = L.filter(((x, i, a) => x && a.findIndex((y => String(y).trim().toUpperCase() === String(x).trim().toUpperCase())) === i));
+     const U = L.filter(((x, i, a) => x && a.findIndex((y => String(y).trim().toUpperCase() === String(x).trim().toUpperCase())) === i));
+     // Orden: Nelson, encargados, supervisores (por jornada), los operadores y de último los monitores (mañana, tarde, noche)
+     const ARRIBA = [ "NELSON HERRERA", "ALEXANDER COLINA", "MAURICIO TORREALBA", "JESUS ENRIQUE", "LUIZZANA MUÑOZ", "HAROLD CABRERA", "LARRY RIERA" ], ABAJO = [ "JENNY VILLAMIZAR", "ZHUHEY STAPER", "CAMILO BUITRAGO" ];
+     const en = (lista, x) => lista.indexOf(String(x).trim().toUpperCase());
+     c.cubren = ARRIBA.filter((n => U.some((x => en([ n ], x) === 0)))).concat(U.filter((x => en(ARRIBA, x) < 0 && en(ABAJO, x) < 0))).concat(ABAJO.filter((n => U.some((x => en([ n ], x) === 0)))));
     }
    } catch (e) {}
    AUD.cat = c;
@@ -17976,4 +17980,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = 'ad70792656a9' -->
+<!-- var HUELLA = '9ab3aa771f6e' -->
