@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr03m5tH4HrrssdWXzoGtKFAqbvOnPPA7tRjsFSRsE16hLkv-w/exec";
 
 (function() {
- var n = 0, VER = "web 216", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 217", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "a58ed7049b3f";
+ var HUELLA = "1e9f2e777750";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -13729,7 +13729,7 @@ function monRender() {
   second: "2-digit"
  }) : "";
  document.getElementById("monEst").textContent = (MON.verErr ? "⚠ No se pudo actualizar la lista de IDs, reintentando… " : "") + (hc ? "IDs al " + hc + ". " : "") + (h ? "Celdas revisadas a las " + h + "." : "");
- const P = d.pendientes.map((r => ({
+ const P = d.pendientes.filter((r => !d.mes || String(r[0]) === String(d.mes))).map((r => ({      // solo el mes actual
   m: r[0],
   d: r[1],
   g: r[2],
@@ -17980,4 +17980,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = 'a58ed7049b3f' -->
+<!-- var HUELLA = '1e9f2e777750' -->
