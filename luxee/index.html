@@ -17,7 +17,7 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycby3GwgzMEi7DcXUkfCtX9JroODoaJalAv6MN_1D_zrn5TJoOm3msQFiM3v3iIOXPYl-/exec";
 
 (function() {
- var n = 0, VER = "web 204", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 205", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
@@ -15323,7 +15323,7 @@ if (typeof MON_ICO !== "undefined") MON_ICO.aud = '<path d="M9 4h6l1 2h3v14H5V6h
   } else if (AUD.clase === "novedades") {
    h = '<h3 class="au-paso"><span>2</span>Cuéntanos qué pasó <small>con la fecha y el turno de arriba</small></h3><div id="ntMonHost" class="nt-emb-h"></div>';
   } else if (AUD.clase === "cobertura") {
-   h = '<h3 class="au-paso"><span>2</span>Perfil o perfiles que se cubrieron</h3>' + chipsHtml() + '<h3 class="au-paso"><span>3</span>Quién cubrió</h3><div class="au-grid">' + campo("auCQuien", "Quién atendió el perfil", '<select id="auCQuien">' + opciones(C.cubren) + '</select><span class="au-pista" id="auCTit"></span>') + campo("auCMot", "Motivo", '<select id="auCMot">' + opciones(C.motivosCobertura) + "</select>") + campo("auCDet", 'Detalle <small class="au-mut" id="auCDetL">(opcional)</small>', '<textarea id="auCDet" placeholder="Ej.: cubrió de 2:00 a 6:00 p. m."></textarea>', "ancho") + '</div><div class="au-acc"><button type="button" class="btn" id="auGuardarN">Guardar cobertura</button></div>';
+   h = '<h3 class="au-paso"><span>2</span>Perfil o perfiles que se cubrieron</h3>' + chipsHtml() + '<h3 class="au-paso"><span>3</span>Quién cubrió</h3><div class="au-grid">' + campo("auCQuien", "Quién atendió el perfil", '<select id="auCQuien">' + opciones(C.cubren) + '</select><span class="au-pista" id="auCTit"></span>') + campo("auCMot", 'Motivo <small class="au-mut au-oblig">(obligatorio)</small>', '<select id="auCMot">' + opciones((C.motivosCobertura || []).filter((m => !/^otro/i.test(String(m).trim())))) + "</select>") + campo("auCDesde", 'Cubrió desde <small class="au-mut au-oblig">(obligatorio)</small>', '<input type="time" id="auCDesde">') + campo("auCHasta", 'Hasta <small class="au-mut au-oblig">(obligatorio)</small>', '<input type="time" id="auCHasta">') + campo("auCDet", 'Razón <small class="au-mut au-oblig" id="auCDetL">(obligatorio)</small>', '<textarea id="auCDet" placeholder="Ej.: el titular salió por una cita médica y le avisó al supervisor."></textarea>', "ancho") + '</div><div class="au-acc"><button type="button" class="btn" id="auGuardarN">Guardar cobertura</button></div>';
   }
   f.innerHTML = h;
   audConectarForm();
@@ -15409,11 +15409,10 @@ if (typeof MON_ICO !== "undefined") MON_ICO.aud = '<path d="M9 4h6l1 2h3v14H5V6h
     lm.textContent = o ? "(obligatorio: elegiste «Otro», escribe la razón)" : "(opcional)";
     lm.classList.toggle("au-oblig", o);
    }
-   const lc = q("#auCDetL"), cm = q("#auCMot");
-   if (lc && cm) {
-    const o = /^otro/i.test(cm.value);
-    lc.textContent = o ? "(obligatorio: elegiste «Otro», escribe la razón)" : "(opcional)";
-    lc.classList.toggle("au-oblig", o);
+   const lc = q("#auCDetL");
+   if (lc) {
+    lc.textContent = "(obligatorio)";
+    lc.classList.add("au-oblig");
    }
   };
   {
@@ -15971,17 +15970,31 @@ const evDato = a => ({
     if (AUD.ev.soportes.length !== n) return audMsg("mal", "Pusiste " + n + (n === 1 ? " archivo" : " archivos") + ": sube " + n + (n === 1 ? " soporte" : " soportes") + " (uno por cada uno). Llevas " + AUD.ev.soportes.length + ".");
    }
   } else if (AUD.clase === "cobertura") {
+   const cDesde = val("auCDesde"), cHasta = val("auCHasta"), cRazon = String(val("auCDet") || "").trim();
+   const h12 = t => {
+    const m = String(t || "").match(/^(\d{1,2}):(\d{2})/);
+    if (!m) return t;
+    const H = Number(m[1]);
+    return (H % 12 || 12) + ":" + m[2] + (H < 12 ? " a. m." : " p. m.");
+   };
+   if (!val("auCQuien") || !val("auCMot")) return audMsg("mal", "Elige quién atendió el perfil y el motivo.");
+   if (!cDesde || !cHasta) {
+    const x = q(cDesde ? "#auCHasta" : "#auCDesde");
+    if (x) x.focus();
+    return audMsg("mal", "Pon el horario en el que cubrió el perfil (desde y hasta).");
+   }
+   if (cRazon.length < 8) {
+    const dt = q("#auCDet");
+    if (dt) dt.focus();
+    return audMsg("mal", "Escribe la razón por la que se cubrió el perfil.");
+   }
    Object.assign(base, {
     cubre: val("auCQuien"),
     motivo: val("auCMot"),
-    detalle: val("auCDet")
+    desde: cDesde,
+    hasta: cHasta,
+    detalle: "Cubrió de " + h12(cDesde) + " a " + h12(cHasta) + ". Razón: " + cRazon
    });
-   if (!base.cubre || !base.motivo) return audMsg("mal", "Elige quién atendió el perfil y el motivo.");
-   if (/^otro/i.test(base.motivo) && base.detalle.trim().length < 8) {
-    const dt = q("#auCDet");
-    if (dt) dt.focus();
-    return audMsg("mal", "Elegiste «Otro»: escribe en Detalle por qué se cubrió el perfil.");
-   }
   }
   if (AUD.ev.cargando) return audMsg("mal", "Espera a que terminen de cargar las evidencias.");
   if (AUD.ev.total || AUD.ev.soportes.length) base.evidencias = {
