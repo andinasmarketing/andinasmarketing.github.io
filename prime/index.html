@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 212", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 213", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "aaee9f93c95d";
+ var HUELLA = "c7e52a7834ea";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -3898,7 +3898,7 @@ function sgNttRender() {
     dia = x.fecha;
     o += '<div class="nvm-dia"><b>' + esc(x.fecha.slice(8) + "/" + x.fecha.slice(5, 7)) + "</b><span>" + L.filter((y => y.fecha === dia)).length + " registros</span></div>";
    }
-   return o + '<div class="nt-c' + (x.resp ? "" : " pend") + '"><div class="nt-ch"><b>' + esc(x.o) + (x.g ? " · " + esc(x.g) : "") + "</b>" + ntPill(x) + "</div><small>" + esc(x.turno) + " · la registró <b>" + esc(x.mon || "—") + "</b>" + (x.reg ? " el " + esc(x.reg) : "") + (x.visto ? " · el operador la vio el " + esc(x.visto) : " · el operador todavía no la ha visto") + (x.respT ? " · respondió el " + esc(x.respT) : "") + '</small><div><span class="nt-t">' + esc(x.tipo) + '</span></div><p class="nt-x">' + esc(x.txt) + "</p>" + ntFotos(x, supNombre || "") + (x.com ? '<div class="nt-com">💬 Comentario del operador: ' + esc(x.com) + "</div>" : "") + "</div>";
+   return o + '<div class="nt-c' + (x.resp ? "" : " pend") + '"><div class="nt-ch"><b>' + esc(x.o) + (x.g ? " · " + esc(x.g) : "") + "</b><span style=\"display:flex;gap:8px;align-items:center\">" + ntPill(x) + '<button type="button" class="btn ghost" data-ntb="' + esc(x.id) + '" style="padding:4px 10px;font-size:12px" title="Borrar esta novedad (por ejemplo, si fue de prueba)">Borrar</button></span></div><small>' + esc(x.turno) + " · la registró <b>" + esc(x.mon || "—") + "</b>" + (x.reg ? " el " + esc(x.reg) : "") + (x.visto ? " · el operador la vio el " + esc(x.visto) : " · el operador todavía no la ha visto") + (x.respT ? " · respondió el " + esc(x.respT) : "") + '</small><div><span class="nt-t">' + esc(x.tipo) + '</span></div><p class="nt-x">' + esc(x.txt) + "</p>" + ntFotos(x, supNombre || "") + (x.com ? '<div class="nt-com">💬 Comentario del operador: ' + esc(x.com) + "</div>" : "") + "</div>";
   })).join("") + "</div>";
  }
  c.innerHTML = h;
@@ -3908,6 +3908,39 @@ function sgNttRender() {
  }));
  const ba = c.querySelector("#ntsAct");
  if (ba) ba.onclick = () => sgNttCargar(true);
+ c.querySelectorAll("[data-ntb]").forEach((bt => bt.onclick = () => {
+  if (bt.dataset.seguro !== "1") {
+   bt.dataset.seguro = "1";
+   bt.textContent = "¿Seguro? Toca otra vez para borrar";
+   bt.style.borderColor = "#B3312A";
+   bt.style.color = "#B3312A";
+   setTimeout((() => {
+    if (bt.isConnected && bt.dataset.seguro === "1" && !bt.disabled) {
+     bt.dataset.seguro = "";
+     bt.textContent = "Borrar";
+     bt.style.borderColor = "";
+     bt.style.color = "";
+    }
+   }), 6e3);
+   return;
+  }
+  bt.disabled = true;
+  bt.textContent = "Borrando…";
+  const id = bt.dataset.ntb;
+  ntLlamar("ntBorrar", [ window.claveSup && window.claveSup() || "", id, typeof supNombre !== "undefined" ? supNombre : "" ], (t => {
+   const r = ntJson(t);
+   if (!r.ok) {
+    bt.disabled = false;
+    bt.dataset.seguro = "";
+    bt.textContent = "Borrar";
+    alertaSuave(r.error || "No se pudo borrar.");
+    return;
+   }
+   if (NTS.d && NTS.d.lista) NTS.d.lista = NTS.d.lista.filter((y => y.id !== id));
+   if (typeof NTX !== "undefined" && NTX.m.d && NTX.m.d.mios) NTX.m.d.mios = NTX.m.d.mios.filter((y => y.id !== id));
+   if (typeof sgResumen === "function") sgResumen(); else sgNttRender();
+  }));
+ }));
  ntFotosEnlazar(c, window.claveSup && window.claveSup() || "");
 }
 
@@ -17921,4 +17954,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = 'aaee9f93c95d' -->
+<!-- var HUELLA = 'c7e52a7834ea' -->
