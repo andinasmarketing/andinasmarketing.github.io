@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr03m5tH4HrrssdWXzoGtKFAqbvOnPPA7tRjsFSRsE16hLkv-w/exec";
 
 (function() {
- var n = 0, VER = "web 213", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 214", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "063409be04b8";
+ var HUELLA = "320ddc864987";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -3944,9 +3944,11 @@ function sgNttRender() {
  ntFotosEnlazar(c, window.claveSup && window.claveSup() || "");
 }
 
+const sgDejMes = () => typeof F !== "undefined" && F.mes || DATA && DATA.claveActual || sgHoyYmd().slice(0, 7);
+
 function sgDejados() {
- const M = SEGMON.mon;
- return (SEGMON.dejados || []).filter((x => !M || sgEs(x.q, M) || nrm(x.q).indexOf(nrm(M)) >= 0));
+ const M = SEGMON.mon, mes = sgDejMes();
+ return (SEGMON.dejados || []).filter((x => String(x.f || "").slice(0, 7) === mes && (!M || sgEs(x.q, M) || nrm(x.q).indexOf(nrm(M)) >= 0)));
 }
 
 function sgDejadosPer() {
@@ -3961,7 +3963,7 @@ function sgDejRender() {
   return;
  }
  const xs = sgDejados();
- const ayuda = '<div class="sg-dej-ay"><b>¿Qué es esto?</b> Cada ID que anota un operador le toca al monitor que está de turno en ese momento. ' + "Lo que se anota en los <b>últimos 10 minutos</b> de un turno ya le toca al monitor que entra (no cuenta aquí). " + "Aquí sale, monitor por monitor y día por día, lo que <b>no verificó antes de terminar su turno</b> y tuvo que verificar el compañero que llegó, " + "y los turnos a los que <b>no se presentó</b>. Si se quedó un rato más y los verificó él mismo, no cuenta. Es el historial completo (desde el 20/10), sin importar el periodo de arriba.</div>";
+ const ayuda = '<div class="sg-dej-ay"><b>¿Qué es esto?</b> Cada ID que anota un operador le toca al monitor que está de turno en ese momento. ' + "Lo que se anota en los <b>últimos 10 minutos</b> de un turno ya le toca al monitor que entra (no cuenta aquí). " + "Aquí sale, monitor por monitor y día por día, lo que <b>no verificó antes de terminar su turno</b> y tuvo que verificar el compañero que llegó, " + "y los turnos a los que <b>no se presentó</b>. Si se quedó un rato más y los verificó él mismo, no cuenta. Sale solo lo del <b>mes elegido arriba</b> (" + esc(((DATA.mesPorClave || {})[sgDejMes()] || {}).nombre || sgDejMes()) + "), sin mezclar meses ni importar el periodo.</div>";
  if (!xs.length) {
   c.innerHTML = ayuda + '<div class="state" style="padding:18px 0">' + (SEGMON.mon ? esc(SEGMON.mon) + " no ha dejado IDs sin verificar." : "Ningún monitor ha dejado IDs sin verificar al cierre de su turno.") + "</div>";
   return;
@@ -17954,4 +17956,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = '063409be04b8' -->
+<!-- var HUELLA = '320ddc864987' -->
