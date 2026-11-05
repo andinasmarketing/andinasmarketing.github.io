@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr03m5tH4HrrssdWXzoGtKFAqbvOnPPA7tRjsFSRsE16hLkv-w/exec";
 
 (function() {
- var n = 0, VER = "web 211", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 212", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "2eba1a54f8cd";
+ var HUELLA = "4d55120029df";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -3684,7 +3684,8 @@ const PROD_K = {
  mm: [ "Multimedia", "#2A7F9E" ],
  fal: [ "Faltas", "#B3312A" ],
  cob: [ "Coberturas", "#9499A6" ],
- per: [ "Cambios de perfil", "#7A5D00" ]
+ per: [ "Cambios de perfil", "#7A5D00" ],
+ nt: [ "Novedades de turno", "#8E4FB5" ]
 };
 
 const PROD_TAREAS = [ [ "V", "Verificar IDs" ], [ "D", "Digitar clientes" ], [ "pts", "Revisión por puntos" ], [ "tar", "Control de tareas" ], [ "mm", "Revisión de multimedia" ] ];
@@ -3805,7 +3806,7 @@ function sgProdRender() {
  const barra = (p, nm) => '<div class="pd-b"><span>' + nm + '</span><i><em style="width:' + Math.max(2, p) + "%;background:" + (p >= 80 ? "#1E7A4F" : p >= 50 ? "#C9A227" : "#B3312A") + '"></em></i><b>' + p + "%</b></div>";
  let h = '<div class="pd-nota">Del ' + fe(d.desde) + " al " + fe(d.hasta) + ". Un <b>rato sin registros</b> es tiempo dentro del turno (sin contar el break) de " + d.hueco + " minutos o más en que no quedó nada a su nombre. Revisar chats o apoyar a un operador no deja registro: úsalo para preguntar, no como prueba." + (d.audOk === false ? " <b>No se pudo leer REGISTROS AUDITORIA:</b> faltan tareas, multimedia y faltas." : "") + "</div>";
  if (alertas.length) h += '<div class="pd-al"><b>Lo que hay que mirar</b><ul>' + alertas.map((x => '<li class="' + x[0] + '">' + x[1] + "</li>")).join("") + "</ul></div>";
- h += '<div class="pd-mons">' + R.map((x => '<div class="pd-m"><div class="pd-mh"><b>' + esc(x.n) + "</b><span>" + x.N + (x.N === 1 ? " turno" : " turnos") + "</span></div>" + '<div class="pd-ks">' + kpi(fmt.format(x.prom("V")), "IDs verificados", "por turno") + kpi(fmt.format(x.prom("D")), "Clientes digitados", "por turno") + kpi(fmt.format(x.prom("tar")), "Perfiles revisados", "tareas por turno") + kpi(fmt.format(x.sum("mm")), "Multimedia", "en " + x.con("mm") + " de " + x.N + " turnos", x.pct("mm") < 50 ? "r" : "") + kpi(hm(x.sinReg), "Sin registros", "promedio por turno", x.sinReg >= 180 ? "r" : "") + kpi(x.porPerfil === null ? "—" : x.porPerfil + " min", "Por perfil", x.porPerfil === null ? "se mide desde hoy" : "en el control de tareas") + "</div>" + '<div class="pd-bs"><small>Turnos en que lo hizo</small>' + TAR.map((([k, nm]) => barra(x.pct(k), nm))).join("") + "</div>" + '<div class="pd-brk">✎ Digitación de clientes nuevos: ' + (x.conDig ? "en <b>" + x.conDig + " de " + x.N + "</b> turnos, en promedio <b>" + hm(x.digMin) + "</b> por turno." : "<b>no digitó</b> en estos turnos.") + "</div>" + '<div class="pd-brk">☕ ' + (!brkDesde ? "Break: todavía nadie lo ha marcado con el botón «Salgo a break» (es nuevo)." : !x.nB ? "Break: no ha tenido turnos desde que existe el botón «Salgo a break»." : !x.conBreak ? "Break: <b>no lo marcó</b> en sus " + x.nB + (x.nB === 1 ? " turno" : " turnos") + " desde el " + brkDesde.slice(8) + "/" + brkDesde.slice(5, 7) + "." : "Break: lo marcó en " + x.conBreak + " de " + x.nB + (x.nB === 1 ? " turno" : " turnos") + " (desde el " + brkDesde.slice(8) + "/" + brkDesde.slice(5, 7) + "), en promedio " + x.promB + " min." + (x.exceso ? " <b>Se pasó de " + (d.breakMin || 20) + " min en " + x.exceso + (x.exceso === 1 ? " turno" : " turnos") + ".</b>" : "")) + "</div></div>")).join("") + "</div>";
+ h += '<div class="pd-mons">' + R.map((x => '<div class="pd-m"><div class="pd-mh"><b>' + esc(x.n) + "</b><span>" + x.N + (x.N === 1 ? " turno" : " turnos") + "</span></div>" + '<div class="pd-ks">' + kpi(fmt.format(x.prom("V")), "IDs verificados", "por turno") + kpi(fmt.format(x.prom("D")), "Clientes digitados", "por turno") + kpi(fmt.format(x.prom("tar")), "Perfiles revisados", "tareas por turno") + kpi(fmt.format(x.sum("mm")), "Multimedia", "en " + x.con("mm") + " de " + x.N + " turnos", x.pct("mm") < 50 ? "r" : "") + kpi(hm(x.sinReg), "Sin registros", "promedio por turno", x.sinReg >= 180 ? "r" : "") + kpi(x.porPerfil === null ? "—" : x.porPerfil + " min", "Por perfil", x.porPerfil === null ? "se mide desde hoy" : "en el control de tareas") + "</div>" + '<div class="pd-bs"><small>Turnos en que lo hizo</small>' + TAR.map((([k, nm]) => barra(x.pct(k), nm))).join("") + "</div>" + '<div class="pd-brk">✎ Digitación de clientes nuevos: ' + (x.conDig ? "en <b>" + x.conDig + " de " + x.N + "</b> turnos, en promedio <b>" + hm(x.digMin) + "</b> por turno." : "<b>no digitó</b> en estos turnos.") + "</div>" + (window.ES_PRIME !== false ? '<div class="pd-brk">📝 Novedades de turno: ' + (x.sum("nt") ? "<b>" + x.sum("nt") + "</b> " + (x.sum("nt") === 1 ? "registrada" : "registradas") + " en " + x.con("nt") + " de " + x.N + (x.N === 1 ? " turno" : " turnos") + "." : "no registró ninguna en estos turnos.") + "</div>" : "") + '<div class="pd-brk">☕ ' + (!brkDesde ? "Break: todavía nadie lo ha marcado con el botón «Salgo a break» (es nuevo)." : !x.nB ? "Break: no ha tenido turnos desde que existe el botón «Salgo a break»." : !x.conBreak ? "Break: <b>no lo marcó</b> en sus " + x.nB + (x.nB === 1 ? " turno" : " turnos") + " desde el " + brkDesde.slice(8) + "/" + brkDesde.slice(5, 7) + "." : "Break: lo marcó en " + x.conBreak + " de " + x.nB + (x.nB === 1 ? " turno" : " turnos") + " (desde el " + brkDesde.slice(8) + "/" + brkDesde.slice(5, 7) + "), en promedio " + x.promB + " min." + (x.exceso ? " <b>Se pasó de " + (d.breakMin || 20) + " min en " + x.exceso + (x.exceso === 1 ? " turno" : " turnos") + ".</b>" : "")) + "</div></div>")).join("") + "</div>";
  const ley = '<div class="pd-ley">' + Object.keys(PROD_K).map((k => '<span><i style="background:' + PROD_K[k][1] + '"></i>' + PROD_K[k][0] + "</span>")).join("") + '<span><i class="hu"></i>Sin registros</span><span><i class="br"></i>Break</span></div>';
  const linea = t => {
   const L = t.dur, pc = m => Math.max(0, Math.min(100, m * 100 / L));
@@ -17920,4 +17921,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = '2eba1a54f8cd' -->
+<!-- var HUELLA = '4d55120029df' -->
