@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycby3GwgzMEi7DcXUkfCtX9JroODoaJalAv6MN_1D_zrn5TJoOm3msQFiM3v3iIOXPYl-/exec";
 
 (function() {
- var n = 0, VER = "web 214", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 215", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "f4c27c853a1d";
+ var HUELLA = "513e26a2e027";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -15302,6 +15302,26 @@ if (typeof MON_ICO !== "undefined") MON_ICO.aud = '<path d="M9 4h6l1 2h3v14H5V6h
   AUD.errCat = "";
   audPintarBase();
   audLlamar("audCatalogo", [ audClaveMon() ]).then((c => {
+   // «Quién atendió el perfil»: supervisores, encargados y monitores con nombre y apellido, y los que faltaban
+   try {
+    const COMPLETO = {
+     ALEXANDER: "ALEXANDER COLINA",
+     MAURICIO: "MAURICIO TORREALBA",
+     HAROLD: "HAROLD CABRERA",
+     LARRY: "LARRY RIERA",
+     LUIZZANA: "LUIZZANA MUÑOZ",
+     CAMILO: "CAMILO BUITRAGO",
+     JENNY: "JENNY VILLAMIZAR",
+     ZHUHEY: "ZHUHEY STAPER"
+    }, EXTRA = [ "ALEXANDER COLINA", "MAURICIO TORREALBA", "NELSON HERRERA" ];
+    if (c && Array.isArray(c.cubren)) {
+     const L = c.cubren.map((n => COMPLETO[String(n).trim().toUpperCase()] || n));
+     EXTRA.forEach((n => {
+      if (!L.some((x => String(x).trim().toUpperCase() === n))) L.push(n);
+     }));
+     c.cubren = L.filter(((x, i, a) => x && a.findIndex((y => String(y).trim().toUpperCase() === String(x).trim().toUpperCase())) === i));
+    }
+   } catch (e) {}
    AUD.cat = c;
    AUD.cargandoCat = false;
    if (!AUD.turno) AUD.turno = turnoAhora();
@@ -17971,4 +17991,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = 'f4c27c853a1d' -->
+<!-- var HUELLA = '513e26a2e027' -->
