@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8aHAmA1aiFHCsf8XuHty7VSyH1G3gk0Oui4AZRSGtyeCLjC/exec";
 
 (function() {
- var n = 0, VER = "web 219", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 220", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "b3a9bd005da1";
+ var HUELLA = "6e0bd2e0388b";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -384,7 +384,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
 <div class="pr-clave" role="dialog" aria-modal="true" aria-labelledby="keyTitle">
 <h2 id="keyTitle">Entrar a supervisión</h2>
 <div class="sub">Solo para encargados, supervisores y administración. Escribe tu nombre y apellido (en mayúsculas, minúsculas o mezclado, con o sin tildes: como quieras) y la clave.</div>
-<input type="text" id="keyNombre" placeholder="Nombre y apellido" autocomplete="name" aria-label="Nombre y apellido" style="margin-bottom:8px">
+<input type="text" id="keyNombre" placeholder="Tu nombre (o nombre y apellido)" autocomplete="name" aria-label="Tu nombre" style="margin-bottom:8px">
 <input type="password" id="keyInput" placeholder="Clave" autocomplete="current-password" aria-label="Clave">
 <div class="err" id="keyErr"></div>
 <div class="pr-botones">
@@ -10420,7 +10420,7 @@ document.getElementById("navInicio").onclick = () => {
   caja.hidden = false;
   if (D.min) {
    caja.classList.add("mini");
-   caja.innerHTML = "<b>Recordatorio:</b> faltan " + xs.reduce(((s, y) => s + y.faltan), 0) + " por llenar" + (venc ? "" : " · " + dur(quedan));
+   caja.innerHTML = "<b>Recordatorio:</b> faltan " + xs.reduce(((s, y) => s + y.faltan), 0) + " por llenar";
    caja.onclick = () => {
     D.min = false;
     ver();
@@ -10430,9 +10430,9 @@ document.getElementById("navInicio").onclick = () => {
   caja.onclick = null;
   const linea = y => {
    const v = ahora > y.venceMs;
-   return "<b>Recordatorio: falta llenar los clientes nuevos de la " + JN(y.j) + " del " + fe(y.f) + "</b> (cerró a las " + y.cierre + "): faltan <b>" + y.faltan + "</b> de " + y.total + " casillas" + (y.grupos && y.grupos.length ? " en " + esc(y.grupos.slice(0, 6).join(", ")) + (y.grupos.length > 6 ? " y " + (y.grupos.length - 6) + " más" : "") : "") + (y.resp && y.resp.length ? typeof MON !== "undefined" && MON.nombre && y.resp.some((n => nrm(n) === nrm(MON.nombre) || nrm(n).split(" ")[0] === nrm(MON.nombre).split(" ")[0])) ? " · <b>te toca a ti</b>" : " · le toca a <b>" + esc(y.resp.join(" y ")) + "</b>" : "") + ". " + (v ? y.aut ? "<b>" + esc(y.autPor || "Supervisión") + " autorizó llenarlo hasta las " + esc(y.aut) + "</b>: hazlo ya." : "Para llenarlo ahora, pide autorización a tu supervisora." + (window.claveSup && window.claveSup() ? ' <button type="button" class="dg-aut" data-f="' + esc(y.f) + '" data-j="' + esc(y.j) + '">Autorizar 1 hora</button>' : "") : "Tienes hasta las <b>" + y.vence + "</b>.");
+   return "<b>Recordatorio: falta llenar los clientes nuevos de la " + JN(y.j) + " del " + fe(y.f) + "</b> (cerró a las " + y.cierre + "): faltan <b>" + y.faltan + "</b> de " + y.total + " casillas" + (y.grupos && y.grupos.length ? " en " + esc(y.grupos.slice(0, 6).join(", ")) + (y.grupos.length > 6 ? " y " + (y.grupos.length - 6) + " más" : "") : "") + (y.resp && y.resp.length ? typeof MON !== "undefined" && MON.nombre && y.resp.some((n => nrm(n) === nrm(MON.nombre) || nrm(n).split(" ")[0] === nrm(MON.nombre).split(" ")[0])) ? " · <b>te toca a ti</b>" : " · le toca a <b>" + esc(y.resp.join(" y ")) + "</b>" : "") + ". Las casillas que faltan están en <b>amarillo</b> en la hoja del mes." + (y.aut ? " <b>" + esc(y.autPor || "Supervisión") + " autorizó que otro monitor lo llene hasta las " + esc(y.aut) + "</b>." : window.claveSup && window.claveSup() ? ' <button type="button" class="dg-aut" data-f="' + esc(y.f) + '" data-j="' + esc(y.j) + '" title="Deja que otro monitor (no solo al que le toca) llene esta jornada durante 1 hora">Autorizar a otro monitor 1 hora</button>' : "");
   };
-  caja.innerHTML = '<div class="dg-f"><span class="dg-i">' + "✎" + '</span><span class="dg-t">' + xs.map(linea).join("<br>") + "</span>" + '<span class="dg-r">' + (venc ? "Pendiente" : dur(quedan)) + "</span></div>" + '<div class="dg-f" style="margin-top:8px;justify-content:flex-end">' + (d.url ? '<a href="' + esc(d.url) + '" target="_blank" rel="noopener">Abrir la hoja del mes</a>' : "") + '<button type="button" class="dg-v">' + (D.abierto ? "Ocultar cuáles" : "Ver cuáles faltan") + '</button><button type="button" class="dg-m">Minimizar</button></div>' + (D.abierto ? '<div class="dg-l">' + xs.map((y => y.det.map((z => "<div>" + esc(z[0]) + " · " + esc(z[1]) + ' <span style="opacity:.7">(' + esc(z[2]) + ", columna del " + fe(z[3] || y.f) + ")</span></div>")).join(""))).join("") + (xs.some((y => y.faltan > y.det.length)) ? "<div>…</div>" : "") + "</div>" : "");
+  caja.innerHTML = '<div class="dg-f"><span class="dg-i">' + "✎" + '</span><span class="dg-t">' + xs.map(linea).join("<br>") + "</span>" + '<span class="dg-r">Pendiente</span></div>" + '<div class="dg-f" style="margin-top:8px;justify-content:flex-end">' + (d.url ? '<a href="' + esc(d.url) + '" target="_blank" rel="noopener">Abrir la hoja del mes</a>' : "") + '<button type="button" class="dg-v">' + (D.abierto ? "Ocultar cuáles" : "Ver cuáles faltan") + '</button><button type="button" class="dg-m">Minimizar</button></div>' + (D.abierto ? '<div class="dg-l">' + xs.map((y => y.det.map((z => "<div>" + esc(z[0]) + " · " + esc(z[1]) + ' <span style="opacity:.7">(' + esc(z[2]) + ", columna del " + fe(z[3] || y.f) + ")</span></div>")).join(""))).join("") + (xs.some((y => y.faltan > y.det.length)) ? "<div>…</div>" : "") + "</div>" : "");
   caja.querySelectorAll(".dg-aut").forEach((bt => bt.onclick = ev => {
    ev.stopPropagation();
    bt.disabled = true;
@@ -10444,7 +10444,7 @@ document.getElementById("navInicio").onclick = () => {
     } catch (e) {}
     if (!r || !r.ok) {
      bt.disabled = false;
-     bt.textContent = "Autorizar 1 hora";
+     bt.textContent = "Autorizar a otro monitor 1 hora";
      alertaSuave(r && r.error || "No se pudo autorizar.");
      return;
     }
@@ -10452,7 +10452,7 @@ document.getElementById("navInicio").onclick = () => {
     pedir();
    })).withFailureHandler((() => {
     bt.disabled = false;
-    bt.textContent = "Autorizar 1 hora";
+    bt.textContent = "Autorizar a otro monitor 1 hora";
    })).autorizarDigitacion(window.claveSup(), bt.dataset.f, bt.dataset.j, 60, typeof supNombre !== "undefined" ? supNombre : "");
   }));
   caja.querySelector(".dg-v").onclick = () => {
@@ -18030,4 +18030,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = 'b3a9bd005da1' -->
+<!-- var HUELLA = '6e0bd2e0388b' -->
