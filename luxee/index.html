@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycby3GwgzMEi7DcXUkfCtX9J
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "a819bed3c842";
+ var HUELLA = "be75ad58c45e";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -10432,7 +10432,7 @@ document.getElementById("navInicio").onclick = () => {
    const v = ahora > y.venceMs;
    return "<b>Recordatorio: falta llenar los clientes nuevos de la " + JN(y.j) + " del " + fe(y.f) + "</b> (cerró a las " + y.cierre + "): faltan <b>" + y.faltan + "</b> de " + y.total + " casillas" + (y.grupos && y.grupos.length ? " en " + esc(y.grupos.slice(0, 6).join(", ")) + (y.grupos.length > 6 ? " y " + (y.grupos.length - 6) + " más" : "") : "") + (y.resp && y.resp.length ? typeof MON !== "undefined" && MON.nombre && y.resp.some((n => nrm(n) === nrm(MON.nombre) || nrm(n).split(" ")[0] === nrm(MON.nombre).split(" ")[0])) ? " · <b>te toca a ti</b>" : " · le toca a <b>" + esc(y.resp.join(" y ")) + "</b>" : "") + ". Las casillas que faltan están en <b>amarillo</b> en la hoja del mes." + (y.aut ? " <b>" + esc(y.autPor || "Supervisión") + " autorizó que otro monitor lo llene hasta las " + esc(y.aut) + "</b>." : window.claveSup && window.claveSup() ? ' <button type="button" class="dg-aut" data-f="' + esc(y.f) + '" data-j="' + esc(y.j) + '" title="Deja que otro monitor (no solo al que le toca) llene esta jornada durante 1 hora">Autorizar a otro monitor 1 hora</button>' : "");
   };
-  caja.innerHTML = '<div class="dg-f"><span class="dg-i">' + "✎" + '</span><span class="dg-t">' + xs.map(linea).join("<br>") + "</span>" + '<span class="dg-r">Pendiente</span></div>" + '<div class="dg-f" style="margin-top:8px;justify-content:flex-end">' + (d.url ? '<a href="' + esc(d.url) + '" target="_blank" rel="noopener">Abrir la hoja del mes</a>' : "") + '<button type="button" class="dg-v">' + (D.abierto ? "Ocultar cuáles" : "Ver cuáles faltan") + '</button><button type="button" class="dg-m">Minimizar</button></div>' + (D.abierto ? '<div class="dg-l">' + xs.map((y => y.det.map((z => "<div>" + esc(z[0]) + " · " + esc(z[1]) + ' <span style="opacity:.7">(' + esc(z[2]) + ", columna del " + fe(z[3] || y.f) + ")</span></div>")).join(""))).join("") + (xs.some((y => y.faltan > y.det.length)) ? "<div>…</div>" : "") + "</div>" : "");
+  caja.innerHTML = '<div class="dg-f"><span class="dg-i">' + "✎" + '</span><span class="dg-t">' + xs.map(linea).join("<br>") + "</span>" + '<span class="dg-r">Pendiente</span></div>' + '<div class="dg-f" style="margin-top:8px;justify-content:flex-end">' + (d.url ? '<a href="' + esc(d.url) + '" target="_blank" rel="noopener">Abrir la hoja del mes</a>' : "") + '<button type="button" class="dg-v">' + (D.abierto ? "Ocultar cuáles" : "Ver cuáles faltan") + '</button><button type="button" class="dg-m">Minimizar</button></div>' + (D.abierto ? '<div class="dg-l">' + xs.map((y => y.det.map((z => "<div>" + esc(z[0]) + " · " + esc(z[1]) + ' <span style="opacity:.7">(' + esc(z[2]) + ", columna del " + fe(z[3] || y.f) + ")</span></div>")).join(""))).join("") + (xs.some((y => y.faltan > y.det.length)) ? "<div>…</div>" : "") + "</div>" : "");
   caja.querySelectorAll(".dg-aut").forEach((bt => bt.onclick = ev => {
    ev.stopPropagation();
    bt.disabled = true;
@@ -18045,4 +18045,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = 'a819bed3c842' -->
+<!-- var HUELLA = 'be75ad58c45e' -->
