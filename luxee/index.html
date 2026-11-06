@@ -17,14 +17,14 @@
 window.API_URL = "https://script.google.com/macros/s/AKfycby3GwgzMEi7DcXUkfCtX9JroODoaJalAv6MN_1D_zrn5TJoOm3msQFiM3v3iIOXPYl-/exec";
 
 (function() {
- var n = 0, VER = "web 218", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
+ var n = 0, VER = "web 219", MSG = "No se pudo conectar con los datos de Google (" + VER + "). Si sigue pasando, avísale a supervisión.";
  document.addEventListener("DOMContentLoaded", (function() {
   var v = document.createElement("div");
   v.textContent = VER;
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "d272de574239";
+ var HUELLA = "5b9aee93c2bf";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -10416,11 +10416,11 @@ document.getElementById("navInicio").onclick = () => {
    return;
   }
   const ahora = Date.now(), x = xs[xs.length - 1], venc = xs.some((y => ahora > y.venceMs)), quedan = Math.max(0, Math.ceil((x.venceMs - ahora) / 6e4));
-  caja.className = venc ? "venc" : "";
+  caja.className = "";
   caja.hidden = false;
   if (D.min) {
    caja.classList.add("mini");
-   caja.innerHTML = "<b>" + (venc ? "Plazo vencido" : "Por digitar") + ":</b> faltan " + xs.reduce(((s, y) => s + y.faltan), 0) + (venc ? "" : " · " + dur(quedan));
+   caja.innerHTML = "<b>Recordatorio:</b> faltan " + xs.reduce(((s, y) => s + y.faltan), 0) + " por llenar" + (venc ? "" : " · " + dur(quedan));
    caja.onclick = () => {
     D.min = false;
     ver();
@@ -10430,9 +10430,9 @@ document.getElementById("navInicio").onclick = () => {
   caja.onclick = null;
   const linea = y => {
    const v = ahora > y.venceMs;
-   return "<b>" + (v ? "Se venció el plazo para digitar la" : "Digita los clientes nuevos de la") + " " + JN(y.j) + " del " + fe(y.f) + "</b> (cerró a las " + y.cierre + "): faltan <b>" + y.faltan + "</b> de " + y.total + " casillas" + (y.grupos && y.grupos.length ? " en " + esc(y.grupos.slice(0, 6).join(", ")) + (y.grupos.length > 6 ? " y " + (y.grupos.length - 6) + " más" : "") : "") + (y.resp && y.resp.length ? typeof MON !== "undefined" && MON.nombre && y.resp.some((n => nrm(n) === nrm(MON.nombre) || nrm(n).split(" ")[0] === nrm(MON.nombre).split(" ")[0])) ? " · <b>te toca a ti</b>" : " · le toca a <b>" + esc(y.resp.join(" y ")) + "</b>" : "") + ". " + (v ? y.aut ? "Tenía hasta las " + y.vence + " (quedó como fuera de tiempo). <b>" + esc(y.autPor || "Supervisión") + " autorizó digitarlo hasta las " + esc(y.aut) + "</b>: digítalo ya." : "Tenía hasta las " + y.vence + ": <b>ya no se puede digitar</b> (la hoja lo bloquea). Pide autorización a tu supervisora." + (window.claveSup && window.claveSup() ? ' <button type="button" class="dg-aut" data-f="' + esc(y.f) + '" data-j="' + esc(y.j) + '">Autorizar 1 hora</button>' : "") : "Tienes hasta las <b>" + y.vence + "</b>.");
+   return "<b>Recordatorio: falta llenar los clientes nuevos de la " + JN(y.j) + " del " + fe(y.f) + "</b> (cerró a las " + y.cierre + "): faltan <b>" + y.faltan + "</b> de " + y.total + " casillas" + (y.grupos && y.grupos.length ? " en " + esc(y.grupos.slice(0, 6).join(", ")) + (y.grupos.length > 6 ? " y " + (y.grupos.length - 6) + " más" : "") : "") + (y.resp && y.resp.length ? typeof MON !== "undefined" && MON.nombre && y.resp.some((n => nrm(n) === nrm(MON.nombre) || nrm(n).split(" ")[0] === nrm(MON.nombre).split(" ")[0])) ? " · <b>te toca a ti</b>" : " · le toca a <b>" + esc(y.resp.join(" y ")) + "</b>" : "") + ". " + (v ? y.aut ? "<b>" + esc(y.autPor || "Supervisión") + " autorizó llenarlo hasta las " + esc(y.aut) + "</b>: hazlo ya." : "Para llenarlo ahora, pide autorización a tu supervisora." + (window.claveSup && window.claveSup() ? ' <button type="button" class="dg-aut" data-f="' + esc(y.f) + '" data-j="' + esc(y.j) + '">Autorizar 1 hora</button>' : "") : "Tienes hasta las <b>" + y.vence + "</b>.");
   };
-  caja.innerHTML = '<div class="dg-f"><span class="dg-i">' + (venc ? "!" : "✎") + '</span><span class="dg-t">' + xs.map(linea).join("<br>") + "</span>" + '<span class="dg-r">' + (venc ? "Vencido" : dur(quedan)) + "</span></div>" + '<div class="dg-f" style="margin-top:8px;justify-content:flex-end">' + (d.url ? '<a href="' + esc(d.url) + '" target="_blank" rel="noopener">Abrir la hoja del mes</a>' : "") + '<button type="button" class="dg-v">' + (D.abierto ? "Ocultar cuáles" : "Ver cuáles faltan") + '</button><button type="button" class="dg-m">Minimizar</button></div>' + (D.abierto ? '<div class="dg-l">' + xs.map((y => y.det.map((z => "<div>" + esc(z[0]) + " · " + esc(z[1]) + ' <span style="opacity:.7">(' + esc(z[2]) + ", columna del " + fe(z[3] || y.f) + ")</span></div>")).join(""))).join("") + (xs.some((y => y.faltan > y.det.length)) ? "<div>…</div>" : "") + "</div>" : "");
+  caja.innerHTML = '<div class="dg-f"><span class="dg-i">' + "✎" + '</span><span class="dg-t">' + xs.map(linea).join("<br>") + "</span>" + '<span class="dg-r">' + (venc ? "Pendiente" : dur(quedan)) + "</span></div>" + '<div class="dg-f" style="margin-top:8px;justify-content:flex-end">' + (d.url ? '<a href="' + esc(d.url) + '" target="_blank" rel="noopener">Abrir la hoja del mes</a>' : "") + '<button type="button" class="dg-v">' + (D.abierto ? "Ocultar cuáles" : "Ver cuáles faltan") + '</button><button type="button" class="dg-m">Minimizar</button></div>' + (D.abierto ? '<div class="dg-l">' + xs.map((y => y.det.map((z => "<div>" + esc(z[0]) + " · " + esc(z[1]) + ' <span style="opacity:.7">(' + esc(z[2]) + ", columna del " + fe(z[3] || y.f) + ")</span></div>")).join(""))).join("") + (xs.some((y => y.faltan > y.det.length)) ? "<div>…</div>" : "") + "</div>" : "");
   caja.querySelectorAll(".dg-aut").forEach((bt => bt.onclick = ev => {
    ev.stopPropagation();
    bt.disabled = true;
@@ -13740,6 +13740,22 @@ function monRender() {
  const d = MON.datos, c = document.getElementById("monCuerpo");
  if (!d) return;
  const ae = document.activeElement;
+ // Si el monitor está escribiendo en cualquier campo del panel (revisión por puntos, auditoría, novedades…), no se redibuja:
+ // se deja pendiente y se hace apenas suelte el campo. Así no pierde lo que escribe ni salta la página.
+ if (c && ae && ae !== document.body && c.contains(ae) && (/^(TEXTAREA|SELECT)$/.test(ae.tagName) || ae.tagName === "INPUT" && !/^(button|checkbox|radio|file|submit)$/i.test(ae.type || "") || ae.isContentEditable)) {
+  MON.renderPend = true;
+  if (!MON.pendFoco) {
+   MON.pendFoco = true;
+   c.addEventListener("focusout", (() => setTimeout((() => {
+    const a2 = document.activeElement;
+    if (MON.renderPend && !(a2 && a2 !== document.body && c.contains(a2) && /^(TEXTAREA|INPUT|SELECT)$/.test(a2.tagName))) {
+     MON.renderPend = false;
+     monRender();
+    }
+   }), 250)));
+  }
+  return;
+ }
  if ((ae && ae.matches && ae.matches(".vf-cli,.vf-otra,.vf-met,.vf-rep-f input,.vf-rep-f select") || window.audEnfocado && window.audEnfocado() || window.extEnfocado && window.extEnfocado()) && !MON.forzarRender) {
   MON.renderPend = true;
   return;
@@ -18029,4 +18045,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = 'd272de574239' -->
+<!-- var HUELLA = '5b9aee93c2bf' -->
