@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr0
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "09c01edaed8d";
+ var HUELLA = "2cfda3d4dbff";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -309,8 +309,8 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr0
 <div id="ntOpCuerpo"></div>
 </div>
 <div id="vistaCliRk" class="pt" hidden>
-<div class="pt-cab pt-cab-f"><div><h2 class="vt">Clientes y ranking</h2>
-<p class="pt-est">Los clientes nuevos que retrajo cada operador este mes y quién va adelante.</p></div>
+<div class="pt-cab pt-cab-f"><div><h2 class="vt">Ranking del bono</h2>
+<p class="pt-est">Los clientes nuevos de cada operador este mes, por jornada. Gana el primer lugar de cada jornada.</p></div>
 <button class="btn" type="button" onclick="amlCliCargar(true)"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.3-4M4 4v3.5h3.5M4 13a8 8 0 0 0 14.3 4M20 20v-3.5h-3.5"/></svg>Actualizar</button></div>
 <div id="amlCliTop"></div>
 </div>
@@ -11306,46 +11306,46 @@ function amlCliCss() {
 function amlCliHtml() {
  const d = ACL.op === aclQuien() ? ACL.d : null;
  const MES = d && d.mes ? [ "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre" ][Number(String(d.mes).slice(5, 7)) - 1] || "" : "";
- const cab = sub => '<div class="cn-h"><div><h2>Clientes nuevos' + (MES ? " de " + MES : "") + '</h2><p class="cn-s">' + sub + "</p></div>" + (d && d.act ? '<span class="cn-act">Actualizado ' + esc(d.act) + "</span>" : "") + "</div>";
+ const cab = sub => '<div class="cn-h"><div><h2>Ranking del bono' + (MES ? " · " + MES : "") + '</h2><p class="cn-s">' + sub + "</p></div>" + (d && d.act ? '<span class="cn-act">Actualizado ' + esc(d.act) + "</span>" : "") + "</div>";
  if (!d) return cab("Quién retrajo más clientes este mes.") + '<div class="cn-cargando">Cargando el ranking…</div>';
  if (!d.ok) return cab("Quién retrajo más clientes este mes.") + '<div class="cn-vacio"><b>No se pudo cargar el ranking</b><span>' + esc(d.error || "Intenta de nuevo en un momento.") + "</span></div>";
  const R = d.ranking || [], conMios = Array.isArray(d.mios), mios = d.mios || [], yo = R.findIndex((x => x.yo)), max = R.length ? R[0].n : 1;
  const ico = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></svg>';
  const candado = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
  const cli = n => n === 1 ? "cliente" : "clientes";
- let h = cab("Cada ID que un operador anota en su tabla cuenta como cliente nuevo. Así va el mes.");
- if (!R.length) h += '<div class="cn-vacio"><div class="cn-vi">' + ico + "</div><b>Todavía no hay clientes nuevos este mes</b><span>Cuando los operadores anoten IDs en su tabla, aquí aparece quién va adelante.</span></div>"; else if (R.some((x => x.j))) h += amlBonoHtml(R); else {
+ let h = cab("Cada operador suma los clientes de todos los perfiles que maneja. Gana el primer lugar de cada jornada.");
+ if (!R.length) h += '<div class="cn-vacio"><div class="cn-vi">' + ico + "</div><b>Todavía no hay clientes nuevos este mes</b><span>Cuando los operadores anoten IDs en su tabla, aquí aparece quién va adelante.</span></div>"; else if (R.some((x => x.j))) h += amlBonoHtml(R, d.mes); else {
   const pd = (x, i) => x ? '<div class="cn-pd p' + (i + 1) + (x.yo ? " yo" : "") + '"><div class="cn-md">' + (i + 1) + '</div>' + (x.yo ? '<span class="cn-tu cn-tup">Tú</span>' : "") + '<div class="n" title="' + esc(x.o) + '">' + esc(x.o) + '</div><div class="g">' + esc(x.g) + '</div><div class="c">' + x.n + "<small>" + cli(x.n) + "</small></div></div>" : '<div class="cn-pd vacio"></div>';
   h += '<div class="cn-podio">' + pd(R[1], 1) + pd(R[0], 0) + pd(R[2], 2) + "</div>";
   if (R.length > 3) h += '<ol class="cn-rank">' + R.slice(3).map(((x, i) => '<li class="' + (x.yo ? "yo" : "") + '"><span class="p">' + (i + 4) + '</span><span class="q"><b>' + esc(x.o) + (x.yo ? '<span class="cn-tu">Tú</span>' : "") + "</b><small>" + esc(x.g) + '</small></span><span class="cn-bar"><i style="width:' + Math.max(4, Math.round(x.n / max * 100)) + '%"></i></span><span class="v">' + x.n + "</span></li>")).join("") + "</ol>";
  }
- const ops = d.ops || [], actual = aclQuien();
- const elegir = '<div class="cn-lock" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span><b>¿Quién eres?</b> Elige tu nombre para ver tus clientes y en qué puesto vas.</span><select onchange="aclElegir(this.value)" aria-label="Tu nombre" style="min-width:220px"><option value="">Elige tu nombre…</option>' + ops.map((n => '<option value="' + esc(n) + '"' + (actual && n.toUpperCase() === actual.toUpperCase() ? " selected" : "") + ">" + esc(n) + "</option>")).join("") + "</select></div>";
- if (!conMios) return h + (ops.length ? elegir : "");
- if (!(typeof PT !== "undefined" && PT.yo === "ok") && ops.length) h += elegir;
- h += '<div class="cn-mio"><div class="cn-mio-h"><b>Tus clientes nuevos</b><span>' + (mios.length ? mios.length + " " + cli(mios.length) + (yo >= 0 ? " · vas de " + (yo + 1) + " de " + R.length : "") : "Aún no tienes este mes") + "</span></div>" + (mios.length ? '<div class="cn-ids">' + mios.map((x => '<button type="button" class="cn-id" data-sgcp="' + esc(x.id) + '" title="Copiar el ID"><b>' + esc(x.id) + "</b><small>Día " + x.d + " · " + esc(x.p) + "</small></button>")).join("") + "</div>" : '<div class="cn-nada">Cuando anotes un ID en tu tabla, aparece aquí. Toca cualquiera para copiarlo.</div>') + "</div>";
  return h;
 }
 
 /* Ranking del bono de AML/LUXEE por jornada, igual que el de PRIME: gana el primer lugar de cada jornada */
-function amlBonoHtml(R) {
+function amlBonoHtml(R, mes) {
  const J3 = [ "MANANA", "TARDE", "NOCHE" ], JL3 = [ "Mañana", "Tarde", "Noche" ];
  const nj = j => String(j || "").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
  const cli = n => n === 1 ? "cliente" : "clientes";
+ // Días con datos, para el promedio por día (como en PRIME)
+ const hoy = new Date, mesHoy = hoy.getFullYear() + "-" + String(hoy.getMonth() + 1).padStart(2, "0");
+ const dias = !mes || mes === mesHoy ? hoy.getDate() : new Date(Number(mes.slice(0, 4)), Number(mes.slice(5, 7)), 0).getDate();
+ const pd = n => dias > 1 ? ", " + (Math.round(n / dias * 10) / 10).toLocaleString("es-CO") + " por día" : "";
+ const chip = t => '<span style="display:table;margin-top:6px;padding:2px 9px;border-radius:99px;font-size:11.5px;background:var(--line-2,#eee);color:var(--muted,#555)">' + t + "</span>";
  const col = (L, t, c) => {
   const head = '<h3><span class="dot" style="background:' + c + '"></span>' + esc(t) + "</h3>";
   if (!L.length) return '<div class="bono-col">' + head + '<div class="empty" style="padding:12px 0">Sin clientes todavía.</div></div>';
   const top = L[0].n, emp = L.filter((x => x.n === top)), seg = L[emp.length];
-  const gan = emp.map((x => '<div class="gan"' + (x.yo ? ' style="box-shadow:0 0 0 2px var(--oro) inset"' : "") + '><div class="tag">' + (emp.length > 1 ? "Empate en el primer lugar" : "Primer lugar") + (x.yo ? " · Tú" : "") + '</div><div class="nm">' + esc(x.o) + '</div><div class="tot">' + x.n + "<small>" + cli(x.n) + '</small></div><div class="det">' + esc(x.g) + (seg && emp.length === 1 ? ". " + (top - seg.n) + " más que el segundo lugar" : "") + "</div></div>")).join("");
+  const gan = emp.map((x => '<div class="gan"><div class="tag">' + (emp.length > 1 ? "Empate en el primer lugar" : "Primer lugar") + '</div><div class="nm">' + esc(x.o) + '</div><div class="tot">' + x.n + "<small>" + cli(x.n) + pd(x.n) + '</small></div><div class="det">' + esc(x.g) + "</div>" + (seg && emp.length === 1 ? chip((top - seg.n) + " más que el 2.º") : "") + "</div>")).join("");
   const P = [];
   L.forEach(((x, q) => {
    P[q] = q && x.n === L[q - 1].n ? P[q - 1] : q + 1;
   }));
-  const resto = L.slice(emp.length).map(((x, k) => "<li" + (x.yo ? ' style="background:var(--hl,rgba(201,162,39,.14));border-radius:6px;padding-left:6px;padding-right:6px"' : "") + '><span class="p">' + P[emp.length + k] + "</span><span>" + esc(x.o) + (x.yo ? " <b>(tú)</b>" : "") + "<small>" + esc(x.g) + ". Le " + (top - x.n === 1 ? "falta 1 cliente" : "faltan " + (top - x.n) + " clientes") + " para el primer lugar</small></span><b>" + x.n + "</b></li>")).join("");
+  const resto = L.slice(emp.length).map(((x, k) => '<li><span class="p">' + P[emp.length + k] + "</span><span><b>" + esc(x.o) + "</b><small>" + esc(x.g) + "</small>" + chip("Le faltan " + (top - x.n) + " para el 1.º") + "</span><b>" + x.n + '<small style="display:block;font-weight:400;font-size:11px;color:var(--faint)">' + cli(x.n) + "</small></b></li>")).join("");
   return '<div class="bono-col">' + head + gan + (resto ? "<ol>" + resto + "</ol>" : "") + "</div>";
  };
  const colores = typeof JC !== "undefined" ? JC : [ "#C9A227", "#9499A6", "#15161A" ];
- let h = '<h3 style="margin:4px 0 2px;font-size:17px">Ranking del bono</h3><p class="cn-s" style="margin:0 0 12px">Cada operador suma los clientes nuevos de todos los perfiles que maneja. Gana el primer lugar de cada jornada.</p>';
+ let h = "";
  h += '<div class="bono">' + J3.map(((j, i) => col(R.filter((x => nj(x.j) === j)), JL3[i], colores[i]))).join("") + "</div>";
  const sin = R.filter((x => !x.j));
  if (sin.length) h += '<p class="cn-s" style="margin:14px 0 4px"><b>Sin jornada en el horario</b> (no entran al bono hasta que tengan jornada): ' + sin.map((x => esc(x.o) + " " + x.n)).join(", ") + "</p>";
@@ -11391,7 +11391,7 @@ window.amlBonoSupHtml = () => {
  if (!d.ok) return '<section class="panel cn" style="margin:6px 0 14px"><div class="cn-vacio"><b>No se pudo cargar el ranking del bono</b><span>' + esc(d.error || "Intenta de nuevo en un momento.") + "</span></div></section>";
  const R = d.ranking || [];
  if (!R.length) return '<section class="panel cn" style="margin:6px 0 14px"><h3 style="margin:0 0 4px;font-size:17px">Ranking del bono</h3><p class="cn-s">Todavía no hay clientes nuevos este mes.</p></section>';
- return '<section class="panel cn" style="margin:6px 0 14px">' + amlBonoHtml(R) + "</section>";
+ return '<section class="panel cn" style="margin:6px 0 14px"><h3 style="margin:0 0 2px;font-size:17px">Ranking del bono</h3><p class="cn-s" style="margin:0 0 12px">Cada operador suma los clientes de todos los perfiles que maneja. Gana el primer lugar de cada jornada.</p>' + amlBonoHtml(R, d.mes) + "</section>";
 };
 
 function amlCliPintar() {
@@ -18122,4 +18122,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = '09c01edaed8d' -->
+<!-- var HUELLA = '2cfda3d4dbff' -->
