@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycby3GwgzMEi7DcXUkfCtX9J
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "96dc9ecf47c1";
+ var HUELLA = "788519c2e6be";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -11252,7 +11252,28 @@ const ACL = {
  cargando: false
 };
 
-const aclQuien = () => typeof PT !== "undefined" && PT.yo === "ok" ? PT.op : "";
+// Como en PRIME: el operador elige su nombre (sin clave). Si ya entró en «Mis puntos», se usa ese.
+const aclQuien = () => {
+ if (typeof PT !== "undefined" && PT.yo === "ok" && PT.op) return PT.op;
+ if (ACL.sel === undefined) {
+  try {
+   ACL.sel = localStorage.getItem("acl_sel_" + (window.PROYECTO ? PROYECTO.id : "")) || "";
+  } catch (e) {
+   ACL.sel = "";
+  }
+ }
+ return ACL.sel || "";
+};
+
+window.aclElegir = v => {
+ ACL.sel = String(v || "");
+ try {
+  localStorage.setItem("acl_sel_" + (window.PROYECTO ? PROYECTO.id : ""), ACL.sel);
+ } catch (e) {}
+ const c = document.getElementById("amlCliIn");
+ if (c) c.innerHTML = amlCliHtml();
+ amlCliCargar(true);
+};
 
 setTimeout((() => {
  const b = document.getElementById("navCliRk");
@@ -11298,7 +11319,10 @@ function amlCliHtml() {
   h += '<div class="cn-podio">' + pd(R[1], 1) + pd(R[0], 0) + pd(R[2], 2) + "</div>";
   if (R.length > 3) h += '<ol class="cn-rank">' + R.slice(3).map(((x, i) => '<li class="' + (x.yo ? "yo" : "") + '"><span class="p">' + (i + 4) + '</span><span class="q"><b>' + esc(x.o) + (x.yo ? '<span class="cn-tu">Tú</span>' : "") + "</b><small>" + esc(x.g) + '</small></span><span class="cn-bar"><i style="width:' + Math.max(4, Math.round(x.n / max * 100)) + '%"></i></span><span class="v">' + x.n + "</span></li>")).join("") + "</ol>";
  }
- if (!conMios) return h + '<div class="cn-lock">' + candado + "<span>Para ver tus clientes y en qué puesto vas, entra en «Mis puntos y mi grupo» con tu nombre y tu clave, y vuelve aquí.</span><button type=\"button\" class=\"btn ghost cn-ir\" onclick=\"verVista(&quot;pts&quot;)\">Entrar</button></div>";
+ const ops = d.ops || [], actual = aclQuien();
+ const elegir = '<div class="cn-lock" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span><b>¿Quién eres?</b> Elige tu nombre para ver tus clientes y en qué puesto vas.</span><select onchange="aclElegir(this.value)" aria-label="Tu nombre" style="min-width:220px"><option value="">Elige tu nombre…</option>' + ops.map((n => '<option value="' + esc(n) + '"' + (actual && n.toUpperCase() === actual.toUpperCase() ? " selected" : "") + ">" + esc(n) + "</option>")).join("") + "</select></div>";
+ if (!conMios) return h + (ops.length ? elegir : "");
+ if (!(typeof PT !== "undefined" && PT.yo === "ok") && ops.length) h += elegir;
  h += '<div class="cn-mio"><div class="cn-mio-h"><b>Tus clientes nuevos</b><span>' + (mios.length ? mios.length + " " + cli(mios.length) + (yo >= 0 ? " · vas de " + (yo + 1) + " de " + R.length : "") : "Aún no tienes este mes") + "</span></div>" + (mios.length ? '<div class="cn-ids">' + mios.map((x => '<button type="button" class="cn-id" data-sgcp="' + esc(x.id) + '" title="Copiar el ID"><b>' + esc(x.id) + "</b><small>Día " + x.d + " · " + esc(x.p) + "</small></button>")).join("") + "</div>" : '<div class="cn-nada">Cuando anotes un ID en tu tabla, aparece aquí. Toca cualquiera para copiarlo.</div>') + "</div>";
  return h;
 }
@@ -18113,4 +18137,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = '96dc9ecf47c1' -->
+<!-- var HUELLA = '788519c2e6be' -->
