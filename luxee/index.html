@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycby3GwgzMEi7DcXUkfCtX9J
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "9cc36baf8667";
+ var HUELLA = "a5e7c744520d";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -15639,13 +15639,15 @@ if (typeof MON_ICO !== "undefined") MON_ICO.aud = '<path d="M9 4h6l1 2h3v14H5V6h
   if (AUD.el.parentNode !== host) host.appendChild(AUD.el);
   if (!AUD.el.firstChild) audPintarBase();
   if (AUD.quienPintado !== audQuien()) audPintarBase();
-  if (!AUD.cat && !AUD.cargandoCat) audCargarCat();
+  // Los perfiles y operadores se vuelven a leer cada 10 min (si cambian en INFO OPERADORES/PERFILES, salen sin recargar la página)
+  if (!AUD.cargandoCat && (!AUD.cat || Date.now() - (AUD.catT || 0) > 6e5) && !(window.audEnfocado && window.audEnfocado())) audCargarCat();
  };
  window.audEnfocado = () => !!(AUD.el && document.activeElement && AUD.el.contains(document.activeElement) && document.activeElement !== document.body);
  function audCargarCat() {
+  const previo = AUD.cat, firmaPrev = previo ? JSON.stringify(previo.grupos || []) : "";
   AUD.cargandoCat = true;
   AUD.errCat = "";
-  audPintarBase();
+  if (!previo) audPintarBase();
   audLlamar("audCatalogo", [ audClaveMon() ]).then((c => {
    // «Quién atendió el perfil»: supervisores, encargados y monitores con nombre y apellido, y los que faltaban
    try {
@@ -15672,13 +15674,20 @@ if (typeof MON_ICO !== "undefined") MON_ICO.aud = '<path d="M9 4h6l1 2h3v14H5V6h
     }
    } catch (e) {}
    AUD.cat = c;
+   AUD.catT = Date.now();
    AUD.cargandoCat = false;
    if (!AUD.turno) AUD.turno = turnoAhora();
+   // Si solo se refrescó la lista: se repinta únicamente si cambió algo y no hay nada a medio llenar
+   if (previo && (JSON.stringify(c && c.grupos || []) === firmaPrev || AUD.clase)) return;
    audPintarBase();
    audCargarMis();
    audCargarPts();
   })).catch((er => {
    AUD.cargandoCat = false;
+   if (previo) {
+    AUD.cat = previo;
+    return;
+   }
    AUD.errCat = er.message;
    audPintarBase();
   }));
@@ -18341,4 +18350,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = '9cc36baf8667' -->
+<!-- var HUELLA = 'a5e7c744520d' -->
