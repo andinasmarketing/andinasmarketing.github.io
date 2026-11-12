@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "fb1c8f1eee6e";
+ var HUELLA = "446a9b037581";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -342,6 +342,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
 <button class="btn" id="monRefresh" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.3-4M4 4v3.5h3.5M4 13a8 8 0 0 0 14.3 4M20 20v-3.5h-3.5"/></svg>Actualizar</button></div>
 </div>
 <div id="monHall"></div>
+<div id="monSalidas" hidden></div>
 <div id="monCuerpo"></div>
 </div>
 <div id="vistaAud" class="pt" hidden>
@@ -6881,7 +6882,7 @@ function asistenciaHtmlBase(soloFilas, diasF) {
  const fila = (z, i) => {
   const t = tipo(z), hh = z.h, ent = z.T.ajuste === "sup" ? hmDe(z.T.S) : z.T.ent !== null ? hmDe(enTol(z) ? z.T.S : z.T.ent) : "";
   const sal = hh && hh[4] ? hh[4] : !hh && z.T.sal !== null && z.T.sal !== undefined && z.T.ajuste !== "sup" ? hmDe(z.T.sal) : "";
-  const comoSal = hh && hh[4] ? /automática/i.test(hh[6] || "") ? "Salida automática" : /supervisión/i.test(hh[6] || "") ? "Salida puesta por supervisión" : /según el horario/i.test(hh[6] || "") ? "Salida según el horario" : "Marcó la salida" : "";
+  const comoSal = hh && hh[4] ? /automática/i.test(hh[6] || "") ? "Salida automática" : /supervisión/i.test(hh[6] || "") ? "Salida puesta por supervisión" : /por el monitor/i.test(hh[6] || "") ? String(hh[6]) : /según el horario/i.test(hh[6] || "") ? "Salida según el horario" : "Marcó la salida" : "";
   const dif = z.T.ajuste === "sup" ? "Horario " + hmDe(z.T.S) + " – " + hmDe(z.T.E) + ' · <span class="g">supervisión lo dio a tiempo</span>' : z.est === "vino" ? "Tenía descanso" : z.est === "fuera" ? "Sin turno a esa hora" : "Horario " + hmDe(z.T.S) + " – " + hmDe(z.T.E) + (z.T.ent !== null && z.T.ajuste !== "sup" && !z.T.lejos && z.est !== "otro" ? z.T.ent > z.T.S + TOLER_LLEGADA ? ' · <span class="r">' + (z.T.ent - z.T.S) + " min tarde</span>" : z.T.ent < z.T.S - 15 ? " · llegó antes" : ' · <span class="g">a tiempo</span>' : "");
   const rep = z.est === "otro" && !z.otroOk ? deudasOp(z.o)["inc:" + z.f] ? Object.assign({}, deudasOp(z.o)["inc:" + z.f], {
    que: ""
@@ -14031,6 +14032,90 @@ function monHallRender() {
  document.head.appendChild(st);
 })();
 
+/* ---------- Monitores: turnos de operadores sin hora de salida (el monitor debe poner a qué hora salió) ---------- */
+(() => {
+ const S = {
+  d: null,
+  t: 0,
+  cargando: false
+ };
+ const caja = () => document.getElementById("monSalidas");
+ const pedir = () => {
+  if (S.cargando || typeof MON === "undefined" || !MON.clave) return;
+  S.cargando = true;
+  S.t = Date.now();
+  const listo = t => {
+   S.cargando = false;
+   try {
+    S.d = JSON.parse(t);
+   } catch (e) {
+    S.d = null;
+   }
+   ver();
+  };
+  if (!esApps) return listo(JSON.stringify({
+   ok: true,
+   items: []
+  }));
+  google.script.run.withSuccessHandler(listo).withFailureHandler((() => {
+   S.cargando = false;
+  })).salidasPendMonitor(MON.clave);
+ };
+ const ver = () => {
+  const c = caja();
+  if (!c) return;
+  const ae = document.activeElement;
+  if (ae && c.contains(ae) && ae.tagName === "INPUT") return;
+  const xs = ROL === "mon" && S.d && S.d.ok ? S.d.items || [] : [];
+  if (!xs.length) {
+   c.hidden = true;
+   c.innerHTML = "";
+   return;
+  }
+  c.hidden = false;
+  c.innerHTML = '<div class="sr-al si-sal" style="margin:0 0 14px"><b>' + (xs.length === 1 ? "1 operador quedó" : xs.length + " operadores quedaron") + ' sin hora de salida — debes ponerla</b><p>No quitó su casilla «Estoy de turno» al irse y su entrada no coincide con su horario, así que la salida no se puso sola. Revisa a qué hora salió (por ejemplo, su última actividad o lo que se habló en el grupo), escríbela y toca Guardar.</p><p style="margin-top:4px"><b>Hora en formato de 24 horas:</b> 6:15 de la mañana = 6:15 · 2:15 de la tarde = 14:15 · 10:15 de la noche = 22:15.</p>' + xs.map(((h, i) => '<div class="sr-al-f" data-si="' + i + '"><span><b>' + esc(titulo(h[2])) + "</b> · " + esc(titulo(h[1])) + "<small>Entró el " + DSEMLARGO(h[0]).toLowerCase() + " " + h[0].slice(8) + "/" + h[0].slice(5, 7) + " a las " + esc(h[3]) + "</small></span>" + '<label style="display:flex;align-items:center;gap:6px;font-size:13px">Salió a las <input type="text" inputmode="numeric" class="sal-h" placeholder="ej: 22:15" maxlength="8" title="Formato de 24 horas: 10:15 de la noche = 22:15" style="font:inherit;width:90px;padding:6px 8px;border:1px solid var(--line);border-radius:8px"></label><button type="button" class="btn sal-g">Guardar</button><span class="rac-err" style="color:var(--down);font-size:12.5px"></span></div>')).join("") + "</div>";
+  c.querySelectorAll("[data-si]").forEach((f => {
+   const h = xs[Number(f.dataset.si)], inp = f.querySelector(".sal-h"), b = f.querySelector(".sal-g"), err = f.querySelector(".rac-err");
+   b.onclick = () => {
+    const hv = horaSensata(inp.value, h[3], "despues");
+    if (!hv) {
+     err.textContent = "Escribe la hora en formato de 24 horas, por ejemplo 22:15.";
+     inp.focus();
+     return;
+    }
+    inp.value = hv;
+    b.disabled = true;
+    err.textContent = "";
+    const listo = t => {
+     let d = null;
+     try {
+      d = JSON.parse(t);
+     } catch (e) {}
+     if (!d || !d.ok) {
+      b.disabled = false;
+      err.textContent = d && d.error || "No se pudo guardar.";
+      return;
+     }
+     S.d.items = (S.d.items || []).filter((x => x !== h));
+     if (window.toast) toast("Listo: salida de " + titulo(h[2]) + " a las " + hv + ".");
+     inp.blur();
+     ver();
+    };
+    if (!esApps) return listo('{"ok":true}');
+    google.script.run.withFailureHandler((e => listo(JSON.stringify({
+     ok: false,
+     error: e && e.message
+    })))).withSuccessHandler(listo).guardarSalidaTurno(MON.clave, h[0], h[1], h[2], h[3], hv, MON.nombre || "");
+   };
+  }));
+ };
+ setInterval((() => {
+  if (document.visibilityState !== "visible" || ROL !== "mon") return;
+  if (!S.t || Date.now() - S.t > 3 * 6e4) pedir();
+ }), 3e4);
+ setTimeout(pedir, 4e3);
+})();
+
 function monRender() {
  const d = MON.datos, c = document.getElementById("monCuerpo");
  if (!d) return;
@@ -18335,4 +18420,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = 'fb1c8f1eee6e' -->
+<!-- var HUELLA = '446a9b037581' -->
