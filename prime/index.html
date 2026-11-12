@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "c57816a4b745";
+ var HUELLA = "d1e26316bc8b";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -13198,7 +13198,13 @@ const hora12M = h => {
 
 function monTurnoHtml() {
  const T = MON.turno, nom = MON.nombre || "", n1 = nom.split(" ")[0];
- const tramoTxt = (x, lim, et) => x.abierto ? "" : '<span class="mt-pill' + (lim && x.min > lim ? " mal" : " ok") + '">' + (et ? et + " " : "") + esc(x.ini) + "–" + esc(x.fin) + " · " + x.min + " min" + (lim && x.min > lim ? " (" + (x.min - lim) + " de más)" : "") + "</span>";
+ // Al monitor se le muestran solo los minutos entre sus dos marcas. La revisión de actividad después del break
+ // (por si marcó «Volví» y no volvió) la ve solo supervisión: así no se le avisa al monitor.
+ const tramoTxt = (x, lim, et) => {
+  if (x.abierto) return "";
+  const m = x.marcado != null ? x.marcado : x.min;
+  return '<span class="mt-pill' + (lim && m > lim ? " mal" : " ok") + '">' + (et ? et + " " : "") + esc(x.ini) + "–" + esc(x.fin) + " · " + m + " min" + (lim && m > lim ? " (" + (m - lim) + " de más)" : "") + "</span>";
+ };
  let pausa = "";
  if (T) {
   const lim = T.breakMin || 20, limL = T.largoMin || 60, brA = (T.breaks || []).find((x => x.abierto)), lgA = (T.largos || []).find((x => x.abierto));
@@ -14030,6 +14036,23 @@ function monHallRender() {
  const st = document.createElement("style");
  st.textContent = ".mn-hall{border:2px solid #E2A63B;border-radius:16px;padding:14px 16px;margin:0 0 14px;background:rgba(226,166,59,.08)}.mn-hall h3{margin:0 0 4px;font-size:17px}.mn-hall>p{margin:0 0 10px;font-size:13px;opacity:.8}.mn-hall .hl-c{margin-bottom:10px}" + ".hl-resp{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}.hl-no{display:flex;flex-wrap:wrap;gap:8px;width:100%}.hl-no[hidden]{display:none}.hl-no textarea{flex:1;min-width:220px;font:inherit;font-size:14px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--surface);color:var(--ink)}.hl-m{color:var(--down,#B3312A)}";
  document.head.appendChild(st);
+})();
+
+/* ---------- Monitores: señal de actividad en la página (para saber que volvió del break aunque no esté verificando ni digitando) ---------- */
+(() => {
+ let ult = 0;
+ const ping = () => {
+  try {
+   if (typeof ROL === "undefined" || ROL !== "mon" || typeof MON === "undefined" || !MON.clave || !MON.nombre || !esApps) return;
+   if (document.visibilityState !== "visible" || Date.now() - ult < 3 * 6e4) return;
+   ult = Date.now();
+   google.script.run.withFailureHandler((() => {})).pingMonitor(MON.clave, MON.nombre);
+  } catch (e) {}
+ };
+ [ "pointerdown", "keydown", "wheel", "touchstart" ].forEach((ev => document.addEventListener(ev, ping, {
+  passive: true,
+  capture: true
+ })));
 })();
 
 /* ---------- Monitores: turnos de operadores sin hora de salida (el monitor debe poner a qué hora salió) ---------- */
@@ -18440,4 +18463,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = 'c57816a4b745' -->
+<!-- var HUELLA = 'd1e26316bc8b' -->
