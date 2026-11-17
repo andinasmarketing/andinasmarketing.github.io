@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycby3GwgzMEi7DcXUkfCtX9J
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "43f4cb93a617";
+ var HUELLA = "b4353fc4ca50";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -14149,12 +14149,15 @@ function monHallRender() {
   } catch (e) {
    k = 0;
   }
+  // El título de la sección y el botón del menú suman también las revisiones por puntos pendientes del monitor
+  const kp = k + (ROL === "mon" ? Number(window.PTS_PEND_N) || 0 : 0);
   [ "navMonSalN", "navMonTurN", "secMonN", "btnMenuN" ].forEach((id => {
    const n = document.getElementById(id);
    if (!n) return;
-   n.textContent = k > 99 ? "99+" : String(k);
-   n.hidden = !k;
-   if (id !== "btnMenuN") n.classList.toggle("sal-lat", !!k);
+   const v = id === "secMonN" || id === "btnMenuN" ? kp : k;
+   n.textContent = v > 99 ? "99+" : String(v);
+   n.hidden = !v;
+   if (id !== "btnMenuN") n.classList.toggle("sal-lat", !!v);
   }));
  };
  window.salidasNumero = contar;
@@ -16694,11 +16697,24 @@ window.audPtsSeccionHtml = () => '<div class="mn-h"><span class="mn-hi">' + (typ
   });
  }
  function ptsNumero() {
-  const n = $("navMonPtsN");
-  if (!n) return;
   const k = AUD.pts ? ptsReparto().ahora.length : 0;
-  n.textContent = k;
-  n.hidden = !k;
+  window.PTS_PEND_N = k;
+  const n = $("navMonPtsN");
+  if (n) {
+   n.textContent = k;
+   n.hidden = !k;
+   n.classList.toggle("sal-lat", !!k);
+  }
+  // Aviso cuando supervisión pide revisiones nuevas: mensaje en pantalla y el número en el título de la pestaña del navegador
+  // (así se ve aunque el monitor esté en otra pestaña, por ejemplo en la plataforma).
+  const antes = AUD.ptsAvisados || 0;
+  if (k > antes && window.toast) toast(k === 1 ? "📋 Supervisión pidió 1 revisión por puntos. Está en «Revisión por puntos»." : "📋 Tienes " + k + " revisiones por puntos pendientes. Están en «Revisión por puntos».");
+  AUD.ptsAvisados = k;
+  try {
+   const base = document.title.replace(/^\(\d+\) 📋 /, "");
+   document.title = k ? "(" + k + ") 📋 " + base : base;
+  } catch (e) {}
+  if (window.salidasNumero) window.salidasNumero();
  }
  window.audPtsNumero = () => ptsNumero();
  function ptsPintar(forzar) {
@@ -16741,16 +16757,26 @@ window.audPtsSeccionHtml = () => '<div class="mn-h"><span class="mn-hi">' + (typ
    AUD.ptsT = Date.now();
    ptsNumero();
    ptsPintar();
-   refrescarMon();
+   if (AUD.cat || AUD.ptsEl) refrescarMon();
   })).catch((er => {
    AUD.ptsCargando = false;
    AUD.ptsErr = er.message;
    ptsPintar();
   }));
  }
+ // Las revisiones por puntos pendientes se consultan cada 3 min mientras el monitor tenga la página abierta, aunque no haya
+ // entrado a «Registro de auditoría» ni a «Revisión por puntos» (antes solo se consultaban al abrir esas secciones, y por eso
+ // el aviso podía salir horas después de que supervisión las pidiera). También al volver a la pestaña de la página.
+ const ptsToca = () => typeof VISTA_ACTUAL !== "undefined" && VISTA_ACTUAL === "mon" && !!audClaveMon() && !!window.AUD_URL;
  setInterval((() => {
-  if ((AUD.cat || AUD.ptsEl) && typeof VISTA_ACTUAL !== "undefined" && VISTA_ACTUAL === "mon" && !document.hidden) audCargarPts();
+  if (ptsToca()) audCargarPts();
  }), 18e4);
+ setInterval((() => {
+  if (ptsToca() && !AUD.pts && !AUD.ptsCargando) audCargarPts();
+ }), 15e3);
+ document.addEventListener("visibilitychange", (() => {
+  if (!document.hidden && ptsToca() && Date.now() - (AUD.ptsT || 0) > 6e4) audCargarPts();
+ }));
  const fmtPts = x => new Intl.NumberFormat("es-CO", {
   maximumFractionDigits: 2
  }).format(Number(x) || 0);
@@ -18485,4 +18511,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = '43f4cb93a617' -->
+<!-- var HUELLA = 'b4353fc4ca50' -->
