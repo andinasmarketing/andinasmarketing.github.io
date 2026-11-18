@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycby3GwgzMEi7DcXUkfCtX9J
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "254ec008b3a2";
+ var HUELLA = "8097a6e85e6c";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -16750,6 +16750,7 @@ window.audPtsSeccionHtml = () => '<div class="mn-h"><span class="mn-hi">' + (typ
  function audCargarPts() {
   if (AUD.ptsCargando) return;
   AUD.ptsCargando = true;
+  AUD.ptsIntento = Date.now();
   audLlamar("audPuntosPendientes", [ audClaveMon() ]).then((d => {
    AUD.ptsCargando = false;
    AUD.pts = d;
@@ -16772,7 +16773,8 @@ window.audPtsSeccionHtml = () => '<div class="mn-h"><span class="mn-hi">' + (typ
   if (ptsToca()) audCargarPts();
  }), 18e4);
  setInterval((() => {
-  if (ptsToca() && !AUD.pts && !AUD.ptsCargando) audCargarPts();
+  // Primera carga al entrar (reintenta cada 3 min si falló, no cada 15 s, para no recargar el servidor)
+  if (ptsToca() && !AUD.pts && !AUD.ptsCargando && Date.now() - (AUD.ptsIntento || 0) > 18e4) audCargarPts();
  }), 15e3);
  document.addEventListener("visibilitychange", (() => {
   if (!document.hidden && ptsToca() && Date.now() - (AUD.ptsT || 0) > 6e4) audCargarPts();
@@ -18511,4 +18513,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = '254ec008b3a2' -->
+<!-- var HUELLA = '8097a6e85e6c' -->
