@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr0
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "f9e4452be48d";
+ var HUELLA = "7254674fe564";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -11867,11 +11867,22 @@ function ptAbrirOp() {
 }
 
 function ptCargarOp(forzar) {
- if (PT.cargando) return;
+ // Si ya hay una lectura en camino (por ejemplo, la del grupo), no se pierde lo que pidió el operador (su clave):
+ // se vuelve a pedir apenas termine esa. Antes se ignoraba y se quedaba en «Comprobando…».
+ if (PT.cargando) {
+  PT.otraVez = forzar === true ? 2 : PT.otraVez || 1;
+  return;
+ }
  if (forzar === true) document.getElementById("ptEst").textContent = "Actualizando…";
  PT.cargando = true;
  const ok = t => {
   PT.cargando = false;
+  if (PT.otraVez) {
+   const f = PT.otraVez === 2;
+   PT.otraVez = 0;
+   setTimeout((() => ptCargarOp(f)), 0);
+   return;
+  }
   let d;
   try {
    d = JSON.parse(t);
@@ -18498,4 +18509,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = 'f9e4452be48d' -->
+<!-- var HUELLA = '7254674fe564' -->
