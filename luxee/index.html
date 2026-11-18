@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycby3GwgzMEi7DcXUkfCtX9J
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "44e68a21d8a4";
+ var HUELLA = "681ac12c1bd1";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -343,6 +343,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycby3GwgzMEi7DcXUkfCtX9J
 </div>
 <div id="monHall"></div>
 <div id="monSalidas" hidden></div>
+<div id="monAusencias" hidden></div>
 <div id="monCuerpo"></div>
 </div>
 <div id="vistaAud" class="pt" hidden>
@@ -14169,7 +14170,7 @@ function monHallRender() {
    k = 0;
   }
   // El título de la sección y el botón del menú suman también las revisiones por puntos pendientes del monitor
-  const kp = k + (ROL === "mon" ? Number(window.PTS_PEND_N) || 0 : 0);
+  const kp = k + (ROL === "mon" ? (Number(window.PTS_PEND_N) || 0) + (Number(window.AUS_PEND_N) || 0) : 0);
   [ "navMonSalN", "navMonTurN", "secMonN", "btnMenuN" ].forEach((id => {
    const n = document.getElementById(id);
    if (!n) return;
@@ -14186,6 +14187,100 @@ function monHallRender() {
   if (!S.t || Date.now() - S.t > 3 * 6e4) pedir();
  }), 3e4);
  setTimeout(pedir, 4e3);
+})();
+
+/* ---------- Monitores: operadores que faltaron y nadie ha registrado qué pasó (antes solo le salía a supervisión) ---------- */
+(() => {
+ const S = {
+  d: null,
+  t: 0,
+  cargando: false
+ };
+ const fe = f => DSEMLARGO(f).toLowerCase() + " " + f.slice(8) + "/" + f.slice(5, 7);
+ const pedir = () => {
+  if (S.cargando || typeof MON === "undefined" || !MON.clave || window.ES_PRIME === false) return;
+  S.cargando = true;
+  S.t = Date.now();
+  const listo = t => {
+   S.cargando = false;
+   try {
+    S.d = JSON.parse(t);
+   } catch (e) {
+    S.d = null;
+   }
+   ver();
+  };
+  if (!esApps) return listo(JSON.stringify({
+   ok: true,
+   items: []
+  }));
+  google.script.run.withSuccessHandler(listo).withFailureHandler((() => {
+   S.cargando = false;
+  })).ausenciasPendMonitor(MON.clave);
+ };
+ const ver = () => {
+  const c = document.getElementById("monAusencias");
+  if (!c) return;
+  const ae = document.activeElement;
+  if (ae && c.contains(ae) && /INPUT|SELECT|TEXTAREA/.test(ae.tagName)) return;
+  const xs = ROL === "mon" && S.d && S.d.ok ? S.d.items || [] : [];
+  window.AUS_PEND_N = xs.length;
+  if (window.salidasNumero) window.salidasNumero();
+  if (!xs.length) {
+   c.hidden = true;
+   c.innerHTML = "";
+   return;
+  }
+  c.hidden = false;
+  c.innerHTML = '<div class="sr-al si-aus" style="margin:0 0 14px"><b>' + (xs.length === 1 ? "1 operador faltó a su turno" : xs.length + " turnos sin presentarse") + ' y no se ha registrado qué pasó — pregunta y regístralo</b><p>Tenía turno según el horario y no marcó entrada ni anotó clientes. Pregúntale al operador (o a su grupo) qué pasó y registra: si faltó (marca «Justificada» y escribe el motivo si dio una razón válida) o, si sí trabajó, «Sí vino». Vacaciones, permisos y retiros los registra supervisión.</p>' + xs.map(((x, i) => '<div class="sr-al-f am-f" data-ai="' + i + '"><div class="sr-al-n"><b>' + esc(titulo(x.o)) + "</b> · " + esc(titulo(x.g)) + "<small>Faltó el " + esc(fe(x.f)) + " · turno de " + esc(x.e) + " a " + esc(x.s) + '</small></div><div class="am-c"><select class="am-q" aria-label="Qué pasó"><option value="aus">Faltó (ausencia)</option><option value="just">Faltó, justificada</option><option value="vino">Sí vino / sí trabajó</option></select><input class="am-mot" type="text" maxlength="300" placeholder="Motivo de la justificación" hidden><button type="button" class="btn am-g">Guardar</button></div><div class="rac-err"></div></div>')).join("") + "</div>";
+  c.querySelectorAll("[data-ai]").forEach((f => {
+   const x = xs[Number(f.dataset.ai)], sel = f.querySelector(".am-q"), mot = f.querySelector(".am-mot"), b = f.querySelector(".am-g"), err = f.querySelector(".rac-err");
+   sel.onchange = () => {
+    mot.hidden = sel.value !== "just";
+    if (!mot.hidden) mot.focus();
+    err.textContent = "";
+   };
+   b.onclick = () => {
+    const q = sel.value, m = mot.value.trim();
+    if (q === "just" && !m) {
+     err.textContent = "Escribe el motivo que dio el operador.";
+     mot.focus();
+     return;
+    }
+    b.disabled = true;
+    err.style.color = "";
+    err.textContent = "Guardando…";
+    const listo = t => {
+     let d = null;
+     try {
+      d = JSON.parse(t);
+     } catch (e) {}
+     if (!d || !d.ok) {
+      b.disabled = false;
+      err.textContent = d && d.error || "No se pudo guardar.";
+      return;
+     }
+     S.d.items = (S.d.items || []).filter((y => y !== x));
+     if (window.toast) toast(q === "vino" ? "Listo: " + titulo(x.o) + " sí trabajó el " + fe(x.f) + "." : "Listo: ausencia de " + titulo(x.o) + " del " + fe(x.f) + (q === "just" ? " (justificada)." : "."));
+     ver();
+    };
+    if (!esApps) return listo('{"ok":true}');
+    google.script.run.withFailureHandler((e => listo(JSON.stringify({
+     ok: false,
+     error: e && e.message
+    })))).withSuccessHandler(listo).registrarAusenciaMonitor(MON.clave, x.g, x.o, x.f, q, m, MON.nombre || "");
+   };
+  }));
+ };
+ window.ausMonVer = ver;
+ setInterval((() => {
+  if (document.visibilityState !== "visible" || ROL !== "mon") return;
+  if (!S.t || Date.now() - S.t > 5 * 6e4) pedir();
+ }), 3e4);
+ setTimeout(pedir, 6e3);
+ const st = document.createElement("style");
+ st.textContent = ".am-c{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:6px}.am-c select,.am-c input{font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line,#ccc);border-radius:10px;background:var(--card,#fff);color:inherit}.am-c input{flex:1;min-width:180px}.am-f .sr-al-n small{display:block;opacity:.75;font-size:12.5px;margin-top:2px}";
+ document.head.appendChild(st);
 })();
 
 function monRender() {
@@ -18532,4 +18627,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = '44e68a21d8a4' -->
+<!-- var HUELLA = '681ac12c1bd1' -->
