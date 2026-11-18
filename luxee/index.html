@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycby3GwgzMEi7DcXUkfCtX9J
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "c8e2346e23c1";
+ var HUELLA = "7eb2f5ee9dfb";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -11877,11 +11877,15 @@ function ptCargarOp(forzar) {
  PT.cargando = true;
  const ok = t => {
   PT.cargando = false;
-  // Se muestra lo que llegó y, si mientras tanto se pidió otra lectura (la clave, otro grupo), se hace enseguida
+  // Si mientras tanto se pidió otra lectura (la clave, otro nombre), se hace enseguida. Lo que llegó solo se muestra si
+  // todavía no había nada en pantalla (la lista de grupos); la clave escrita no se borra.
+  let otra = false, pinGuardado = PT.pin;
   if (PT.otraVez) {
    const f = PT.otraVez === 2;
    PT.otraVez = 0;
+   otra = true;
    setTimeout((() => ptCargarOp(f)), 0);
+   if (PT.lista) return;
   }
   let d;
   try {
@@ -11893,6 +11897,10 @@ function ptCargarOp(forzar) {
    };
   }
   ptRecibirOp(d);
+  if (otra && pinGuardado) {
+   PT.pin = pinGuardado;
+   PT.msg = "";
+  }
  };
  if (esApps) google.script.run.withSuccessHandler(ok).withFailureHandler((e => ok(JSON.stringify({
   ok: false,
@@ -18524,4 +18532,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = 'c8e2346e23c1' -->
+<!-- var HUELLA = '7eb2f5ee9dfb' -->
