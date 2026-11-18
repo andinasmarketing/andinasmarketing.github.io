@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr0
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "4a263bb0f219";
+ var HUELLA = "f4587c519e02";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -10755,16 +10755,16 @@ function ptMetaHtml(a, meta, d, quien, personal, proyFija) {
 
 function ptTablaDias(o, d) {
  const DIA = [ "lun", "mar", "mié", "jue", "vie", "sáb", "dom" ], n = Math.max(d.ultimo, 0);
- const conBono = (o.bono || []).length > 0, con4 = (o.h4 || []).length > 0;
+ const conBono = (o.bono || []).length > 0, con4 = (o.h4 || []).length > 0, conN = (o.nt || []).length > 0;
  let tp = 0, tl = 0, filas = "";
  for (let i = n - 1; i >= 0; i--) {
   const p = o.p[i], l = o.l[i], hay = p !== null && p !== undefined || l !== null && l !== undefined;
   tp += p || 0;
   tl += l || 0;
-  filas += "<tr" + (hay ? "" : ' class="sin"') + "><td><b>" + (i + 1) + "</b> <small>" + DIA[(d.dow1 + i) % 7] + "</small></td>" + '<td class="num">' + (p === null || p === undefined ? "—" : fmtP.format(p)) + '</td><td class="num">' + (l === null || l === undefined ? "—" : fmtP.format(l)) + "</td>" + '<td class="num"><b>' + (hay ? fmtP.format((p || 0) + (l || 0)) : "—") + "</b></td>" + (conBono ? "<td>" + (o.bono.indexOf(i + 1) >= 0 ? "✓" : "") + "</td>" : "") + (con4 ? "<td>" + (o.h4.indexOf(i + 1) >= 0 ? "✓" : "") + "</td>" : "") + "</tr>";
+  filas += "<tr" + (hay ? "" : ' class="sin"') + "><td><b>" + (i + 1) + "</b> <small>" + DIA[(d.dow1 + i) % 7] + "</small></td>" + '<td class="num">' + (p === null || p === undefined ? "—" : fmtP.format(p)) + '</td><td class="num">' + (l === null || l === undefined ? "—" : fmtP.format(l)) + "</td>" + '<td class="num"><b>' + (hay ? fmtP.format((p || 0) + (l || 0)) : "—") + "</b></td>" + (conBono ? "<td>" + (o.bono.indexOf(i + 1) >= 0 ? "✓" : "") + "</td>" : "") + (con4 ? "<td>" + (o.h4.indexOf(i + 1) >= 0 ? "✓" : "") + "</td>" : "") + (conN ? "<td>" + (o.nt.indexOf(i + 1) >= 0 ? "🌙" : "") + "</td>" : "") + "</tr>";
  }
  if (!n) return '<div class="vacio">Todavía no hay puntos registrados este mes.</div>';
- return '<div class="table-scroll pt-dias"><table><thead><tr><th>Día</th><th class="num">Día normal</th><th class="num">Día libre</th><th class="num">Total del día</th>' + (conBono ? "<th>Día bono</th>" : "") + (con4 ? "<th>4 Hrs</th>" : "") + "</tr></thead><tbody>" + filas + "</tbody>" + '<tfoot><tr><td><b>Total del mes</b></td><td class="num"><b>' + fmtP.format(tp) + '</b></td><td class="num"><b>' + fmtP.format(tl) + '</b></td><td class="num"><b>' + fmtP.format(tp + tl) + "</b></td>" + (conBono ? "<td></td>" : "") + (con4 ? "<td></td>" : "") + "</tr></tfoot></table></div>";
+ return '<div class="table-scroll pt-dias"><table><thead><tr><th>Día</th><th class="num">Día normal</th><th class="num">Día libre</th><th class="num">Total del día</th>' + (conBono ? "<th>Día bono</th>" : "") + (con4 ? "<th>4 Hrs</th>" : "") + (conN ? "<th>Turno noche</th>" : "") + "</tr></thead><tbody>" + filas + "</tbody>" + '<tfoot><tr><td><b>Total del mes</b></td><td class="num"><b>' + fmtP.format(tp) + '</b></td><td class="num"><b>' + fmtP.format(tl) + '</b></td><td class="num"><b>' + fmtP.format(tp + tl) + "</b></td>" + (conBono ? "<td></td>" : "") + (con4 ? "<td></td>" : "") + (conN ? "<td></td>" : "") + "</tr></tfoot></table></div>";
 }
 
 const ptTurno = (d, j) => (d.turno && d.turno[j] ? d.turno[j] : []).map((x => x || 0));
@@ -18496,4 +18496,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = '4a263bb0f219' -->
+<!-- var HUELLA = 'f4587c519e02' -->
