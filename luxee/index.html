@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycby3GwgzMEi7DcXUkfCtX9J
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "141fa662987c";
+ var HUELLA = "c8e2346e23c1";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -11877,11 +11877,11 @@ function ptCargarOp(forzar) {
  PT.cargando = true;
  const ok = t => {
   PT.cargando = false;
+  // Se muestra lo que llegó y, si mientras tanto se pidió otra lectura (la clave, otro grupo), se hace enseguida
   if (PT.otraVez) {
    const f = PT.otraVez === 2;
    PT.otraVez = 0;
    setTimeout((() => ptCargarOp(f)), 0);
-   return;
   }
   let d;
   try {
@@ -18524,4 +18524,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = '141fa662987c' -->
+<!-- var HUELLA = 'c8e2346e23c1' -->
