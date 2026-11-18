@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "6ae4de5cb346";
+ var HUELLA = "a4dd672a2d2c";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -12251,7 +12251,7 @@ function ptRenderOp() {
    }), 60);
   };
   const cambiar = () => {
-   const a = document.getElementById("ptOlv1").value.trim(), b = document.getElementById("ptOlv2").value.trim(), sup = document.getElementById("ptOlvS").value;
+   const a = document.getElementById("ptOlv1").value.trim(), b = document.getElementById("ptOlv2").value.trim(), sup = document.getElementById("ptOlvS").value.trim() || (window.claveSup && window.claveSup() || "");
    if (!/^\d{4,8}$/.test(a)) {
     e2.textContent = "La clave nueva debe tener entre 4 y 8 números.";
     return;
@@ -18517,4 +18517,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = '6ae4de5cb346' -->
+<!-- var HUELLA = 'a4dd672a2d2c' -->
