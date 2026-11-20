@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr0
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "27eb319ce24c";
+ var HUELLA = "edae86bc7f1b";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -17126,20 +17126,25 @@ function audCargarMis() {
    qe("#auEqC").querySelectorAll("button").forEach((b => b.onclick = () => {
     AUD.eq.c = b.dataset.c;
     qe("#auEqC").querySelectorAll("button").forEach((x => x.setAttribute("aria-pressed", String(x === b))));
-    if (AUD.eq.c === "tareas") audCargarTareasEq(false); else audPintarEq();
+    if (AUD.eq.c === "tareas") audCargarTareasEq(false); else if (AUD.eq.c) audPintarEq(); else audCargarEq(false);
    }));
    qe("#auEqD").onchange = ev => {
     AUD.eq.d = Number(ev.target.value);
-    if (AUD.eq.c === "tareas") audCargarTareasEq(true); else audCargarEq(true);
+    if (AUD.eq.c !== "tareas") audCargarEq(true);
+    if (!AUD.eq.c || AUD.eq.c === "tareas") audCargarTareasEq(true);
    };
    qe("#auEqQ").oninput = ev => {
     AUD.eq.q = ev.target.value;
     audPintarEq();
    };
-   qe("#auEqAct").onclick = () => AUD.eq.c === "tareas" ? audCargarTareasEq(true) : audCargarEq(true);
+   qe("#auEqAct").onclick = () => {
+    if (AUD.eq.c !== "tareas") audCargarEq(true);
+    if (!AUD.eq.c || AUD.eq.c === "tareas") audCargarTareasEq(true);
+   };
   }
   if (AUD.eqEl.parentNode !== host) host.appendChild(AUD.eqEl);
-  if (AUD.eq.c === "tareas") audCargarTareasEq(false); else audCargarEq(false);
+  if (AUD.eq.c !== "tareas") audCargarEq(false);
+  if (!AUD.eq.c || AUD.eq.c === "tareas") audCargarTareasEq(false);
  };
  function audCargarEq(forzar) {
   const k = String(AUD.eq.d);
@@ -17170,7 +17175,7 @@ function audCargarMis() {
   if (!forzar && T.d && T.k === k && Date.now() - T.t < 12e4) return audPintarTareasEq();
   if (T.cargando) return;
   const box = AUD.eqEl && AUD.eqEl.querySelector("#auEq");
-  if (box) box.innerHTML = '<div class="vacio">Cargando el control de tareas…</div>';
+  if (box && AUD.eq.c === "tareas") box.innerHTML = '<div class="vacio">Cargando el control de tareas…</div>';
   if (typeof esApps !== "undefined" && !esApps) {
    T.d = {
     ok: true,
@@ -17181,41 +17186,34 @@ function audCargarMis() {
    return audPintarTareasEq();
   }
   T.cargando = true;
-  google.script.run.withFailureHandler((er => {
+  const falla = msg => {
    T.cargando = false;
+   T.d = {
+    ok: true,
+    filas: []
+   };
+   T.k = k;
+   T.t = Date.now() - 9e4;
    const b = AUD.eqEl && AUD.eqEl.querySelector("#auEq");
-   if (b) b.innerHTML = '<div class="vacio">' + e(er && er.message || "No se pudo cargar.") + "</div>";
-  })).withSuccessHandler((txt => {
+   if (b && AUD.eq.c === "tareas") b.innerHTML = '<div class="vacio">' + e(msg) + "</div>"; else audPintarEq();
+  };
+  google.script.run.withFailureHandler((er => falla(er && er.message || "No se pudo cargar el control de tareas."))).withSuccessHandler((txt => {
    T.cargando = false;
    let d = null;
    try {
     d = JSON.parse(txt);
    } catch (er) {}
-   if (!d || !d.ok) {
-    const b = AUD.eqEl && AUD.eqEl.querySelector("#auEq");
-    if (b) b.innerHTML = '<div class="vacio">' + e(d && d.error || "No se pudo cargar el control de tareas.") + "</div>";
-    return;
-   }
+   if (!d || !d.ok) return falla(d && d.error || "No se pudo cargar el control de tareas.");
    T.d = d;
    T.k = k;
    T.t = Date.now();
    audPintarTareasEq();
   })).tareasEquipoMonitor(audClaveMon(), audQuien(), AUD.eq.d);
  }
- function audPintarTareasEq() {
-  const box = AUD.eqEl && AUD.eqEl.querySelector("#auEq"), T = AUD.eqT || {};
-  if (!box || !T.d) return;
-  T.ab = T.ab || {};
-  const sinT = x => String(x || "").toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-  const qq = sinT(String(AUD.eq.q || "").trim());
-  const filas = (T.d.filas || []).filter((r => !qq || sinT([ r.p, r.o, r.a, r.tu ].join(" ")).indexOf(qq) >= 0));
-  if (!filas.length) {
-   box.innerHTML = '<div class="vacio">No hay control de tareas con ese filtro en estos días.</div>';
-   return;
-  }
-  // Una tarjeta por monitor, día y turno (como en Seguimiento a monitores); al tocar «Ver perfiles» se despliega
-  const hora = r => String(r.s || "").slice(11, 16);
-  const cls = r => /^cumple$/i.test(String(r.est).trim()) ? "ok" : /justific/i.test(r.est) ? "ju" : "no";
+ // Tarjetas del control de tareas: una por monitor, día y turno (como en Seguimiento a monitores); «Ver perfiles» la despliega
+ const teqCls = r => /^cumple$/i.test(String(r.est).trim()) ? "ok" : /justific/i.test(r.est) ? "ju" : "no";
+ const teqSin = x => String(x || "").toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+ function teqGrupos(filas) {
   const grupos = {}, lista = [];
   filas.forEach((r => {
    const k = r.a + "|" + r.f + "|" + r.tu;
@@ -17232,63 +17230,96 @@ function audCargarMis() {
     };
     lista.push(grupos[k]);
    }
-   const g = grupos[k], h = hora(r);
+   const g = grupos[k], h = String(r.s || "").slice(11, 16);
    g.filas.push(r);
    if (h && (!g.h0 || h < g.h0)) g.h0 = h;
    if (h && (!g.h1 || h > g.h1)) g.h1 = h;
   }));
-  lista.sort(((x, y) => x.f < y.f ? 1 : x.f > y.f ? -1 : (y.h1 || "").localeCompare(x.h1 || "")));
-  const DS = [ "Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado" ], fe = f => DS[new Date(f + "T12:00:00").getDay()] + " " + f.slice(8) + "/" + f.slice(5, 7);
+  return lista;
+ }
+ function teqCard(g) {
+  const T = AUD.eqT || {}, ab = !!(T.ab && T.ab[g.k]), noche = g.tu === "NOCHE";
   const sn = v => {
    const x = String(v || "").trim();
    return !x ? '<i class="nd">—</i>' : /^s[ií]/i.test(x) ? '<i class="si">Sí</i>' : /^no$/i.test(x) ? '<i class="no">No</i>' : "<i>" + e(x) + "</i>";
   };
-  let dia = "", h = '<div class="nvm-list">';
-  lista.forEach((g => {
-   if (g.f !== dia) {
-    dia = g.f;
-    const n = lista.filter((y => y.f === dia)).length;
-    h += '<div class="nvm-dia"><b>' + fe(dia) + "</b><span>" + n + (n === 1 ? " control de tareas" : " controles de tareas") + "</span></div>";
-   }
-   const ok = g.filas.filter((r => cls(r) === "ok")).length, ju = g.filas.filter((r => cls(r) === "ju")).length, no = g.filas.length - ok - ju, ab = !!T.ab[g.k];
-   const noche = g.tu === "NOCHE";
-   h += '<div class="nvm-it" style="--c:#1E7A4F"><span class="nvm-ic" aria-hidden="true">✓</span><div class="nvm-b"><div class="nvm-t"><b>Control de tareas · ' + g.filas.length + (g.filas.length === 1 ? " perfil" : " perfiles") + '</b><span class="nvm-p">' + (g.mio ? "Lo registraste tú" : "Control de tareas") + "</span></div>" + '<div class="nvm-m"><span class="nvm-q">' + e(t(g.a)) + "</span>" + (g.h0 ? " · " + e(g.h0 === g.h1 ? g.h0 : g.h0 + "–" + g.h1) : "") + " · turno " + e(String(JN[g.tu] || t(g.tu)).toLowerCase()) + "</div>" + '<div class="nvm-r"><span class="ok">' + ok + (ok === 1 ? " llegó a la meta" : " llegaron a la meta") + "</span>" + (ju ? '<span class="ju">' + ju + (ju === 1 ? " justificado" : " justificados") + "</span>" : "") + (no ? '<span class="no">' + no + " sin justificar</span>" : "") + '<button type="button" class="nvm-mas" data-teq="' + e(g.k) + '" aria-expanded="' + ab + '">' + (ab ? "Ocultar perfiles" : "Ver perfiles") + "</button></div>";
-   if (ab) {
-    h += '<div class="nvm-tt"><div class="nvm-th"><span>Perfil</span><span>Operador</span><span>Cartas</span><span>Newsfeed</span><span>Likes outbox</span><span>Depuración</span><span>Cliente nuevo</span><span>Motivo</span></div>' + g.filas.slice().sort(((p, q2) => ({
-     no: 0,
-     ju: 1,
-     ok: 2
-    })[cls(p)] - ({
-     no: 0,
-     ju: 1,
-     ok: 2
-    })[cls(q2)])).map((r => {
-     const c = cls(r), num = r.ver && r.c !== undefined && r.c !== "" ? e(r.c) + "/" + e(r.m || "10") : c === "ok" ? "Cumplió" : c === "ju" ? "Justificado" : "No cumplió";
-     return '<div class="nvm-tr"><b data-l="Perfil">' + e(t(r.p)) + '</b><span data-l="Operador">' + e(t(r.o) || "—") + '</span><em data-l="Cartas" class="' + c + '">' + num + '</em><span data-l="Newsfeed">' + (r.nf ? sn(r.nf) : noche ? '<i class="nd">No aplica</i>' : sn("")) + '</span><span data-l="Likes outbox">' + sn(r.lk) + '</span><span data-l="Depuración">' + sn(r.dp) + '</span><span data-l="Cliente nuevo">' + sn(r.cn) + '</span><small data-l="Motivo">' + e(r.mot || "") + "</small></div>";
-    })).join("") + "</div>";
-   }
-   h += "</div></div>";
+  const ok = g.filas.filter((r => teqCls(r) === "ok")).length, ju = g.filas.filter((r => teqCls(r) === "ju")).length, no = g.filas.length - ok - ju, ord = {
+   no: 0,
+   ju: 1,
+   ok: 2
+  };
+  let h = '<div class="nvm-it" style="--c:#1E7A4F"><span class="nvm-ic" aria-hidden="true">✓</span><div class="nvm-b"><div class="nvm-t"><b>Control de tareas · ' + g.filas.length + (g.filas.length === 1 ? " perfil" : " perfiles") + '</b><span class="nvm-p">' + (g.mio ? "Lo registraste tú" : "Control de tareas") + "</span></div>" + '<div class="nvm-m"><span class="nvm-q">' + e(t(g.a)) + "</span>" + (g.h0 ? " · " + e(g.h0 === g.h1 ? g.h0 : g.h0 + "–" + g.h1) : "") + " · turno " + e(String(JN[g.tu] || t(g.tu)).toLowerCase()) + "</div>" + '<div class="nvm-r"><span class="ok">' + ok + (ok === 1 ? " llegó a la meta" : " llegaron a la meta") + "</span>" + (ju ? '<span class="ju">' + ju + (ju === 1 ? " justificado" : " justificados") + "</span>" : "") + (no ? '<span class="no">' + no + " sin justificar</span>" : "") + '<button type="button" class="nvm-mas" data-teq="' + e(g.k) + '" aria-expanded="' + ab + '">' + (ab ? "Ocultar perfiles" : "Ver perfiles") + "</button></div>";
+  if (ab) h += '<div class="nvm-tt"><div class="nvm-th"><span>Perfil</span><span>Operador</span><span>Cartas</span><span>Newsfeed</span><span>Likes outbox</span><span>Depuración</span><span>Cliente nuevo</span><span>Motivo</span></div>' + g.filas.slice().sort(((p, q2) => ord[teqCls(p)] - ord[teqCls(q2)])).map((r => {
+   const c = teqCls(r), num = r.ver && r.c !== undefined && r.c !== "" ? e(r.c) + "/" + e(r.m || "10") : c === "ok" ? "Cumplió" : c === "ju" ? "Justificado" : "No cumplió";
+   return '<div class="nvm-tr"><b data-l="Perfil">' + e(t(r.p)) + '</b><span data-l="Operador">' + e(t(r.o) || "—") + '</span><em data-l="Cartas" class="' + c + '">' + num + '</em><span data-l="Newsfeed">' + (r.nf ? sn(r.nf) : noche ? '<i class="nd">No aplica</i>' : sn("")) + '</span><span data-l="Likes outbox">' + sn(r.lk) + '</span><span data-l="Depuración">' + sn(r.dp) + '</span><span data-l="Cliente nuevo">' + sn(r.cn) + '</span><small data-l="Motivo">' + e(r.mot || "") + "</small></div>";
+  })).join("") + "</div>";
+  return h + "</div></div>";
+ }
+ // Tarjeta de un registro (falta, multimedia, cobertura, cambio de perfil), con el mismo estilo
+ const EQ_TIPOS = {
+  "Falta o novedad": [ "Faltas", "#B3312A", "!" ],
+  Multimedia: [ "Multimedia", "#2A7F9E", "▣" ],
+  Cobertura: [ "Coberturas", "#7D8190", "⇄" ],
+  "Cambio de perfil": [ "Cambios de perfil", "#7A5D00", "+" ]
+ };
+ function eqCard(r) {
+  const tp = EQ_TIPOS[r.clase] || [ t(r.clase || "Registro"), "#7D8190", "•" ], hora = r.sello ? String(r.sello).slice(11, 16) : "";
+  const perfil = r.perfil ? ' · perfil <b>' + e(t(r.perfil)) + "</b>" : "", op = String(r.operador || "").trim() && !/^(MULTIMEDIA|CONTINGENCIA)$/i.test(r.operador) ? ' · operador <b>' + e(t(r.operador)) + "</b>" : "";
+  return '<div class="nvm-it" style="--c:' + tp[1] + '"><span class="nvm-ic" aria-hidden="true">' + tp[2] + '</span><div class="nvm-b"><div class="nvm-t"><b>' + e(t(r.novedad || tp[0])) + '</b><span class="nvm-p">' + e(tp[0]) + (r.fila ? " · fila " + e(r.fila) : "") + "</span></div>" + '<div class="nvm-m"><span class="nvm-q">' + e(t(r.auditor)) + "</span>" + (hora ? " · " + e(hora) : "") + (r.turno ? " · turno " + e(String(JN[r.turno] || t(r.turno)).toLowerCase()) : "") + perfil + op + "</div>" + (r.observacion ? '<div class="nvm-d">' + e(r.observacion) + "</div>" : "") + (typeof evLink === "function" ? evLink(r).replace(/^<br>/, "") : "") + "</div></div>";
+ }
+ function audPintarTareasEq() {
+  return audPintarEq();
+ }
+ function audPintarEq() {
+  const box = AUD.eqEl && AUD.eqEl.querySelector("#auEq"), c = AUD.eq.c || "", T = AUD.eqT = AUD.eqT || {};
+  if (!box) return;
+  T.ab = T.ab || {};
+  const conTareas = c === "" || c === "tareas", conReg = c !== "tareas";
+  if (conReg && !AUD.eq.d0) return;
+  if (conTareas && !T.d) {
+   if (!T.cargando) audCargarTareasEq(false);
+   if (c === "tareas") return;
+  }
+  const qq = teqSin(String(AUD.eq.q || "").trim());
+  const items = [];
+  if (conReg) (AUD.eq.d0.filas || []).forEach((r => {
+   if (c && r.clase !== c) return;
+   if (qq && teqSin([ r.perfil, r.operador, r.novedad, r.auditor ].join(" ")).indexOf(qq) < 0) return;
+   items.push({
+    f: r.fecha,
+    h: r.sello ? String(r.sello).slice(11, 16) : "",
+    html: eqCard(r)
+   });
   }));
-  h += "</div>";
+  if (conTareas && T.d) teqGrupos((T.d.filas || []).filter((r => !qq || teqSin([ r.p, r.o, r.a, r.tu ].join(" ")).indexOf(qq) >= 0))).forEach((g => items.push({
+   f: g.f,
+   h: g.h1,
+   html: teqCard(g)
+  })));
+  if (!items.length) {
+   box.innerHTML = '<div class="vacio">No hay registros con ese filtro en estos días.</div>';
+   return;
+  }
+  items.sort(((x, y) => x.f < y.f ? 1 : x.f > y.f ? -1 : String(y.h).localeCompare(String(x.h))));
+  const DS = [ "Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado" ], fe = f => /^\d{4}-\d{2}-\d{2}$/.test(f || "") ? DS[new Date(f + "T12:00:00").getDay()] + " " + f.slice(8) + "/" + f.slice(5, 7) : e(f);
+  const MAX = 250;
+  let dia = null, h = '<div class="nvm-list">';
+  items.slice(0, MAX).forEach((x => {
+   if (x.f !== dia) {
+    dia = x.f;
+    const n = items.filter((y => y.f === dia)).length;
+    h += '<div class="nvm-dia"><b>' + fe(dia) + "</b><span>" + n + (n === 1 ? " registro" : " registros") + "</span></div>";
+   }
+   h += x.html;
+  }));
+  h += "</div>" + (items.length > MAX ? '<div class="au-mut" style="margin-top:6px">Se muestran los ' + MAX + " más recientes de " + items.length + ". Usa el buscador para encontrar uno.</div>" : "") + (conTareas && !T.d ? '<div class="au-mut" style="margin-top:6px">Cargando el control de tareas…</div>' : "");
   box.innerHTML = h;
   box.querySelectorAll("[data-teq]").forEach((b => b.onclick = () => {
    T.ab[b.dataset.teq] = !T.ab[b.dataset.teq];
-   audPintarTareasEq();
+   audPintarEq();
   }));
  }
- function audPintarEq() {
-  const box = AUD.eqEl && AUD.eqEl.querySelector("#auEq");
-  if (AUD.eq.c === "tareas") return audPintarTareasEq();
-  if (!box || !AUD.eq.d0) return;
-  const qq = String(AUD.eq.q || "").trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  const filas = (AUD.eq.d0.filas || []).filter((r => (!AUD.eq.c || r.clase === AUD.eq.c) && (!qq || [ r.perfil, r.operador, r.novedad, r.auditor ].join(" ").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").indexOf(qq) >= 0)));
-  const fe = r => {
-   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(r.fecha || "");
-   return m ? m[3] + "/" + m[2] : e(r.fecha);
-  };
-  const tabla = l => '<div class="table-scroll vt-cel"><table class="sr-t au-reg"><thead><tr><th>Día</th><th>Turno</th><th>Perfil</th><th>Operador</th><th>Qué</th><th>Detalle</th><th>Registró</th></tr></thead><tbody>' + l.map((r => '<tr><td data-l="Día"><b>' + fe(r) + "</b>" + (r.sello ? ' <small class="au-mut">' + e(r.sello.slice(11, 16)) + "</small>" : "") + '</td><td data-l="Turno">' + e(JN[r.turno] || t(r.turno)) + '</td><td data-l="Perfil"><b>' + e(t(r.perfil)) + '</b></td><td data-l="Operador">' + opTxt(r) + '</td><td data-l="Qué">' + pillTipo(r) + " " + e(t(r.novedad)) + '</td><td data-l="Detalle" class="au-obs">' + e(r.observacion) + '</td><td data-l="Registró">' + e(t(r.auditor)) + "</td></tr>")).join("") + "</tbody></table></div>";
-  box.innerHTML = filas.length ? tabla(filas.slice(0, 200)) + (filas.length > 200 ? '<div class="au-mut" style="margin-top:6px">Se muestran los 200 más recientes de ' + filas.length + ". Usa el buscador para encontrar uno.</div>" : "") : '<div class="vacio">No hay registros con ese filtro en estos días.</div>';
- }
+
  function audPintarMis() {
   const m = q("#auMis");
   if (!m || !AUD.mis) return;
@@ -18734,4 +18765,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = '27eb319ce24c' -->
+<!-- var HUELLA = 'edae86bc7f1b' -->
