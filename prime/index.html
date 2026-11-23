@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "7bab4c43505e";
+ var HUELLA = "dbd98dad4548";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -17114,7 +17114,7 @@ function audCargarMis() {
   k: ""
  };
  window.audTabEq = () => window.ES_PRIME ? [ "eq", "Historial del equipo", AUD.eq.d0 ? (AUD.eq.d0.filas || []).length : null ] : null;
- window.audEqHtml = () => '<div class="mn-h"><span class="mn-hi">' + (typeof monIco === "function" ? monIco("eq") : "") + '</span><div><h2>Historial del equipo</h2><div class="sub">Lo que registraron todos los monitores: faltas, multimedia, coberturas, cambios de perfil y el control de tareas. En «Tareas» las cartas de otros monitores solo dicen si el operador cumplió la meta, si estaba justificado o no; el número solo lo ves en lo que registraste tú.</div></div></div><div id="audEqHost"></div>';
+ window.audEqHtml = () => '<div class="mn-h"><span class="mn-hi">' + (typeof monIco === "function" ? monIco("eq") : "") + '</span><div><h2>Historial del equipo</h2><div class="sub">Lo que registraron todos los monitores: faltas, multimedia, coberturas, cambios de perfil y el control de tareas. En el control de tareas, las cartas solo dicen si el operador cumplió la meta, si estaba justificado o si no cumplió; aquí no se muestra cuántas cartas envió.</div></div></div><div id="audEqHost"></div>';
  window.audEqMontar = () => {
   const host = $("audEqHost");
   if (!host) return;
@@ -17250,7 +17250,7 @@ function audCargarMis() {
   };
   let h = '<div class="nvm-it" style="--c:#1E7A4F"><span class="nvm-ic" aria-hidden="true">✓</span><div class="nvm-b"><div class="nvm-t"><b>Control de tareas · ' + g.filas.length + (g.filas.length === 1 ? " perfil" : " perfiles") + '</b><span class="nvm-p">' + (g.mio ? "Lo registraste tú" : "Control de tareas") + "</span></div>" + '<div class="nvm-m"><span class="nvm-q">' + e(t(g.a)) + "</span>" + (g.h0 ? " · " + e(g.h0 === g.h1 ? g.h0 : g.h0 + "–" + g.h1) : "") + " · turno " + e(String(JN[g.tu] || t(g.tu)).toLowerCase()) + "</div>" + '<div class="nvm-r"><span class="ok">' + ok + (ok === 1 ? " llegó a la meta" : " llegaron a la meta") + "</span>" + (ju ? '<span class="ju">' + ju + (ju === 1 ? " justificado" : " justificados") + "</span>" : "") + (no ? '<span class="no">' + no + " sin justificar</span>" : "") + '<button type="button" class="nvm-mas" data-teq="' + e(g.k) + '" aria-expanded="' + ab + '">' + (ab ? "Ocultar perfiles" : "Ver perfiles") + "</button></div>";
   if (ab) h += '<div class="nvm-tt"><div class="nvm-th"><span>Perfil</span><span>Operador</span><span>Cartas</span><span>Newsfeed</span><span>Likes outbox</span><span>Depuración</span><span>Cliente nuevo</span><span>Motivo</span></div>' + g.filas.slice().sort(((p, q2) => ord[teqCls(p)] - ord[teqCls(q2)])).map((r => {
-   const c = teqCls(r), num = r.ver && r.c !== undefined && r.c !== "" ? e(r.c) + "/" + e(r.m || "10") : c === "ok" ? "Cumplió" : c === "ju" ? "Justificado" : "No cumplió";
+   const c = teqCls(r), num = c === "ok" ? "Cumplió" : c === "ju" ? "Justificado" : "No cumplió";
    return '<div class="nvm-tr"><b data-l="Perfil">' + e(t(r.p)) + '</b><span data-l="Operador">' + e(t(r.o) || "—") + '</span><em data-l="Cartas" class="' + c + '">' + num + '</em><span data-l="Newsfeed">' + (r.nf ? sn(r.nf) : noche ? '<i class="nd">No aplica</i>' : sn("")) + '</span><span data-l="Likes outbox">' + sn(r.lk) + '</span><span data-l="Depuración">' + sn(r.dp) + '</span><span data-l="Cliente nuevo">' + sn(r.cn) + '</span><small data-l="Motivo">' + e(r.mot || "") + "</small></div>";
   })).join("") + "</div>";
   return h + "</div></div>";
@@ -18765,4 +18765,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = '7bab4c43505e' -->
+<!-- var HUELLA = 'dbd98dad4548' -->
