@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "dbd98dad4548";
+ var HUELLA = "29bcaac734bd";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -10468,7 +10468,9 @@ document.getElementById("navInicio").onclick = () => {
   };
   const linea = y => {
    const v = ahora > y.venceMs;
-   return "<b>Recordatorio: falta llenar los clientes nuevos de la " + JN(y.j) + " del " + fe(y.f) + "</b> (cerró a las " + y.cierre + "): faltan <b>" + y.faltan + "</b> de " + y.total + " casillas" + (y.grupos && y.grupos.length ? " en " + esc(y.grupos.slice(0, 6).join(", ")) + (y.grupos.length > 6 ? " y " + (y.grupos.length - 6) + " más" : "") : "") + (y.resp && y.resp.length ? typeof MON !== "undefined" && MON.nombre && y.resp.some((n => nrm(n) === nrm(MON.nombre) || nrm(n).split(" ")[0] === nrm(MON.nombre).split(" ")[0])) ? " · <b>te toca a ti</b>" : " · corresponde a <b>" + esc(y.resp.join(" y ")) + "</b>" : "") + ". Las casillas que faltan están en <b>amarillo</b> y lo que quedó mal en <b>rojo</b> en la hoja del mes. Cualquier monitor puede llenarlas" + (y.aut ? ": <b>supervisión autorizó llenarlas hasta " + (/ /.test(y.aut) ? "el " + esc(y.aut.split(" ")[0]) + " a las " + esc(h12(y.aut.split(" ")[1])) : "las " + esc(h12(y.aut))) + (y.autPor ? " (" + esc(y.autPor) + ")" : "") + "</b>." : v ? ". <b>Se vencieron a las " + esc(h12(y.vence)) + "</b>: ya no se pueden llenar sin autorización de supervisión." : ", <b>tienen hasta las " + esc(h12(y.vence)) + "</b>. Después la hoja ya no deja llenarlas.") + (typeof ROL !== "undefined" && ROL === "sup" ? ' <span class="dg-autc"><select class="dg-autm" aria-label="Por cuánto tiempo"><option value="60">1 hora</option><option value="240">4 horas</option><option value="720">12 horas</option><option value="1440">24 horas (cuando vuelva)</option></select><button type="button" class="dg-aut btn" data-f="' + esc(y.f) + '" data-j="' + esc(y.j) + '">' + (y.aut ? "Ampliar autorización" : v ? "Autorizar" : "Dejar autorizado") + "</button></span>" : "");
+   const pide = y.sol ? "🙋 <b>" + esc(y.sol) + " pide autorización</b>" + (y.solT ? " (" + esc(h12(y.solT)) + ")" : "") + " para llenar la " + JN(y.j) + " del " + fe(y.f) + ". " : "";
+   if (y.soloSol) return pide + "Esa jornada cerró a las " + y.cierre + (y.aut ? ": <b>supervisión autorizó llenarla hasta " + (/ /.test(y.aut) ? "el " + esc(y.aut.split(" ")[0]) + " a las " + esc(h12(y.aut.split(" ")[1])) : "las " + esc(h12(y.aut))) + (y.autPor ? " (" + esc(y.autPor) + ")" : "") + "</b>." : " y la hoja ya no deja llenarla sin autorización de supervisión.") + (typeof ROL !== "undefined" && ROL === "sup" ? ' <span class="dg-autc"><select class="dg-autm" aria-label="Por cuánto tiempo"><option value="60">1 hora</option><option value="240">4 horas</option><option value="720">12 horas</option><option value="1440">24 horas (cuando vuelva)</option></select><button type="button" class="dg-aut btn" data-f="' + esc(y.f) + '" data-j="' + esc(y.j) + '">' + (y.aut ? "Ampliar autorización" : "Autorizar") + "</button></span>" : "");
+   return pide + "<b>Recordatorio: falta llenar los clientes nuevos de la " + JN(y.j) + " del " + fe(y.f) + "</b> (cerró a las " + y.cierre + "): faltan <b>" + y.faltan + "</b> de " + y.total + " casillas" + (y.grupos && y.grupos.length ? " en " + esc(y.grupos.slice(0, 6).join(", ")) + (y.grupos.length > 6 ? " y " + (y.grupos.length - 6) + " más" : "") : "") + (y.resp && y.resp.length ? typeof MON !== "undefined" && MON.nombre && y.resp.some((n => nrm(n) === nrm(MON.nombre) || nrm(n).split(" ")[0] === nrm(MON.nombre).split(" ")[0])) ? " · <b>te toca a ti</b>" : " · corresponde a <b>" + esc(y.resp.join(" y ")) + "</b>" : "") + ". Las casillas que faltan están en <b>amarillo</b> y lo que quedó mal en <b>rojo</b> en la hoja del mes. Cualquier monitor puede llenarlas" + (y.aut ? ": <b>supervisión autorizó llenarlas hasta " + (/ /.test(y.aut) ? "el " + esc(y.aut.split(" ")[0]) + " a las " + esc(h12(y.aut.split(" ")[1])) : "las " + esc(h12(y.aut))) + (y.autPor ? " (" + esc(y.autPor) + ")" : "") + "</b>." : v ? ". <b>Se vencieron a las " + esc(h12(y.vence)) + "</b>: ya no se pueden llenar sin autorización de supervisión." : ", <b>tienen hasta las " + esc(h12(y.vence)) + "</b>. Después la hoja ya no deja llenarlas.") + (typeof ROL !== "undefined" && ROL === "sup" ? ' <span class="dg-autc"><select class="dg-autm" aria-label="Por cuánto tiempo"><option value="60">1 hora</option><option value="240">4 horas</option><option value="720">12 horas</option><option value="1440">24 horas (cuando vuelva)</option></select><button type="button" class="dg-aut btn" data-f="' + esc(y.f) + '" data-j="' + esc(y.j) + '">' + (y.aut ? "Ampliar autorización" : v ? "Autorizar" : "Dejar autorizado") + "</button></span>" : "");
   };
   caja.innerHTML = '<div class="dg-f"><span class="dg-i">' + "✎" + '</span><span class="dg-t">' + xs.map(linea).join("<br>") + "</span>" + '<span class="dg-r">Pendiente</span></div>' + '<div class="dg-f" style="margin-top:8px;justify-content:flex-end">' + (d.url ? '<a href="' + esc(d.url) + '" target="_blank" rel="noopener">Abrir la hoja del mes</a>' : "") + '<button type="button" class="dg-v">' + (D.abierto ? "Ocultar cuáles" : "Ver cuáles faltan") + '</button><button type="button" class="dg-m">Minimizar</button></div>' + (D.abierto ? '<div class="dg-l">' + xs.map((y => y.det.map((z => "<div>" + esc(z[0]) + " · " + esc(z[1]) + ' <span style="opacity:.7">(' + esc(z[2]) + ", columna del " + fe(z[3] || y.f) + ")</span></div>")).join(""))).join("") + (xs.some((y => y.faltan > y.det.length)) ? "<div>…</div>" : "") + "</div>" : "");
   caja.querySelectorAll(".dg-autm").forEach((m => m.onclick = ev => ev.stopPropagation()));
@@ -10511,6 +10513,9 @@ document.getElementById("navInicio").onclick = () => {
  }), 3e4);
  window.avisoDigitarVer = () => {
   if ((ROL === "mon" || ROL === "sup") && (!D.t || Date.now() - D.t > 6e4)) pedir(); else ver();
+ };
+ window.avisoDigitarYa = () => {
+  if (ROL === "mon" || ROL === "sup") pedir();
  };
  setTimeout(window.avisoDigitarVer, 3e3);
 })();
@@ -13253,7 +13258,7 @@ function monTurnoHtml() {
   }
  }
  const venc = monVencida();
- return '<section class="mt-card" id="monTurnoCard">' + '<div class="mt-ban" id="monFinBan"' + (venc ? "" : " hidden") + "><div><b>⏰ El turno de " + esc(n1) + " terminó a las " + esc(monFinTxt()) + "</b><span>Cuando te vayas, toca «Terminé mi turno»: queda la hora en que lo toques. Si " + esc(n1) + " ya se fue y tú eres el monitor que llega, toca «Soy el monitor que llega».</span></div>" + '<button type="button" class="btn ghost" data-mfin="llega">Soy el monitor que llega</button></div>' + '<div class="mt-top"><div class="mt-yo"><span class="mt-av" aria-hidden="true">' + esc(nom.split(" ").map((x => x[0] || "")).join("").slice(0, 2).toUpperCase()) + "</span><div><b>" + esc(nom) + "</b>" + "<span>" + (T && T.ini ? "Turno de la " + (MN_JOR[T.jor] || "") + " · " + esc(T.ini) + " a " + esc(T.fin) : "Fuera de tu horario publicado") + (T && T.ent ? " · entraste a las <b>" + esc(T.ent) + "</b>" : MON.ent ? " · entraste a las <b>" + esc(MON.ent) + "</b>" : "") + "</span></div></div>" + '<div class="mt-acc"><button type="button" class="btn mt-fin" id="monTermine">Terminé mi turno</button></div></div>' + pausa + '<div class="mt-nota">Lo que verifiques y registres queda a tu nombre. La sesión sigue abierta hasta que toques «Terminé mi turno».</div><div class="mt-err" id="monTurnoErr" role="alert"></div></section>';
+ return '<section class="mt-card" id="monTurnoCard">' + '<div class="mt-ban" id="monFinBan"' + (venc ? "" : " hidden") + "><div><b>⏰ El turno de " + esc(n1) + " terminó a las " + esc(monFinTxt()) + "</b><span>Cuando te vayas, toca «Terminé mi turno»: queda la hora en que lo toques. Si " + esc(n1) + " ya se fue y tú eres el monitor que llega, toca «Soy el monitor que llega».</span></div>" + '<button type="button" class="btn ghost" data-mfin="llega">Soy el monitor que llega</button></div>' + '<div class="mt-top"><div class="mt-yo"><span class="mt-av" aria-hidden="true">' + esc(nom.split(" ").map((x => x[0] || "")).join("").slice(0, 2).toUpperCase()) + "</span><div><b>" + esc(nom) + "</b>" + "<span>" + (T && T.ini ? "Turno de la " + (MN_JOR[T.jor] || "") + " · " + esc(T.ini) + " a " + esc(T.fin) : "Fuera de tu horario publicado") + (T && T.ent ? " · entraste a las <b>" + esc(T.ent) + "</b>" : MON.ent ? " · entraste a las <b>" + esc(MON.ent) + "</b>" : "") + "</span></div></div>" + '<div class="mt-acc">' + (window.PROYECTO && window.PROYECTO.id === "prime" ? '<button type="button" class="btn ghost" id="monPedirAut" title="Si la hoja del mes ya no te deja llenar una jornada, pídele aquí la autorización a supervisión">Pedir autorización para digitar</button>' : "") + '<button type="button" class="btn mt-fin" id="monTermine">Terminé mi turno</button></div></div>' + pausa + '<div class="mt-nota">Lo que verifiques y registres queda a tu nombre. La sesión sigue abierta hasta que toques «Terminé mi turno».</div><div class="mt-err" id="monTurnoErr" role="alert"></div></section>';
 }
 
 function monTurnoPintar() {
@@ -14787,6 +14792,57 @@ document.addEventListener("click", (e => {
 
 document.addEventListener("click", (e => {
  if (e.target && e.target.id === "monTermine") monTerminar(e.target);
+}));
+
+/* ---------- MONITOR: pedir a supervisión autorización para llenar una jornada que ya venció ---------- */
+function monPedirAutAbrir() {
+ let o = document.getElementById("monAutDlg");
+ if (o) o.remove();
+ const dias = [ "domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado" ], p2 = n => ("0" + n).slice(-2), hoy = new Date;
+ let ops = "";
+ for (let k = 0; k <= 6; k++) {
+  const d = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - k), ymd = d.getFullYear() + "-" + p2(d.getMonth() + 1) + "-" + p2(d.getDate());
+  ops += '<option value="' + ymd + '">' + (k === 0 ? "Hoy, " : k === 1 ? "Ayer, " : "") + dias[d.getDay()] + " " + p2(d.getDate()) + "/" + p2(d.getMonth() + 1) + "</option>";
+ }
+ const sel = "width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line,#d9d9d9);background:var(--surface,#fff);color:var(--ink);font:inherit;margin:4px 0 12px";
+ o = document.createElement("div");
+ o.id = "monAutDlg";
+ o.className = "mn-finT";
+ o.innerHTML = '<div class="mn-finT-c" role="dialog" aria-modal="true" aria-labelledby="monAutTit" style="text-align:left"><h2 id="monAutTit" style="text-align:center">Pedir autorización para digitar</h2>' + '<p style="text-align:center">Elige la jornada que la hoja del mes ya no te deja llenar: el <b>día de la columna</b> y el <b>turno de la fila</b>. A supervisión le sale el aviso para autorizarte.</p>' + '<label style="font-size:13px;font-weight:700">Día (columna)<select id="monAutDia" style="' + sel + '">' + ops + "</select></label>" + '<label style="font-size:13px;font-weight:700">Turno (fila)<select id="monAutJor" style="' + sel + '"><option value="MAÑANA">Mañana</option><option value="TARDE">Tarde</option><option value="NOCHE">Noche</option></select></label>' + '<div id="monAutMsg" role="alert" style="min-height:20px;font-size:13.5px;font-weight:600;margin-bottom:8px"></div>' + '<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button type="button" class="btn ghost" id="monAutNo">Cerrar</button><button type="button" class="btn mt-fin" id="monAutSi">Enviar solicitud</button></div></div>';
+ document.body.appendChild(o);
+ const cerrar = () => o.remove(), msg = o.querySelector("#monAutMsg"), si = o.querySelector("#monAutSi");
+ o.addEventListener("click", (e => {
+  if (e.target === o) cerrar();
+ }));
+ o.querySelector("#monAutNo").onclick = cerrar;
+ si.onclick = () => {
+  const f = o.querySelector("#monAutDia").value, j = o.querySelector("#monAutJor").value;
+  si.disabled = true;
+  si.textContent = "Enviando…";
+  msg.style.color = "";
+  msg.textContent = "";
+  const fin = (bien, texto) => {
+   si.disabled = false;
+   si.textContent = bien ? "Enviar otra" : "Enviar solicitud";
+   msg.style.color = bien ? "var(--up,#1a7f37)" : "var(--down,#b42318)";
+   msg.textContent = texto;
+  };
+  google.script.run.withSuccessHandler((t => {
+   let r = null;
+   try {
+    r = JSON.parse(t);
+   } catch (e) {}
+   if (!r || !r.ok) return fin(false, r && r.error ? /No se puede usar/.test(r.error) ? "Todavía no está activo: falta que supervisión actualice el sistema. Avísale a tu supervisora." : r.error : "No se pudo enviar. Intenta de nuevo.");
+   fin(true, r.ya ? "Esa jornada ya está autorizada hasta las " + hora12M(r.ya) + ": ya puedes llenarla en la hoja." : "Solicitud enviada. Cuando supervisión autorice, te sale en el aviso de arriba y ya puedes escribir en la hoja.");
+   try {
+    if (window.avisoDigitarYa) window.avisoDigitarYa();
+   } catch (e) {}
+  })).withFailureHandler((() => fin(false, "No se pudo enviar. Revisa tu conexión e intenta de nuevo."))).pedirAutorizacionDigitar(MON.clave, MON.nombre, f, j);
+ };
+}
+
+document.addEventListener("click", (e => {
+ if (e.target && e.target.id === "monPedirAut") monPedirAutAbrir();
 }));
 
 document.getElementById("monRefresh").onclick = () => {
@@ -18765,4 +18821,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = 'dbd98dad4548' -->
+<!-- var HUELLA = '29bcaac734bd' -->
