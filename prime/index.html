@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbwPNWI_lbA2wCkYpPwyY8a
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "e75be2d78c02";
+ var HUELLA = "0fd85fd6cdad";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -5534,7 +5534,7 @@ function novedadPorMotivo(m) {
  return /VACACION/.test(x) ? "Vacaciones" : /INCAPACI/.test(x) ? "Incapacidad" : /PERMISO|LICENCIA/.test(x) ? "Permiso" : /RETIR|RENUNCI|YA NO TRABAJA|NO PERTENECE|DESPID/.test(x) ? "Retirado" : "";
 }
 
-function pedirNovedadPorMotivo(g, o, fecha, tipo, motivo) {
+function pedirNovedadPorMotivo(g, o, fecha, tipo, motivo, mon) {
  let d = document.getElementById("novMotDlg");
  if (d) d.remove();
  const est = "width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line,#d9d9d9);background:var(--surface,#fff);color:var(--ink);font:inherit;margin:4px 0 12px;box-sizing:border-box";
@@ -5542,7 +5542,7 @@ function pedirNovedadPorMotivo(g, o, fecha, tipo, motivo) {
  d = document.createElement("div");
  d.id = "novMotDlg";
  d.className = "mn-finT";
- d.innerHTML = '<div class="mn-finT-c" role="dialog" aria-modal="true" aria-labelledby="novMotTit" style="text-align:left"><h2 id="novMotTit" style="text-align:center">Esto se registra como novedad</h2>' + "<p>Escribiste <b>«" + esc(motivo) + "»</b> para <b>" + esc(titulo(o)) + "</b>. Eso no es una falta justificada de un día: es una novedad. Regístrala con sus fechas para que salga bien en el horario, la asistencia y los reportes, y no vuelva a aparecer como falta cada día.</p>" + '<label style="font-size:13px;font-weight:700">Qué pasó<select id="novMotTipo" style="' + est + '">' + tipos.map((t => "<option" + (t === tipo ? " selected" : "") + ">" + t + "</option>")).join("") + "</select></label>" + '<label style="font-size:13px;font-weight:700">Desde (primer día que no viene)<input type="date" id="novMotDesde" value="' + esc(fecha) + '" style="' + est + '"></label>' + '<label style="font-size:13px;font-weight:700" id="novMotHastaL">Hasta (último día que no viene)<input type="date" id="novMotHasta" style="' + est + '"></label>' + '<div id="novMotMsg" style="min-height:20px;font-size:13.5px;font-weight:600;margin-bottom:8px;color:var(--down,#b42318)"></div>' + '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><button type="button" class="btn" id="novMotSi">Registrar la novedad</button><button type="button" class="btn ghost" id="novMotNo">Cancelar</button></div></div>';
+ d.innerHTML = '<div class="mn-finT-c" role="dialog" aria-modal="true" aria-labelledby="novMotTit" style="text-align:left"><h2 id="novMotTit" style="text-align:center">Esto se registra como novedad</h2>' + "<p>" + (mon ? esc(titulo(mon)) + " (monitor) justificó con" : "Escribiste") + " <b>«" + esc(motivo) + "»</b> " + (mon ? "la ausencia de" : "para") + " <b>" + esc(titulo(o)) + "</b>. Eso no es una falta justificada de un día: es una novedad. Regístrala con sus fechas para que salga bien en el horario, la asistencia y los reportes, y no vuelva a aparecer como falta cada día.</p>" + '<label style="font-size:13px;font-weight:700">Qué pasó<select id="novMotTipo" style="' + est + '">' + tipos.map((t => "<option" + (t === tipo ? " selected" : "") + ">" + t + "</option>")).join("") + "</select></label>" + '<label style="font-size:13px;font-weight:700">Desde (primer día que no viene)<input type="date" id="novMotDesde" value="' + esc(fecha) + '" style="' + est + '"></label>' + '<label style="font-size:13px;font-weight:700" id="novMotHastaL">Hasta (último día que no viene)<input type="date" id="novMotHasta" style="' + est + '"></label>' + '<div id="novMotMsg" style="min-height:20px;font-size:13.5px;font-weight:600;margin-bottom:8px;color:var(--down,#b42318)"></div>' + '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><button type="button" class="btn" id="novMotSi">Registrar la novedad</button><button type="button" class="btn ghost" id="novMotNo">Cancelar</button></div></div>';
  document.body.appendChild(d);
  const cerrar = () => d.remove(), msg = d.querySelector("#novMotMsg"), si = d.querySelector("#novMotSi"), sel = d.querySelector("#novMotTipo");
  const retiro = () => /^Retir/.test(sel.value);
@@ -5594,6 +5594,74 @@ function pedirNovedadPorMotivo(g, o, fecha, tipo, motivo) {
   })).guardarNovedad(clave, g, o, sel.value, desde, hasta, false, "");
  };
 }
+
+/* ---------- Supervisión: un monitor justificó una ausencia con «vacaciones», «incapacidad», «permiso» o «retiro».
+   Queda un aviso fijo (no se puede cerrar) hasta que supervisión confirme y registre la novedad con sus fechas. ---------- */
+function novPorConfirmar() {
+ if (typeof DATA === "undefined" || !DATA || !DATA.ausencias) return [];
+ const hoy = DATA.reloj && DATA.reloj.ahora ? DATA.reloj.ahora.slice(0, 10) : (new Date).toISOString().slice(0, 10), lim = ymdMas(hoy, -10), por = {};
+ const conNov = (o, f) => (DATA.novedades || []).some((r => nrm(r[1]) === nrm(o) && r[2] !== "Activo" && r[3] <= f && (!r[4] || r[4] >= f)));
+ DATA.ausencias.forEach((a => {
+  const f = a[0], o = a[1], tipo = a[2] ? novedadPorMotivo(a[4]) : "";
+  if (!tipo || !/^MONITOR\b/.test(nrm(a[5])) || f < lim || conNov(o, f)) return;
+  const k = nrm(o), x = por[k] = por[k] || {
+   o: o,
+   tipo: tipo,
+   motivo: a[4],
+   mon: String(a[5]).replace(/^monitor\s+/i, ""),
+   dias: []
+  };
+  if (x.dias.indexOf(f) < 0) x.dias.push(f);
+ }));
+ return Object.keys(por).map((k => {
+  const x = por[k];
+  x.dias.sort();
+  x.desde = x.dias[0];
+  let g = "";
+  (DATA.filas || []).forEach((f => {
+   if (!g && nrm(f.o) === k) g = f.g;
+  }));
+  if (!g) try {
+   (DATA.horarios.semanas || []).forEach((s => s.f.forEach((r => {
+    if (!g && nrm(r[1]) === k) g = r[0];
+   }))));
+  } catch (e) {}
+  x.g = g;
+  return x;
+ }));
+}
+
+(function() {
+ const caja = document.createElement("div");
+ caja.id = "avisoNovConf";
+ caja.hidden = true;
+ caja.setAttribute("role", "alert");
+ document.body.appendChild(caja);
+ const st = document.createElement("style");
+ st.textContent = "#avisoNovConf{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:60;width:min(760px,calc(100% - 32px));background:#fff;color:#16171B;border:2px solid #B3312A;border-radius:16px;box-shadow:0 12px 32px rgba(0,0,0,.35);padding:12px 16px;font-size:14px;line-height:1.45}#avisoNovConf[hidden]{display:none}#avisoNovConf .nc-f{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between;padding:8px 0;border-top:1px dashed #e3c9c7}#avisoNovConf .nc-f span{flex:1;min-width:220px}";
+ document.head.appendChild(st);
+ let firma = "";
+ const fe = f => f.slice(8) + "/" + f.slice(5, 7);
+ const ver = () => {
+  const xs = typeof ROL !== "undefined" && ROL === "sup" && typeof clave !== "undefined" && clave ? novPorConfirmar() : [];
+  const fz = JSON.stringify(xs);
+  if (fz === firma) return;
+  firma = fz;
+  if (!xs.length) {
+   caja.hidden = true;
+   caja.innerHTML = "";
+   return;
+  }
+  caja.hidden = false;
+  caja.innerHTML = "<b>⚠ " + (xs.length === 1 ? "Hay una novedad por confirmar" : "Hay " + xs.length + " novedades por confirmar") + "</b>: un monitor justificó la ausencia con un motivo que es una novedad. Confírmala y regístrala con sus fechas; este aviso no se quita hasta que quede registrada." + xs.map(((x, i) => '<div class="nc-f"><span><b>' + esc(titulo(x.o)) + "</b>" + (x.g ? " · " + esc(titulo(x.g)) : "") + " · faltó el " + x.dias.map(fe).join(", ") + " · " + esc(titulo(x.mon)) + " escribió: «" + esc(x.motivo) + '»</span><button type="button" class="btn" data-nc="' + i + '">Confirmar y registrar ' + esc(x.tipo.toLowerCase()) + "</button></div>")).join("");
+  caja.querySelectorAll("[data-nc]").forEach((b => b.onclick = () => {
+   const x = xs[Number(b.dataset.nc)];
+   pedirNovedadPorMotivo(x.g, x.o, x.desde, x.tipo, x.motivo, x.mon);
+  }));
+ };
+ window.avisoNovConfVer = ver;
+ setInterval(ver, 5e3);
+})();
 
 function guardarAusenciaUI(g, o, fecha, boton, msg, just, motivo) {
  if (just && nrm(g) !== "MONITORES" && novedadPorMotivo(motivo)) return pedirNovedadPorMotivo(g, o, fecha, novedadPorMotivo(motivo), motivo);
@@ -19115,4 +19183,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = 'e75be2d78c02' -->
+<!-- var HUELLA = '0fd85fd6cdad' -->
