@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr0
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "87836e0d9024";
+ var HUELLA = "3235e64daf5a";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -5526,7 +5526,77 @@ function racEnlazar(caja, rachas) {
  }));
 }
 
+/* ---------- Justificar una ausencia con «vacaciones», «incapacidad», «permiso» o «retiro»: eso es una NOVEDAD.
+   En vez de dejarlo como falta justificada de un solo día (y que vuelva a salir como falta al día siguiente), se pide
+   registrarla como novedad, con sus fechas. ---------- */
+function novedadPorMotivo(m) {
+ const x = nrm(m);
+ return /VACACION/.test(x) ? "Vacaciones" : /INCAPACI/.test(x) ? "Incapacidad" : /PERMISO|LICENCIA/.test(x) ? "Permiso" : /RETIR|RENUNCI|YA NO TRABAJA|NO PERTENECE|DESPID/.test(x) ? "Retirado" : "";
+}
+
+function pedirNovedadPorMotivo(g, o, fecha, tipo, motivo) {
+ let d = document.getElementById("novMotDlg");
+ if (d) d.remove();
+ const est = "width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line,#d9d9d9);background:var(--surface,#fff);color:var(--ink);font:inherit;margin:4px 0 12px;box-sizing:border-box";
+ const tipos = [ "Vacaciones", "Permiso", "Incapacidad", "Retirado", "Retiro definitivo" ];
+ d = document.createElement("div");
+ d.id = "novMotDlg";
+ d.className = "mn-finT";
+ d.innerHTML = '<div class="mn-finT-c" role="dialog" aria-modal="true" aria-labelledby="novMotTit" style="text-align:left"><h2 id="novMotTit" style="text-align:center">Esto se registra como novedad</h2>' + "<p>Escribiste <b>«" + esc(motivo) + "»</b> para <b>" + esc(titulo(o)) + "</b>. Eso no es una falta justificada de un día: es una novedad. Regístrala con sus fechas para que salga bien en el horario, la asistencia y los reportes, y no vuelva a aparecer como falta cada día.</p>" + '<label style="font-size:13px;font-weight:700">Qué pasó<select id="novMotTipo" style="' + est + '">' + tipos.map((t => "<option" + (t === tipo ? " selected" : "") + ">" + t + "</option>")).join("") + "</select></label>" + '<label style="font-size:13px;font-weight:700">Desde (primer día que no viene)<input type="date" id="novMotDesde" value="' + esc(fecha) + '" style="' + est + '"></label>' + '<label style="font-size:13px;font-weight:700" id="novMotHastaL">Hasta (último día que no viene)<input type="date" id="novMotHasta" style="' + est + '"></label>' + '<div id="novMotMsg" style="min-height:20px;font-size:13.5px;font-weight:600;margin-bottom:8px;color:var(--down,#b42318)"></div>' + '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><button type="button" class="btn" id="novMotSi">Registrar la novedad</button><button type="button" class="btn ghost" id="novMotNo">Cancelar</button></div></div>';
+ document.body.appendChild(d);
+ const cerrar = () => d.remove(), msg = d.querySelector("#novMotMsg"), si = d.querySelector("#novMotSi"), sel = d.querySelector("#novMotTipo");
+ const retiro = () => /^Retir/.test(sel.value);
+ const ver = () => {
+  d.querySelector("#novMotHastaL").hidden = retiro();
+ };
+ sel.onchange = ver;
+ ver();
+ d.addEventListener("click", (e => {
+  if (e.target === d) cerrar();
+ }));
+ d.querySelector("#novMotNo").onclick = cerrar;
+ si.onclick = () => {
+  const desde = d.querySelector("#novMotDesde").value, hasta = retiro() ? "" : d.querySelector("#novMotHasta").value;
+  if (!desde) return void (msg.textContent = "Pon desde qué día.");
+  if (!retiro() && !hasta) return void (msg.textContent = "Pon hasta qué día (si es solo ese día, pon la misma fecha).");
+  if (hasta && hasta < desde) return void (msg.textContent = "La fecha de fin no puede ser anterior a la de inicio.");
+  const fin = r => {
+   if (!r || !r.ok) {
+    si.disabled = false;
+    si.textContent = "Registrar la novedad";
+    msg.textContent = r && r.error || "No se pudo guardar. Intenta de nuevo.";
+    return;
+   }
+   cerrar();
+   if (window.toast) toast("Listo: " + sel.value.toLowerCase() + " de " + titulo(o) + " registrada.");
+   if (esApps) cargar(true); else {
+    DATA.novedades = (DATA.novedades || []).concat([ [ g, o, sel.value, desde, hasta ] ]);
+    try {
+     render();
+    } catch (e) {}
+   }
+  };
+  si.disabled = true;
+  si.textContent = "Guardando…";
+  msg.textContent = "";
+  if (!esApps) return fin({
+   ok: true
+  });
+  google.script.run.withFailureHandler((e => fin({
+   ok: false,
+   error: "No se pudo guardar. " + (e && e.message ? e.message : "")
+  }))).withSuccessHandler((t => {
+   let r = null;
+   try {
+    r = JSON.parse(t);
+   } catch (e) {}
+   fin(r);
+  })).guardarNovedad(clave, g, o, sel.value, desde, hasta, false, "");
+ };
+}
+
 function guardarAusenciaUI(g, o, fecha, boton, msg, just, motivo) {
+ if (just && nrm(g) !== "MONITORES" && novedadPorMotivo(motivo)) return pedirNovedadPorMotivo(g, o, fecha, novedadPorMotivo(motivo), motivo);
  if (nrm(g) === "MONITORES") {
   const fin = d => {
    boton.disabled = false;
@@ -7486,6 +7556,7 @@ function asistenciaAmlEnlazar(caja) {
   if (ac === "faltoj") {
    motivoJ = (prompt("Motivo de la justificación de " + titulo(z.o) + " (ej.: incapacidad médica):") || "").trim();
    if (!motivoJ) return;
+   if (novedadPorMotivo(motivoJ)) return pedirNovedadPorMotivo(z.g, z.o, dia, novedadPorMotivo(motivoJ), motivoJ);
   }
   if ((ac === "falto" || ac === "faltoj") && !confirm("¿Anotar que " + titulo(z.o) + " faltó el " + dia.split("-").reverse().join("/") + (ac === "faltoj" ? " (justificada: no pierde su descanso)" : " (sin justificar: pierde su descanso)") + "?")) return;
   const listo = d => {
@@ -19044,4 +19115,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = '87836e0d9024' -->
+<!-- var HUELLA = '3235e64daf5a' -->
