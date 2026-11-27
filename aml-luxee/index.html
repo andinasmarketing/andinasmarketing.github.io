@@ -24,7 +24,7 @@ window.API_URL = "https://script.google.com/macros/s/AKfycbz2wbmC08tGISs2V011Vr0
   v.style.cssText = "position:fixed;right:8px;bottom:6px;font:11px sans-serif;opacity:.45;pointer-events:none;z-index:9999";
   document.body.appendChild(v);
  }));
- var HUELLA = "ddb07e167e92";
+ var HUELLA = "da7edd24152b";
  function revisarVersion() {
   if (document.getElementById("avisoVersion")) return;
   fetch(location.pathname + "?huella=" + Date.now(), {
@@ -10441,17 +10441,22 @@ document.getElementById("navInicio").onclick = () => {
   }
   // Si la supervisora está eligiendo el tiempo de la autorización, no se redibuja (se le cerraría la lista)
   if (caja.contains(document.activeElement) && document.activeElement.tagName === "SELECT") return;
-  const d = D.d, xs = d && d.ok ? (d.items || []).filter((x => x.faltan > 0)) : [];
-  if (!xs.length) {
+  const d = D.d, xs = d && d.ok ? (d.items || []).filter((x => x.faltan > 0)) : [], cobs = d && d.ok ? d.cob || [] : [];
+  if (!xs.length && !cobs.length) {
    caja.hidden = true;
    return;
   }
-  const ahora = Date.now(), x = xs[xs.length - 1], venc = xs.some((y => ahora > y.venceMs)), quedan = Math.max(0, Math.ceil((x.venceMs - ahora) / 6e4));
+  // Coberturas de perfil a las que les falta el control de tareas (obligatorio)
+  const cobTxt = cobs.length + (cobs.length === 1 ? " cobertura" : " coberturas") + " sin control de tareas";
+  const cobHtml = cobs.length ? '<div class="dg-f" style="margin-bottom:8px"><span class="dg-i">⚠</span><span class="dg-t"><b>Cobertura de perfil sin control de tareas</b> (es obligatorio: el monitor no puede terminar su turno sin registrarlo en Auditoría):<br>' + cobs.map((c => "• <b>" + esc(c.p) + "</b> · " + JN(c.t) + " del " + fe(c.f) + " · cubrió " + esc(c.cubre) + " · lo registra " + esc(c.mon))).join("<br>") + "</span></div>" : "";
+  const ahora = Date.now(), x = xs[xs.length - 1] || {
+   venceMs: 0
+  }, venc = xs.some((y => ahora > y.venceMs)), quedan = Math.max(0, Math.ceil((x.venceMs - ahora) / 6e4));
   caja.className = "";
   caja.hidden = false;
   if (D.min) {
    caja.classList.add("mini");
-   caja.innerHTML = "<b>Recordatorio:</b> faltan " + xs.reduce(((s, y) => s + y.faltan), 0) + " por llenar";
+   caja.innerHTML = "<b>Recordatorio:</b> " + [ xs.length ? "faltan " + xs.reduce(((s, y) => s + y.faltan), 0) + " por llenar" : "", cobs.length ? cobTxt : "" ].filter(Boolean).join(" · ");
    caja.onclick = () => {
     D.min = false;
     ver();
@@ -10459,6 +10464,15 @@ document.getElementById("navInicio").onclick = () => {
    return;
   }
   caja.onclick = null;
+  if (!xs.length) {
+   caja.innerHTML = cobHtml + '<div class="dg-f" style="justify-content:flex-end"><button type="button" class="dg-m">Minimizar</button></div>';
+   caja.querySelector(".dg-m").onclick = e => {
+    e.stopPropagation();
+    D.min = true;
+    ver();
+   };
+   return;
+  }
   const h12 = x => {
    try {
     return hora12M(x);
@@ -10472,7 +10486,7 @@ document.getElementById("navInicio").onclick = () => {
    if (y.soloSol) return pide + "Esa jornada cerró a las " + y.cierre + (y.aut ? ": <b>supervisión autorizó llenarla hasta " + (/ /.test(y.aut) ? "el " + esc(y.aut.split(" ")[0]) + " a las " + esc(h12(y.aut.split(" ")[1])) : "las " + esc(h12(y.aut))) + (y.autPor ? " (" + esc(y.autPor) + ")" : "") + "</b>." : " y la hoja ya no deja llenarla sin autorización de supervisión.") + (typeof ROL !== "undefined" && ROL === "sup" ? ' <span class="dg-autc"><select class="dg-autm" aria-label="Por cuánto tiempo"><option value="60">1 hora</option><option value="240">4 horas</option><option value="720">12 horas</option><option value="1440">24 horas (cuando vuelva)</option></select><button type="button" class="dg-aut btn" data-f="' + esc(y.f) + '" data-j="' + esc(y.j) + '">' + (y.aut ? "Ampliar autorización" : "Autorizar") + "</button></span>" : "");
    return pide + "<b>Recordatorio: falta llenar los clientes nuevos de la " + JN(y.j) + " del " + fe(y.f) + "</b> (cerró a las " + y.cierre + "): faltan <b>" + y.faltan + "</b> de " + y.total + " casillas" + (y.grupos && y.grupos.length ? " en " + esc(y.grupos.slice(0, 6).join(", ")) + (y.grupos.length > 6 ? " y " + (y.grupos.length - 6) + " más" : "") : "") + (y.resp && y.resp.length ? typeof MON !== "undefined" && MON.nombre && y.resp.some((n => nrm(n) === nrm(MON.nombre) || nrm(n).split(" ")[0] === nrm(MON.nombre).split(" ")[0])) ? " · <b>te toca a ti</b>" : " · corresponde a <b>" + esc(y.resp.join(" y ")) + "</b>" : "") + ". Las casillas que faltan están en <b>amarillo</b> y lo que quedó mal en <b>rojo</b> en la hoja del mes. Cualquier monitor puede llenarlas" + (y.aut ? ": <b>supervisión autorizó llenarlas hasta " + (/ /.test(y.aut) ? "el " + esc(y.aut.split(" ")[0]) + " a las " + esc(h12(y.aut.split(" ")[1])) : "las " + esc(h12(y.aut))) + (y.autPor ? " (" + esc(y.autPor) + ")" : "") + "</b>." : v ? ". <b>Se vencieron a las " + esc(h12(y.vence)) + "</b>: ya no se pueden llenar sin autorización de supervisión." : ", <b>tienen hasta las " + esc(h12(y.vence)) + "</b>. Después la hoja ya no deja llenarlas.") + (typeof ROL !== "undefined" && ROL === "sup" ? ' <span class="dg-autc"><select class="dg-autm" aria-label="Por cuánto tiempo"><option value="60">1 hora</option><option value="240">4 horas</option><option value="720">12 horas</option><option value="1440">24 horas (cuando vuelva)</option></select><button type="button" class="dg-aut btn" data-f="' + esc(y.f) + '" data-j="' + esc(y.j) + '">' + (y.aut ? "Ampliar autorización" : v ? "Autorizar" : "Dejar autorizado") + "</button></span>" : "");
   };
-  caja.innerHTML = '<div class="dg-f"><span class="dg-i">' + "✎" + '</span><span class="dg-t">' + xs.map(linea).join("<br>") + "</span>" + '<span class="dg-r">Pendiente</span></div>' + '<div class="dg-f" style="margin-top:8px;justify-content:flex-end">' + (d.url ? '<a href="' + esc(d.url) + '" target="_blank" rel="noopener">Abrir la hoja del mes</a>' : "") + '<button type="button" class="dg-v">' + (D.abierto ? "Ocultar cuáles" : "Ver cuáles faltan") + '</button><button type="button" class="dg-m">Minimizar</button></div>' + (D.abierto ? '<div class="dg-l">' + xs.map((y => y.det.map((z => "<div>" + esc(z[0]) + " · " + esc(z[1]) + ' <span style="opacity:.7">(' + esc(z[2]) + ", columna del " + fe(z[3] || y.f) + ")</span></div>")).join(""))).join("") + (xs.some((y => y.faltan > y.det.length)) ? "<div>…</div>" : "") + "</div>" : "");
+  caja.innerHTML = cobHtml + '<div class="dg-f"><span class="dg-i">' + "✎" + '</span><span class="dg-t">' + xs.map(linea).join("<br>") + "</span>" + '<span class="dg-r">Pendiente</span></div>' + '<div class="dg-f" style="margin-top:8px;justify-content:flex-end">' + (d.url ? '<a href="' + esc(d.url) + '" target="_blank" rel="noopener">Abrir la hoja del mes</a>' : "") + '<button type="button" class="dg-v">' + (D.abierto ? "Ocultar cuáles" : "Ver cuáles faltan") + '</button><button type="button" class="dg-m">Minimizar</button></div>' + (D.abierto ? '<div class="dg-l">' + xs.map((y => y.det.map((z => "<div>" + esc(z[0]) + " · " + esc(z[1]) + ' <span style="opacity:.7">(' + esc(z[2]) + ", columna del " + fe(z[3] || y.f) + ")</span></div>")).join(""))).join("") + (xs.some((y => y.faltan > y.det.length)) ? "<div>…</div>" : "") + "</div>" : "");
   caja.querySelectorAll(".dg-autm").forEach((m => m.onclick = ev => ev.stopPropagation()));
   caja.querySelectorAll(".dg-aut").forEach((bt => bt.onclick = ev => {
    ev.stopPropagation();
@@ -18821,4 +18835,4 @@ const AV = {
 })();</script>
 </body>
 </html>
-<!-- var HUELLA = 'ddb07e167e92' -->
+<!-- var HUELLA = 'da7edd24152b' -->
